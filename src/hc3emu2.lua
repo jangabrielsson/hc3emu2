@@ -1,6 +1,6 @@
 local VERSION = "1.1.10"
 
-if arg[2] == "develop" then
+if arg[2] == "develop" or _DEVELOP then -- Running in developer mode
   _DEVELOP = true
   package.path = ";src/?;src/?.lua;"..package.path
 end
