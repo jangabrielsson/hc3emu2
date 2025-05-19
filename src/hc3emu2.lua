@@ -1,6 +1,7 @@
 local VERSION = "1.1.10"
 
 if arg[2] == "develop" then
+  _DEVELOP = true
   package.path = ";src/?;src/?.lua;"..package.path
 end
 
@@ -13,33 +14,18 @@ copas.https = require("ssl.https")
 local ltn12 = require("ltn12")
 
 -- Figure out where we are and what we run...
-local cmdLine = arg[-1] or ""
-local debuggerType = "unknown"
-if cmdLine:match("actboy168") then debuggerType="actboy168" end
-if cmdLine:match("mobdebug") then debuggerType="mobdebug" end
-local cfgFileName = "hc3emu.json"   -- Config file in current directory
-local homeCfgFileName = ".hc3emu.json"  -- Config file in home directory
-  
-local win = (os.getenv('WINDIR') or (os.getenv('OS') or ''):match('[Ww]indows')) and not (os.getenv('OSTYPE') or ''):match('cygwin') -- exclude cygwin
-local fileSeparator = win and '\\' or '/'
-local tempDir = os.getenv("TMPDIR") or os.getenv("TEMP") or os.getenv("TMP") or "/tmp/" -- temp directory
-local homeDir = os.getenv("HOME") or os.getenv("homepath") or ""
--- Try to guess in what environment we are running (used for loading extra console colors)
-local isVscode = package.path:lower():match("vscode") ~= nil
-local isZerobrane = package.path:lower():match("zerobrane") ~= nil
+local config = require("hc3emu2.config")
 
 local copiMap = setmetatable({}, { __mode = "k" }) -- Weak table for coroutine to process info mapping
-
-require("class")
-local function mergeLib(lib1,lib2) for k,v in pairs(lib2 or {}) do lib1[k] = v end end
 
 local function startUp()
   Emu = Emulator() -- Global
   
-  mergeLib(Emu.lib,require("log"))
-  mergeLib(Emu.lib,require("utilities"))
-  mergeLib(Emu.lib,require("tools"))
-  Emu.lib.ui = require("ui")
+  local function mergeLib(lib1,lib2) for k,v in pairs(lib2 or {}) do lib1[k] = v end end
+  mergeLib(Emu.lib,require("hc3emu2.log"))
+  mergeLib(Emu.lib,require("hc3emu2.utilities"))
+  mergeLib(Emu.lib,require("hc3emu2.tools"))
+  Emu.lib.ui = require("hc3emu2.ui")
   
   mainFile = arg[1]
   local src = Emu.lib.readFile(mainFile)
@@ -49,37 +35,37 @@ local function startUp()
   Emu.config.pport = eval("Header:",headers.pport,'number','pport',8265)
   Emu.config.wport = eval("Header:",headers.wport,'number','wport',8266)
   Emu.config.hport = eval("Header:",headers.hport,'number','hport',8267)
-  Emu.config.hip = eval("Header:",headers.hip,nil,'hport','127.0.0.1')
-  Emu.config.hc3.url = os.getenv("HC3URL")
-  Emu.config.hc3.user = os.getenv("HC3USER")
-  Emu.config.hc3.pwd = os.getenv("HC3PASSWORD")
-  Emu.config.hc3.pin = os.getenv("HC3PIN")
+  Emu.config.hip = eval("Header:",headers.hip,'string','hport','127.0.0.1')
+  Emu.config.hc3.url = headers.url or os.getenv("HC3URL")
+  Emu.config.hc3.user = headers.user or os.getenv("HC3USER")
+  Emu.config.hc3.pwd = headers.pwd or os.getenv("HC3PASSWORD")
+  Emu.config.hc3.pin = headers.pin or os.getenv("HC3PIN")
+  Emu.stateTag = headers.state
+  Emu.config.startTime = headers.startTime
+  Emu.config.speedTime = headers.speedTime
+  Emu.config.condensedLog = headers.condensedLog
+  for _,k in ipairs({"refresh","rawrefresh"}) do Emu.config.dbg[k] = headers.debug[k] end
   
-  Emu.api = require("api")(Emu)
-  if Emu.offline then require("offline")(Emu) 
-  else Emu.helper = require("helper") end
+  Emu.api = require("hc3emu2.api")(Emu)
+  if Emu.offline then require("hc3emu2.offline")(Emu) 
+  else Emu.helper = require("hc3emu2.helper") end
   
-  mergeLib(Emu.lib,require("timers"))
-  mergeLib(Emu.lib,require("proxy"))
-  Emu.refreshState = require("refreshState")(Emu)
+  mergeLib(Emu.lib,require("hc3emu2.timers"))
+  mergeLib(Emu.lib,require("hc3emu2.proxy"))
+  Emu.refreshState = require("hc3emu2.refreshState")(Emu)
   
   Emu.lib.setDark(true)
-  
-  do
-    local someRandomIP = "192.168.1.122" --This address you make up
-    local someRandomPort = "3102" --This port you make up
-    local mySocket = socket.udp() --Create a UDP socket like normal
-    mySocket:setpeername(someRandomIP,someRandomPort)
-    local myDevicesIpAddress,_ = mySocket:getsockname()-- returns IP and Port
-    Emu.config.pip = myDevicesIpAddress == "0.0.0.0" and "127.0.0.1" or myDevicesIpAddress
-    Emu.config.pip2 = os.getenv("HC3EMUHOST") or Emu.config.pip
-  end
+  if Emu.stateTag then Emu:loadState() end
 
+  Emu.config.ipAddress = config.ipAddress
+  Emu.config.pip = config.ipAddress -- Proxy server IP (used by HC3 to find emulator)
+  Emu.config.pip2 = os.getenv("HC3EMUHOST") or Emu.config.pip -- Running in container, we may have different ip...
+  
   Emu.mobdebug = { on = function() end, start = function(_,_) end, setbreakpoint = function() end }
   if not Emu.nodebug then
-    if debuggerType == "actboy168" then
+    if config.debuggerType == "actboy168" then
       -- functions?
-    elseif debuggerType == "mobdebug" or true then
+    elseif config.debuggerType == "mobdebug" or true then
       Emu.mobdebug = require("mobdebug") or Emu.mobdebug
       Emu.mobdebug.start('localhost',Emu.config.dport or 8172) 
     end
@@ -88,7 +74,8 @@ local function startUp()
 
   function Emu.EVENT.device_created(event,emu) emu:startQA(event.id) end
   
-  Emu.templates = json.decode(Emu.lib.readFile("src/devices.json"))
+  config.setupRsrscsDir()
+  Emu.templates = json.decode(Emu.lib.readRsrcsFile("devices.json"))
   Emu:process{
     pi = Emu.PI,
     fun = function() 
@@ -108,12 +95,14 @@ local extraLua =  {
   rawset = rawset, rawget = rawget
 }
 
+require("hc3emu2.class")
+
 Emulator = Emulator
 class 'Emulator'
 function Emulator:__init()
   self.config = { hc3 = {}, dbg = {}, emu = {} }
   self.stats = { ports = {}, timers = {} }
-  self.lib = { userTime = os.time }
+  self.lib = { userTime = os.time, readFile= config.readFile, readRsrcsFile = config.readRsrcsFile, filePath = config.filePath }
   self.qas = { devices = {}, files = {}, envs = {}, vars={} }
   self.EVENT = {}
   self.stateTag = nil
@@ -228,23 +217,6 @@ function headerKeys.file(v,h)
   end
 end
 
-function Emulator:mainConfig(headers)
-  self.mainConfigInited = true
-  if self.stateTag == nil then 
-    self.stateTag = headers.state self:loadState() 
-  end
-  self.config.startTime = headers.startTime
-  self.config.speedTime = headers.speedTime
-  self.config.condensedLog = headers.condensedLog
-  self.config.hc3.url = headers.url or self.config.hc3.url
-  self.config.hc3.user = headers.user or self.config.hc3.user
-  self.config.hc3.pwd = headers.pwd or self.config.hc3.pwd
-  self.config.hc3.pin = headers.pin or self.config.hc3.pin
-  for _,k in ipairs({"refresh","rawrefresh"}) do
-    self.config.dbg[k] = headers.debug[k]
-  end
-end
-
 function Emulator:getHeaders(code)
   local headers = { debug = {}, files = {}, UI={} }
   for key,fun in pairs(headerKeys) do 
@@ -253,7 +225,6 @@ function Emulator:getHeaders(code)
   local UI = {}
   for _,v in ipairs(headers.UI) do UI[#UI+1] = validate(v,"UI","table") end
   headers.UI = UI
-  if not self.mainConfigInited then self:mainConfig(headers) end
   return headers
 end
 
@@ -364,11 +335,12 @@ function Emulator:startQA(id)
   env._G = env
   env._emu = self
   self.qas.envs[id] = env
-  loadfile("src/class.lua", "t", env)()
-  loadfile("src/fibaro.lua", "t", env)()
+
+  loadfile(self.lib.filePath("hc3emu2.class"), "t", env)()
+  loadfile(self.lib.filePath("hc3emu2.fibaro"), "t", env)()
   env.fibaro.hc3emu = self
-  loadfile("src/net.lua", "t", env)()
-  loadfile("src/quickApp.lua", "t", env)()
+  loadfile(self.lib.filePath("hc3emu2.net"), "t", env)()
+  loadfile(self.lib.filePath("hc3emu2.quickApp"), "t", env)()
   env.plugin.mainDeviceId = id
   env.__TAG = dev.name..dev.id
   env._PI.dbg = dev._headers and dev._headers.debug or {}

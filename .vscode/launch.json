@@ -15,7 +15,7 @@
       "sourceEncoding": "UTF-8",
       "interpreter": "lua",
       "arguments": [
-        "${workspaceFolder}/hc3emuLite.lua",
+        "${workspaceFolder}/src/hc3emu2.lua",
         "${relativeFile}",
         "develop"
       ],
