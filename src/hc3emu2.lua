@@ -52,7 +52,7 @@ local function startUp()
   
   mergeLib(Emu.lib,require("hc3emu2.timers"))
   mergeLib(Emu.lib,require("hc3emu2.proxy"))
-  Emu.refreshState = require("hc3emu2.refreshState")(Emu)
+  Emu.refreshState = require("hc3emu2.refreshstate")(Emu)
   
   Emu.lib.setDark(true)
   if Emu.stateTag then Emu:loadState() end
@@ -340,7 +340,7 @@ function Emulator:startQA(id)
   loadfile(self.lib.filePath("hc3emu2.fibaro"), "t", env)()
   env.fibaro.hc3emu = self
   loadfile(self.lib.filePath("hc3emu2.net"), "t", env)()
-  loadfile(self.lib.filePath("hc3emu2.quickApp"), "t", env)()
+  loadfile(self.lib.filePath("hc3emu2.quickapp"), "t", env)()
   env.plugin.mainDeviceId = id
   env.__TAG = dev.name..dev.id
   env._PI.dbg = dev._headers and dev._headers.debug or {}
