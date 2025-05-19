@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "hc3emuLite: Current File",
+      "name": "hc3emu2: Current File",
       "type": "luaMobDebug",
       "request": "launch",
       "workingDirectory": "${workspaceFolder}",
@@ -15,7 +15,30 @@
       "sourceEncoding": "UTF-8",
       "interpreter": "lua",
       "arguments": [
-        "${workspaceFolder}/src/hc3emu2.lua",
+        "-e",
+        "dofile(package.searchpath('hc3emu2',package.path))",
+        "x",
+        "${relativeFile}"
+      ],
+      "env": {
+        "HC3URL": "${config:hc3emu.url}",
+        "HC3USER": "${config:hc3emu.user}",
+        "HC3PASSWORD": "${config:hc3emu.password}"
+      },
+      "listenPublicly": true
+    },
+        {
+      "name": "hc3emu2: Dev Current File",
+      "type": "luaMobDebug",
+      "request": "launch",
+      "workingDirectory": "${workspaceFolder}",
+      "sourceBasePath": "${workspaceFolder}",
+      "listenPort": 8172,
+      "stopOnEntry": false,
+      "sourceEncoding": "UTF-8",
+      "interpreter": "lua",
+      "arguments": [
+        "${workspaceFolder}${pathSeparator}src${pathSeparator}hc3emu2.lua",
         "${relativeFile}",
         "develop"
       ],

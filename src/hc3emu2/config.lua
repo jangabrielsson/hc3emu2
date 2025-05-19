@@ -46,7 +46,7 @@ end
 -- Try to locate the user's rsrcrs directory in the installed rock
 local function findRsrscsDir()
   local file = "devices.json"
-  local path = "rsrcs"..fileSeparator..file
+  local path = "src/rsrcs"..fileSeparator..file
   local len = -(#file+2)
   local develop = _DEVELOP
   if type(develop)=="boolean" then 
@@ -69,7 +69,7 @@ local function findRsrscsDir()
   local f,p = datafile.open(path)
   if (not _DEVELOP) and p:match("^.[/\\]rsrcs") then f:close(); f = nil end -- found wrong (local) directory
   if f then f:close() return p:sub(1,len) end
-  p = package.searchpath("hc3emu",package.path)
+  p = package.searchpath("hc3emu2",package.path)
   assert(p,"Failed to find "..path)
 
   -- Try to locate scoop installed rock
