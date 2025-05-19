@@ -5,7 +5,9 @@
 
 function QuickApp:onInit()
   self:debug(self.name,self.id)
-  setInterval(function() 
+  local a = setInterval(function() 
       print("PING")
       end,1000*60)
+
+  print(fibaro.hc3emu.lib.timerInfo(a))
 end

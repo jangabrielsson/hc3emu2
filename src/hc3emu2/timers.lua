@@ -209,6 +209,15 @@ function Master:clearInterval(ref)
   end
 end
 
+local function timerInfo(ref)
+  local v,typ = timers[tostring(ref)],"setTimeout"
+  if v.interval then v,typ = timers[tostring(v.ref)],"setInterval" end
+  if v then
+    local milli = math.floor((v.time - math.floor(v.time)) * 1000)
+    return fmt("%s{%d,%s:%03d}",typ,ref,userDate("%H:%M:%S",v.time),milli)
+  else return "timer{expired}" end
+end
+
 scheduler = Master()
 ------------------------------------------------------
 local function proc(fun,pi,name)
@@ -238,6 +247,7 @@ return {
   setTimeOffset = setTimeOffset,
   midnightLoop = midnightLoop,
   parseTime = parseTime,
+  timerInfo = timerInfo,
   startScheduler = function() scheduler:run() end,
   speedFor = function(hours,cb) scheduler:speedFor(hours,cb) end,
   speed = function(flag) scheduler:speed(flag) end,
