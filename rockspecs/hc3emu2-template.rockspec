@@ -54,8 +54,6 @@ build = {
       ["hc3emu2.helper"] = "src/hc3emu2/helper.lua",
       ["hc3emu2.webserver"] = "src/hc3emu2/webserver.lua",
       ["hc3emu2.simdevices"] = "src/hc3emu2/simdevices.lua",
-      ["hc3emu2.event"] = "src/hc3emu2/event.lua",
-
 
       ["hc3emu2.lib.sourcetrigger"] = "src/hc3emu2/lib/sourcetrigger.lua",
       ["hc3emu2.lib.qwikchild"] = "src/hc3emu2/lib/qwikchild.lua",

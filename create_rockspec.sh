@@ -2,7 +2,7 @@
 # Pushrock - A simple script to create the rock...
 readonly TEMPLATE="rockspecs/hc3emu2-template.rockspec"
 readonly EMULATOR="src/hc3emu2.lua"
-rock_file=$(echo ${TEMPLATE} | sed "s/template/${1}/")
+rock_file=$(echo ${TEMPLATE} | sed "s/template/${1}-1/")
 cp ${TEMPLATE} ${rock_file}
 # change {{VERSION}} in the file to the new version, argument 1
 sed -i "" "s/{{VERSION}}/${1}/g" ${rock_file}

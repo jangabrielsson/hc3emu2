@@ -5,6 +5,7 @@ test.lua
 .project
 *.log
 hc3emu.json
+push_rockspec.sh
 setup.html
 *.out
 test/
