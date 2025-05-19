@@ -1,4 +1,4 @@
-local VERSION = "1.1.3"
+local VERSION = "1.0"
 
 if arg[2] == "develop" or _DEVELOP then -- Running in developer mode
   _DEVELOP = true
