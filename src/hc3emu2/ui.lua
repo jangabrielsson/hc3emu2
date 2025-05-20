@@ -393,10 +393,15 @@ local function logUI(id,pr)
   dumpUI(UI,pr)
 end
 
+  local function getElmType(e) 
+    return e.button and 'button' or e.label and 'label' or e.slider and 'slider' or e.switch and 'switch' or e.select and 'select' or e.multi and 'multi' 
+  end
+
 exports.logUI = logUI
 exports.viewLayout2UI = viewLayout2UI
 exports.uiView2UI = uiView2UI
 exports.dumpUI = dumpUI
 exports.compileUI = compileUI
+exports.getElmType = getElmType
 
 return exports

@@ -58,12 +58,29 @@ function QuickAppBase:__init(dev)
   self.type = dev.type
   self.roomID = dev.roomID
   self.name = dev.name
-  self.properties = dev.properties
+  self.properties = table.copy(dev.properties)
+  self.uiCallbacks = {}
 end
+
 function QuickAppBase:debug(...) fibaro.debug(__TAG,...) end
 function QuickAppBase:trace(...) fibaro.trace(__TAG,...) end
 function QuickAppBase:warning(...) fibaro.warning(__TAG,...) end
 function QuickAppBase:error(...) fibaro.error(__TAG,...) end
+
+function QuickAppBase:registerUICallback(elm, typ, fun)
+  local uic = self.uiCallbacks
+  uic[elm] = uic[elm] or {}
+  uic[elm][typ] = fun
+end
+
+function QuickAppBase:setupUICallbacks()
+  local callbacks = (self.properties or {}).uiCallbacks or {}
+  for _, elm in pairs(callbacks) do
+    self:registerUICallback(elm.name, elm.eventType, elm.callback)
+  end
+end
+
+QuickAppBase.registerUICallbacks = QuickAppBase.setupUICallbacks
 
 function QuickAppBase:callAction(name, ...)
   --if name == "" then return end
@@ -76,7 +93,7 @@ function QuickAppBase:updateProperty(name,value)
   api.post("/plugins/updateProperty",{
     deviceId=self.id,
     propertyName=name,
-    value=value
+    value=table.copy(value)
   })
 end
 
@@ -146,6 +163,7 @@ function QuickApp:__init(dev)
   QuickAppBase.__init(self, dev)
   self.childDevices = {}
   self.childsInitialized = false
+  self:setupUICallbacks()
   if self.onInit then self:onInit() end
   if not self.childsInitialized then self:initChildDevices() end
 end
@@ -201,7 +219,7 @@ function QuickAppChild:__init(dev)
 end
 
 function onAction(id,event) -- { deviceID = 1234, actionName = "test", args = {1,2,3} }
-  --if E:DBGFLAG('onAction') then print("onAction: ", json.encode(event)) end
+  --if Emu:DBGFLAG('onAction') then print("onAction: ", json.encode(event)) end
   local self = plugin.mainQA
 ---@diagnostic disable-next-line: undefined-field
   if self.actionHandler then return self:actionHandler(event) end
@@ -213,6 +231,27 @@ function onAction(id,event) -- { deviceID = 1234, actionName = "test", args = {1
   self:error(fmt("Child with id:%s not found",id))
 end
 
+function onUIEvent(id, event)
+  local quickApp = plugin.mainQA
+  --if Emu:DBGFLAG('onUIEvent') then print("UIEvent: ", json.encode(event)) end
+---@diagnostic disable-next-line: undefined-field
+  if quickApp.UIHandler then quickApp:UIHandler(event) return end
+  if quickApp.uiCallbacks[event.elementName] and quickApp.uiCallbacks[event.elementName][event.eventType] then
+    quickApp:callAction(quickApp.uiCallbacks[event.elementName][event.eventType], event)
+  else
+    fibaro.warning(__TAG,fmt("UI callback for element:%s not found.", event.elementName))
+  end
+end
+
+function QuickAppBase:UIAction(eventType, elementName, arg)
+  local event = {
+    deviceId = self.id, 
+    eventType = eventType,
+    elementName = elementName
+  }
+  event.values = arg ~= nil and  { arg } or json.util.InitArray({})
+  onUIEvent(self.id, event)
+end
 
 class 'RefreshStateSubscriber'
 

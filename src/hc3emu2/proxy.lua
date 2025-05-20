@@ -134,13 +134,21 @@ local function existingProxy(d,headers)
     Emu:DEBUG("Existing Proxy of wrong type, deleted: %s %s",device.id,device.name)
     Emu.api.hc3.delete("/devices/"..proxies[1].id)
   else
-    Emu.qas.devices[device.id] = device
     device.isProxy = true
     Emu:DEBUG("Existing Proxy found: %s %s",device.id,device.name)
+    local ui = Emu.lib.ui.viewLayout2UI(
+      device.properties.viewLayout,
+      device.properties.uiCallbacks or {}
+    )
+    Emu:registerDevice{ id=device.id, device=device, UI=ui, headers=headers }
     local children = Emu.api.hc3.get("/devices?parentId="..device.id) or {}
     for _,child in ipairs(children) do
       child.isProxy,child.isChild = true, true
-      Emu.qas.devices[child.id] = child
+      local ui = Emu.lib.ui.viewLayout2UI(
+        child.properties.viewLayout,
+        child.properties.uiCallbacks or {}
+      )
+      Emu:registerDevice{ id=child.id, device=child, UI=ui, headers=headers }
       Emu:DEBUG("Existing Child proxy found: %s %s",child.id,child.name)
     end
     Emu:saveState()
@@ -164,7 +172,7 @@ function ProxyServer:handler(io)
     local stat,msg = pcall(json.decode,reqdata)
     if stat then
       local deviceId = msg.deviceId
-      local QA = Emu.qas.envs[deviceId]
+      local QA = Emu.qas[deviceId].env
       if QA and msg.type == 'action' then QA.onAction(msg.value.deviceId,msg.value)
       elseif QA and msg.type == 'ui' then QA.onUIEvent(msg.value.deviceId,msg.value) end
     end

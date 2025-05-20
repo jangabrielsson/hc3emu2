@@ -2,4 +2,4 @@
 -Not load state when state is not defined... - Done
 -headers, duplicate settings... - Done
 -load resources - Done
--make luarock
+-make luarock - Done
