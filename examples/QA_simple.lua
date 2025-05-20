@@ -1,16 +1,21 @@
 --%%name=SimpleQA
 --%%type=com.fibaro.binarySwitch
---%%state=9
+--%%state=12
 --%%condensedLog=true
 --%%debug=refresh:false
 --%%proxy=true
+--%%var=test:"Hello"
+--%%var=test2:config.key
 --%%logUI=true
+--%%webUI=true
+
+--%%u={{label='l1',text='Hello'}}
+--%%u={{button='b1', text='My button', onReleased='myButton'}}
 
 fibaro.hc3emu.count = fibaro.hc3emu.count or 0
 
 function QuickApp:onInit()
   self:debug(self.name,self.id)
-
   --self:intervalPing()
   self:childTest()
   self:httpTest()
@@ -24,6 +29,10 @@ function QuickApp:onInit()
   -- self.childsInitialized = true
   -- local r = setInterval(function() print("PING") end, 5000)
   -- clearTimeout(r)
+end
+
+function QuickApp:myButton()
+  self:debug("My button pressed")
 end
 
 MyChild = MyChild

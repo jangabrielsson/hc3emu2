@@ -31,6 +31,15 @@ local function equal(e1,e2)
 end
 table.equal = equal
 
+local function merge(a, b)
+  if type(a) == 'table' and type(b) == 'table' then
+    for k,v in pairs(b) do if type(v)=='table' and type(a[k] or false)=='table' then merge(a[k],v) else a[k]=v end end
+  end
+  return a
+end
+
+function table.merge(a,b) return merge(table.copy(a),b) end
+
 function table.member(key,tab)
   for i,elm in ipairs(tab) do if key==elm then return i end end
 end
@@ -52,9 +61,9 @@ local function readFile(fname,silent)
   return code
 end
 
-local function eval(prefix,str,expr,typ,dflt)
+local function eval(prefix,str,expr,typ,dflt,env)
   if str == nil then return dflt end
-  local stat,res = pcall(load,"return "..str, "chunk", "t")
+  local stat,res = pcall(load,"return "..str, "chunk", "t", env)
   if stat then stat,res = pcall(res) end
   if not stat then error(fmt("%s: Invalid value for %s (%s)",prefix,expr,str),2) end
   if typ~=nil and type(res) ~= typ then error(fmt("%s: Invalid type for %s, expected %s got %s (%s)",prefix,expr,typ,type(res),str),2) end
