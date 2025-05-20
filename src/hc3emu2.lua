@@ -264,11 +264,11 @@ function Emulator:registerDevice(args)
   qa.headers = args.headers or qa.headers
   qa.env = args.env or qa.env
   function qa.ui.watching(prop,value) 
-    print("WATCH",args.id,prop)
+    --print("WATCH",args.id,prop)
     if qa.ui.watches[prop] then qa.ui.watches[prop](value) end
   end
   function qa.ui.updateView(componentName,propertyName,value) 
-    print("UPDATEVIEW",args.id,componentName,propertyName,value)
+    --print("UPDATEVIEW",args.id,componentName,propertyName,value)
     local UI = qa.ui.UI
     local elm = UI[componentName]
     if not elm then return end
