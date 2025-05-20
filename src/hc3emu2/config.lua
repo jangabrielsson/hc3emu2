@@ -11,8 +11,8 @@ local cmdLine = arg[-1] or ""
 local debuggerType = "unknown"
 if cmdLine:match("actboy168") then debuggerType="actboy168" end
 if cmdLine:match("mobdebug") then debuggerType="mobdebug" end
-local cfgFileName = "hc3emu.json"   -- Config file in current directory
-local homeCfgFileName = ".hc3emu.json"  -- Config file in home directory
+local cfgFileName = ".hc3emu.lua"   -- Config file in current directory
+local homeCfgFileName = ".hc3emu.lua"  -- Config file in home directory
   
 local win = (os.getenv('WINDIR') or (os.getenv('OS') or ''):match('[Ww]indows')) and not (os.getenv('OSTYPE') or ''):match('cygwin') -- exclude cygwin
 local fileSeparator = win and '\\' or '/'
@@ -109,10 +109,10 @@ local function writeFile(filename, content)
   end
 end
 
-local rsrcDir = findRsrscsDir()
-assert(rsrcDir, "Failed to find rsrcs directory")
+local rsrcsDir = findRsrscsDir()
+assert(rsrcsDir, "Failed to find rsrcs directory")
 
-local function rsrcsPath(name) return rsrcDir..fileSeparator..name end
+local function rsrcsPath(name) return rsrcsDir..fileSeparator..name end
 local function loadResource(path) return readFile(rsrcsPath(path)) end
 
 local someRandomIP = "192.168.1.122" --This address you make up
@@ -141,8 +141,7 @@ local function setupRsrscsDir(flag)
     ['quickapps.html']={dest=EMUSUB_DIR.."/quickapps.html"},
     ['devices.html']={dest=EMUSUB_DIR.."/devices.html",trans=transVars},
     ['editSettings.html']={dest=EMUSUB_DIR.."/editSettings.html"},
-    ['emu.html']={dest=EMU_DIR.."/_emu.html"},
-    ['setup.html']={dest=EMU_DIR.."/_setup.html",trans=transVars},
+    ['emu.html']={dest=EMU_DIR.."/_emu.html"}
   }
 
   local a,b = lfs.mkdir(EMU_DIR)
@@ -158,10 +157,36 @@ local function setupRsrscsDir(flag)
   end
 end
 
+local function loadLuaFile(path)
+  local res = {}
+  if not lfs.attributes(path) then return true,res,path end
+  local f,err = loadfile(path,"bt",_G)
+  if not f then return f,err,path end
+  local err,res = pcall(f)
+  return err,res,path
+end
+
+local function merge(a, b)
+  if type(a) == 'table' and type(b) == 'table' then
+    for k,v in pairs(b) do if type(v)=='table' and type(a[k] or false)=='table' then merge(a[k],v) else a[k]=v end end
+  end
+  return a
+end
+
+local stat,homeCfg,path = loadLuaFile(homeDir..fileSeparator..homeCfgFileName)
+assert(stat and type(homeCfg)=='table',"Config file error: "..path.." "..tostring(homeCfg))
+local stat,projCfg,path = loadLuaFile(cfgFileName)
+assert(stat and type(projCfg)=='table',"Config file error: "..path.." "..tostring(projCfg))
+
+local userConfig = merge(homeCfg,projCfg)
+
 return {
+  EMU_DIR = EMU_DIR,
+  EMUSUB_DIR = EMUSUB_DIR,
+  userConfig = userConfig,
   readFile = readFile,
   writeFile = writeFile,
-  rsrcDir = rsrcDir,
+  rsrcsDir = rsrcsDir,
   rsrcsPath = rsrcsPath,
   filePath = function(mname) return package.searchpath(mname,package.path) end,
   readRsrcsFile = function(name) return readFile(rsrcsPath(name)) end,
