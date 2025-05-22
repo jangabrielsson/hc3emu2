@@ -388,8 +388,8 @@ local function viewLayout2UI(view,callbacks)
 end
 
 local function logUI(id,pr)
-  local qa = Emu.api.hc3.get("/devices/"..id)
-  local UI = viewLayout2UI(qa.properties.viewLayout,qa.properties.uiCallbacks or {})
+  local dev = Emu.api.hc3.get("/devices/"..id)
+  local UI = viewLayout2UI(dev.properties.viewLayout,dev.properties.uiCallbacks or {})
   dumpUI(UI,pr)
 end
 
