@@ -1,13 +1,15 @@
 --%%name=SimpleQA
 --%%type=com.fibaro.binarySwitch
---%%state=12
+--%%state=11
 --%%condensedLog=true
 --%%debug=refresh:false
---%%proxy=true
+--%% proxy=true
 --%%var=test:"Hello"
 --%%var=test2:config.key
---%%logUI=true
---%%webUI=true
+--%%logui=true
+--%%webui=true
+--%%save=qatest.fqa
+--%%file=src/hc3emu2/lib/sha2.lua,sha
 
 --%%u={{label='l1',text='Hello'}}
 --%%u={{button='b1', text='My button', onReleased='myButton'}}
@@ -116,7 +118,7 @@ function QuickApp:refreshTest()
 local refresh = RefreshStateSubscriber()
   local handler = function(event)
     if event.type == "DevicePropertyUpdatedEvent" then
-      print("QAsimp:",json.encode(event.data))
+      --print("QAsimp:",json.encode(event.data))
     end
   end
   refresh:subscribe(function() return true end,handler)

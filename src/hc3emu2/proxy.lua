@@ -152,11 +152,11 @@ local function existingProxy(d,headers)
       Emu:DEBUG("Existing Child proxy found: %s %s",child.id,child.name)
     end
     Emu:saveState()
-    Emu:post({type='device_created',id=device.id})
-    for _,c in ipairs(children) do Emu:post({type='device_created',id=c.id}) end
     Emu.proxyId = device.id -- Just save the last proxy to be used for restricted API calls
     start()
     Emu.api.hc3.post("/devices/"..device.id.."/action/CONNECT",{args={{ip=Emu.config.pip,port=Emu.config.pport}}})
+    Emu:post({type='device_created',id=device.id})
+    for _,c in ipairs(children) do Emu:post({type='device_created',id=c.id}) end
     return device
   end
 end
@@ -172,7 +172,7 @@ function ProxyServer:handler(io)
     local stat,msg = pcall(json.decode,reqdata)
     if stat then
       local deviceId = msg.deviceId
-      local QA = Emu.qas[deviceId].env
+      local QA = Emu.devices[deviceId].env
       if QA and msg.type == 'action' then QA.onAction(msg.value.deviceId,msg.value)
       elseif QA and msg.type == 'ui' then QA.onUIEvent(msg.value.deviceId,msg.value) end
     end

@@ -13,6 +13,7 @@ local mobdebug = require("mobdebug")
 local socket = require("socket")
 copas.https = require("ssl.https")
 local ltn12 = require("ltn12")
+local lfs = require("lfs")
 
 -- Figure out where we are and what we run...
 local config = require("hc3emu2.config")
@@ -29,7 +30,7 @@ local function startUp()
   mergeLib(Emu.lib,require("hc3emu2.log"))
   mergeLib(Emu.lib,require("hc3emu2.utilities"))
   mergeLib(Emu.lib,require("hc3emu2.tools"))
-  mergeLib(Emu.lib,require("hc3emu2.embedui"))
+  mergeLib(Emu.lib,require("hc3emu2.device"))
   Emu.lib.ui = require("hc3emu2.ui")
   
   mainFile = arg[1]
@@ -80,64 +81,6 @@ local function startUp()
   end
   mobdebug = Emu.mobdebug
   
-  -- qa = { watches = {}, updateView(elm, prop, val), device = ..., }
-  local function initializeUI(QA,UI,index)
-    if type(UI) ~= 'table' then return end
-    local typ = Emu.lib.ui.getElmType(UI)
-    if not typ then for _,r in ipairs(UI) do initializeUI(QA,r,index) end return end
-    UI.type = typ
-    local componentName = UI[typ]
-    if index[componentName] then
-      Emu:DEBUGF('warn',"Duplicate UI element %s in %s",componentName,QA.name)
-    end
-    index[componentName] = UI
-    if componentName then -- Also primes the UI element with default values, in paricular from embedded UI elements
-      local sval = Emu.lib.embedProps[componentName] and Emu.lib.embedProps[componentName](QA) or nil
-      if UI.label then UI.text = sval or UI.text end
-      if UI.button then UI.text = UI.text end
-      if UI.slider then 
-        UI.value = sval or UI.value 
-      end
-      if UI.switch then UI.value = UI.value end
-      if UI.select then 
-        UI.value = UI.values 
-        UI.options = UI.options or {}
-      end
-      if UI.multi then 
-        UI.value = UI.values 
-        UI.options = UI.options or {}
-      end
-    end
-  end
-  
-  function Emu:setupUIstruct(qa)
-    local embed = self.lib.embedUIs[qa.device.type] -- Add embed/stock UI elements for device type
-    for i,r in ipairs(embed or {}) do table.insert(qa.ui.UI,i,r) end
-    
-    if qa.device.isChild then -- Decide html page name for QA
-      local name = (qa.device.name or "Child"):gsub("[^%w]","")
-      qa.ui.pageName = fmt("%s_%s.html",name,qa.id)
-    else
-      local name = qa.device.name:gsub("[^%w]","")
-      qa.ui.pageName = fmt("%s.html",name)
-    end
-    local index = {}
-    local QA = { watches = qa.ui.watches, updateView = qa.ui.updateView, device = qa.device }
-    initializeUI(QA,qa.ui.UI,index) -- Prime the UI struct to serve as value holder for the page renderer
-    setmetatable(qa.ui.UI,{
-      __index=function(t,k) if index[k] then return index[k] else return rawget(t,k) end end,
-    })
-  end
-  
-  function Emu.EVENT.device_created(event,emu)
-    local qa = emu.qas[event.id]
-    if qa.headers.webUI then -- setup for generating web page
-      Emu:setupUIstruct(qa)
-      Emu.web.generateUIpage(qa.device.id,qa.device.name,qa.ui.pageName,qa.ui.UI)
-    end
-    emu:startQA(event.id) 
-  end
-  
   config.setupRsrscsDir()
   Emu.templates = json.decode(Emu.lib.readRsrcsFile("devices.json"))
   Emu:process{
@@ -169,7 +112,7 @@ function Emulator:__init()
   self.config = { hc3 = {}, dbg = {}, emu = {} }
   self.stats = { ports = {}, timers = {}, qas = {} }
   self.lib = { userTime = os.time, readFile= config.readFile, readRsrcsFile = config.readRsrcsFile, filePath = config.filePath }
-  self.qas = {} -- []{ device = {}, files = {}, env = {}, vars = {}, ui = {} }
+  self.devices = {} -- []{ device = {}, files = {}, env = {}, vars = {}, ui = {} }
   self.EVENT = {}
   self.stateTag = nil
   self.lua = extraLua
@@ -244,41 +187,10 @@ function Emulator:HC3Call(method,path,data,silent)
   return (jf and data or res),stat
 end
 
-local compMap = {
-  text = function(v) return v end, 
-  value = function(v) if type(v)=='table' then return v[1] else return v end end,
-  options = function(v) return v end,
-  selectedItem = function(v) return v end,
-  selectedItems = function(v) return v end
-}
-
 function Emulator:registerDevice(args)
-  local dflt = { device = {}, files = {}, env = {}, vars = {}, ui = { UI={}, watches={} } }
-  local qa = self.qas[args.id] or dflt
-  self.qas[args.id] = qa
-  qa.ui = qa.ui or { UI={}, watches={} }
-  qa.device = args.device or qa.device
-  qa.files =  args.files or qa.files
-  qa.vars = args.vars or qa.vars
-  qa.ui.UI = args.UI or qa.ui.UI
-  qa.headers = args.headers or qa.headers
-  qa.env = args.env or qa.env
-  function qa.ui.watching(prop,value) 
-    --print("WATCH",args.id,prop)
-    if qa.ui.watches[prop] then qa.ui.watches[prop](value) end
-  end
-  function qa.ui.updateView(componentName,propertyName,value) 
-    --print("UPDATEVIEW",args.id,componentName,propertyName,value)
-    local UI = qa.ui.UI
-    local elm = UI[componentName]
-    if not elm then return end
-    if compMap[propertyName] then value = compMap[propertyName](value) end
-    if value ~= elm[propertyName] then 
-      elm[propertyName] = value 
-      Emu:post({type='quickApp_updateView',id=args.id})
-    end
-  end
-  return qa
+  assert(args.id,"Missing device id")
+  self.devices[args.id] = Device(args)
+  return self.devices[args.id]
 end
 
 local function validate(v,k,typ)
@@ -286,45 +198,67 @@ local function validate(v,k,typ)
 end
 
 local headerKeys = {}
-function headerKeys.type(v,h) h.type = v end 
-function headerKeys.name(v,h) h.name = v end
-function headerKeys.proxy(v,h,k) h.proxy = validate(v,k,"boolean") end
-function headerKeys.proxy_new(v,h,k) h.proxy_new = validate(v,k,"boolean") end
-function headerKeys.proxy_set_ui(v,h,k) h.proxy_set_ui = validate(v,k,"boolean") end
-function headerKeys.state(v,h) h.state = v end
-function headerKeys.time(v,h,k) h.startTime = v end
-function headerKeys.speed(v,h,k) h.speedTime = validate(v,k,"number") end
-function headerKeys.offline(v,h,k) h.offline = validate(v,k,"boolean") end
-function headerKeys.logui(v,h,k) h.logUI = validate(v,k,"boolean") end
-function headerKeys.webui(v,h,k) h.webUI = validate(v,k,"boolean") end
-function headerKeys.condensedLog(v,h,k) h.condensedLog = validate(v,k,"boolean") end
-function headerKeys.pport(v,h,k) h.pport = validate(v,k,"number") end
-function headerKeys.wport(v,h,k) h.wport = validate(v,k,"number") end
-function headerKeys.hport(v,h,k) h.hport = validate(v,k,"number") end
-function headerKeys.url(v,h) h.url = v end
-function headerKeys.user(v,h) h.user = v end
-function headerKeys.pwd(v,h) h.pwd = v end
-function headerKeys.pin(v,h) h.pin = v end
-function headerKeys.u(v,h) h.UI[#h.UI+1] = v end
-function headerKeys.debug(v,h)
-  local flags = v:split(",")
-  for _,flagv in ipairs(flags) do 
-    local flag,val = flagv:match("(.*):(.*)")
-    h.debug[flag] = Emu.lib.eval("Header:",val,flag)
+do
+  function headerKeys.type(v,h) h.type = v end 
+  function headerKeys.name(v,h) h.name = v end
+  function headerKeys.proxy(v,h,k) h.proxy = validate(v,k,"boolean") end
+  function headerKeys.proxy_new(v,h,k) h.proxy_new = validate(v,k,"boolean") end
+  function headerKeys.proxy_set_ui(v,h,k) h.proxy_set_ui = validate(v,k,"boolean") end
+  function headerKeys.state(v,h) h.state = v end
+  function headerKeys.time(v,h,k) h.startTime = v end
+  function headerKeys.speed(v,h,k) h.speedTime = validate(v,k,"number") end
+  function headerKeys.offline(v,h,k) h.offline = validate(v,k,"boolean") end
+  function headerKeys.logui(v,h,k) h.logUI = validate(v,k,"boolean") end
+  function headerKeys.webui(v,h,k) h.webUI = validate(v,k,"boolean") end
+  function headerKeys.uid(v,h,k) h.uid = validate(v,k,"string") end
+  function headerKeys.manufacturer(v,h,k) h.manufacturer = validate(v,k,"string") end
+  function headerKeys.model(v,h,k) h.model = validate(v,k,"string") end
+  function headerKeys.role(v,h,k) h.role = validate(v,k,"string") end
+  function headerKeys.description(v,h,k) h.description = validate(v,k,"string") end
+  function headerKeys.latitude(v,h,k) h.latitude = validate(v,k,"number") end
+  function headerKeys.longitude(v,h,k) h.longitude = validate(v,k,"number") end
+  function headerKeys.temp(v,h,k) h.temp = validate(v,k,"string") end
+  function headerKeys.silent(v,h,k) h.nodebug = validate(v,k,"boolean") end
+  function headerKeys.silent(v,h,k) h.silent = validate(v,k,"boolean") end
+  function headerKeys.breakOnLoad(v,h,k) h.breakOnLoad = validate(v,k,"boolean") end
+  function headerKeys.breakOnInit(v,h,k) h.breakOnInit = validate(v,k,"boolean") end
+  function headerKeys.save(v,h,k) h.save = v end
+  function headerKeys.conceal(v,h,k) h.conceal = validate(v,k,"boolean") end
+  function headerKeys.condensedLog(v,h,k) h.condensedLog = validate(v,k,"boolean") end
+  function headerKeys.pport(v,h,k) h.pport = validate(v,k,"number") end
+  function headerKeys.wport(v,h,k) h.wport = validate(v,k,"number") end
+  function headerKeys.hport(v,h,k) h.hport = validate(v,k,"number") end
+  function headerKeys.url(v,h) h.url = v end
+  function headerKeys.user(v,h) h.user = v end
+  function headerKeys.pwd(v,h) h.pwd = v end
+  function headerKeys.pin(v,h) h.pin = v end
+  function headerKeys.u(v,h) h.UI[#h.UI+1] = v end
+  function headerKeys.debug(v,h)
+    local flags = v:split(",")
+    for _,flagv in ipairs(flags) do 
+      local flag,val = flagv:match("(.*):(.*)")
+      h.debug[flag] = Emu.lib.eval("Header:",val,flag)
+    end
   end
-end
-function headerKeys.file(v,h)
-  local files = v:split(",")
-  for _,filev in ipairs(files) do 
-    local path,name = filev:match("(.*):(.*)")
-    h.files[name] = path
+  function headerKeys.file(v,h)
+    local function addFile(val) 
+      local path,m = val:match("(.-),(.-);?%s*$")
+      if not path then path,m = val:match("(.-):(.+);?%s*$") end
+      if path:match("%$") then 
+        path = package.searchpath(path:sub(2),package.path)
+      end
+      assert(path and m,"Bad file directive: "..val)
+      assert(lfs.attributes(path),"File not found: "..path)
+      h.files[m] = path
+    end
+    addFile(v)
   end
-end
-function headerKeys.var(v,h)
-  local name,value = v:match("(.-):(.*)")
-  -- eval(prefix,str,expr,typ,dflt,env)
-  value = Emu.lib.eval("Header:",value,name,nil,nil,{config=config.userConfig})
-  h.vars[#h.vars+1] = { name = name, value = value }
+  function headerKeys.var(v,h)
+    local name,value = v:match("(.-):(.*)")
+    -- eval(prefix,str,expr,typ,dflt,env)
+    value = Emu.lib.eval("Header:",value,name,nil,nil,{config=config.userConfig})
+    h.vars[#h.vars+1] = { name = name, value = value }
+  end
 end
 
 function Emulator:getHeaders(code)
@@ -338,33 +272,23 @@ function Emulator:getHeaders(code)
   return headers
 end
 
-local function stringIndex(keyMap) 
-  local r={}  
-  for k,v in pairs(keyMap) do r[tostring(k)] = {device=v.device, files=v.files, vars=v.vars } end  
-  return r 
-end
-
-local function intIndex(keyMap,r)   
-  local n=0   
-  for k,v in pairs(keyMap) do r[tonumber(k)] = v n=n+1 end  
-  return r,n   
-end
-
 function Emulator:loadState()
   local state = json.decode(self.lib.readFile(".state.db",true) or "{}")
   if state.tag ~= self.stateTag then return end
   local d = 0
-  for k,_ in pairs(self.qas) do self.qas[k] = nil end
-  self.qas,d = intIndex(state.qas or {},self.qas)
+  for k,_ in pairs(self.devices) do self.devices[k] = nil end
+  for _,devArgs in pairs(state.devices) do d=d+1 self.devices[devArgs.id] = Device(devArgs) end
   self:DEBUG("Loaded state, %s device(s)",d)
 end
 
 function Emulator:saveState()
   local f = io.open(".state.db", "w")
   if not f then return end
+  local devices = {}
+  for _,dev in pairs(self.devices) do devices[#devices+1] = dev:toArgs() end
   local state = { 
     tag = self.stateTag,
-    qas = stringIndex(self.qas or {}),
+    devices = devices,
   }
   f:write(json.encode(state))
   f:close()
@@ -396,13 +320,13 @@ function Emulator:createUI(UI) -- Move to ui.lua ?
 end
 
 local ID = 5000
-function Emulator:installDevice(d,headers)
+function Emulator:installDevice(d,headers) -- Move to device?
   headers = headers or {}
   local isProxy = headers.proxy
   if isProxy then                                  -- Existing proxy device?
     local device = self.lib.existingProxy(d,headers)
     if device then 
-      if headers.logUI then Emu.lib.ui.logUI(device.id) end
+      --if headers.logUI then Emu.lib.ui.logUI(device.id) end
       return device 
     end
   end
@@ -418,6 +342,15 @@ function Emulator:installDevice(d,headers)
   device.interfaces = d.initialInterfaces or device.interfaces
   device.properties.uiCallbacks,device.properties.viewLayout,device.properties.uiView 
   = self:createUI(headers.UI or {})
+  device.properties.quickAppVariables = headers.vars or {}
+  local specProps = {
+    uid='quickAppUuid',manufacturer='manufacturer',
+    mode='model',role='deviceRole',
+    description='userDescription'
+  }
+  for _,prop in ipairs(specProps) do
+    if headers[prop] then device.properties[prop] = headers[prop] end
+  end
   device.isProxy = d.isProxy
   device.isChild = d.isChild or false
   if isProxy then
@@ -438,7 +371,6 @@ function Emulator:installDevice(d,headers)
   return device
 end
 
-
 local stdFuns = { 
   'setmetatable', 'getmetatable', 'assert', 'rawget', 'rawset', 'pairs', 
   'print', 'ipairs', 'type', 'tostring', 'tonumber', 'string', 'table', 
@@ -446,17 +378,17 @@ local stdFuns = {
 }
 
 function Emulator:startQA(id)
-  local qa = self.qas[id]
-  if #qa.files == 0 then return end
+  local dev = self.devices[id]
+  if #dev.files == 0 then return end
   local env = { 
     api = self.api, 
     os = { time = self.lib.userTime, date = self.lib.userDate, exit = os.exit, clock = os.clock() } 
   }
-  local dev = qa.device
+  local struct = dev.device
   for _,v in ipairs(stdFuns) do env[v] = _G[v] end
   env._G = env
   env._emu = self
-  qa.env = env
+  dev.env = env
   
   loadfile(self.lib.filePath("hc3emu2.class"), "t", env)()
   loadfile(self.lib.filePath("hc3emu2.fibaro"), "t", env)()
@@ -464,20 +396,21 @@ function Emulator:startQA(id)
   loadfile(self.lib.filePath("hc3emu2.net"), "t", env)()
   loadfile(self.lib.filePath("hc3emu2.quickapp"), "t", env)()
   env.plugin.mainDeviceId = id
-  env.__TAG = dev.name..dev.id
-  env._PI.dbg = qa.headers and qa.headers.debug or {}
+  env.__TAG = struct.name..struct.id
+  env._PI.dbg = dev.headers and dev.headers.debug or {}
   self:process{
     pi = env._PI,
     fun = function()
-      for _,file in ipairs(qa.files) do
+      for _,file in ipairs(dev.files) do
         if file.content == nil then
           file.content = self.lib.readFile(file.fname)
         end
         load(file.content, file.fname or file.name, "t", env)()
       end
-      env.quickApp = env.QuickApp(dev)
+      env.quickApp = env.QuickApp(struct)
     end
   }
+  if dev.headers.save then self.lib.saveQA(struct.id) end
 end
 
 function Emulator:installQuickAppCode(fname,code,headers)
@@ -487,7 +420,7 @@ function Emulator:installQuickAppCode(fname,code,headers)
     type = headers.type or "com.fibaro.binarySwitch",
   }
   device = self:installDevice(device,headers)
-  table.insert(self.qas[device.id].files,{fname = fname, name='main', content = code})
+  table.insert(self.devices[device.id].files,{fname = fname, name='main', content = code})
   self:saveState()
   return device
 end
@@ -504,7 +437,7 @@ function Emulator:installFQA(fqa)
     type = fqa.type,
   }
   device = self:installDevice(device,headers)
-  self.qas[device.id].files = fqa.files or {}
+  self.devices[device.id].files = fqa.files or {}
   self:saveState()
   return device
 end
@@ -513,6 +446,9 @@ function Emulator:debugOutput(tag, msg, typ, time)
   self.lib.debugOutput(tag, msg, typ, time or self.lib.userTime())
 end
 
+function Emulator:post(event) 
+  return self:setTimeout(function() self:handleEvent(event) end, 0) 
+end
 function Emulator:handleEvent(event)
   for _,f in ipairs(self.EVENT[event.type] or {}) do
     f(event,self)
@@ -542,14 +478,12 @@ local function wrapFun(fun,pi,typ)
     return fun(...)
   end
 end
-Emulator.wrapFun = wrapFun
+Emulator.wrapFun = wrapFun -- export
 
-function Emulator:post(event) 
-  return self:setTimeout(function() self:handleEvent(event) end, 0) 
-end
 function Emulator:process(args) 
   return copas.addthread(wrapFun(args.fun,args.pi,args.typ),table.unpack(args.args or {})) 
 end
+
 function Emulator:start() copas() end
 
 startUp()

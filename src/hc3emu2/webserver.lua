@@ -21,7 +21,7 @@ function commands.getDeviceStructure(params,io)
     return true
   end
   
-  local device = Emu.qas[id].device
+  local device = Emu.devices[id].device
   if not device then
     io.write("HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nContent-Length: 30\r\n\r\n{\"error\":\"Device not found\"}")
     return true
@@ -65,6 +65,8 @@ local function parseUrl(url)
   return path,params
 end
 
+local embed = require("hc3emu.embedui")
+
 local function handleGET(url,headers,io)
   local path,params = parseUrl(url)
   if path=="multi" then params.selectedOptions = params.selectedOptions or {} end
@@ -73,12 +75,12 @@ local function handleGET(url,headers,io)
     return commands[path](params,io)
   end
   if params.qa then
-    local device = Emu.qas[params.qa].device
+    local device = Emu.devices[params.qa].device
     if device then
       local typ = ({button='onReleased',switch='onReleased',slider='onChanged',select='onToggled',multi='onToggled'})[path]
       if params.id:sub(1,2)=="__" then -- special embedded UI element
-        if Emu.lib.embedHooks[params.id] then
-          Emu.lib.embedHooks[params.id]({device=device},params)
+        if embed.embedHooks[params.id] then
+          embed.embedHooks[params.id]({device=device},params)
         end
         --qa:embedPatch(params)
         local actionName = params.id:sub(3)
@@ -87,8 +89,8 @@ local function handleGET(url,headers,io)
           actionName=actionName,
           args={params.value or params.selectedOptions or params.state=='on' or nil}
         }
-        if device.isChild then device = Emu.qas[device.parentId].device end
-        local env = Emu.qas[device.id].env
+        if device.isChild then device = Emu.devices[device.parentId].device end
+        local env = Emu.devices[device.id].env
         return env.onAction(device.id,args)
       end
       local args = {
@@ -97,8 +99,8 @@ local function handleGET(url,headers,io)
         eventType=typ,
         values={params.value or params.selectedOptions or params.state=='on'}
       }
-      if device.isChild then device = Emu.qas[device.parentId].device end
-      local env = Emu.qas[device.id].env
+      if device.isChild then device = Emu.devices[device.parentId].device end
+      local env = Emu.devices[device.id].env
       env.onUIEvent(device.id,args)
     end
   end
@@ -235,7 +237,7 @@ end
 
 local function generateUIpage(id,name,fname,UI)
   local format,t0 = string.format,os.clock()
-  local device = Emu.qas[id].device
+  local device = Emu.devices[id].device
   local SIP = Emu.config.pip2
   --SIP="127.0.0.1"
   local pr = prBuff(format(header,SIP,Emu.config.wport,id))
@@ -302,9 +304,9 @@ end
 
 function Emu.EVENT.quickApp_updateView(ev)
   local id = ev.id
-  local qa = Emu.qas[id]
-  if qa.ui.pageName then
-    updateView(qa.device.id,qa.device.name,qa.ui.pageName,qa.ui.UI)
+  local dev = Emu.devices[id]
+  if dev.pageName then
+    updateView(dev.device.id,dev.device.name,dev.pageName,dev.UI)
   end
 end
 

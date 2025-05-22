@@ -11,6 +11,6 @@ if require and not QuickApp then require("hc3emu") end
 
 local deviceId = tonumber(args[1])
 local property = args[2]
-local qa = api.get("/devices/"..deviceId)
-_print(string.format("Device %s property '%s' = %s",deviceId,property,qa.properties[property]))
+local dev = api.get("/devices/"..deviceId)
+_print(string.format("Device %s property '%s' = %s",deviceId,property,dev.properties[property]))
 os.exit()

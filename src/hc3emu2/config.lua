@@ -147,6 +147,15 @@ local function setupRsrscsDir(flag)
   local a,b = lfs.mkdir(EMU_DIR)
   local a,b = lfs.mkdir(EMUSUB_DIR)
   assert((b==nil or b=="File exists"),"Failed to create directory "..EMU_DIR)
+
+  if b == "File exists" then
+    for file in lfs.dir(EMU_DIR) do
+      if file:sub(1,1) ~= "_" and file:sub(-5) == ".html" then
+        os.remove(EMU_DIR..fileSeparator..file)
+      end
+    end
+  end
+
   if flag ~= "install" and b == "File exists" then return end
 
   for source,dest in pairs(files) do
