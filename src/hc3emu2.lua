@@ -38,10 +38,10 @@ local function startUp()
   local src = Emu.lib.readFile(mainFile)
   local headers,eval = Emu:getHeaders(src),Emu.lib.eval
   Emu.offline = headers.offline
-  Emu.config.hc3.url = headers.url or os.getenv("HC3URL")
-  Emu.config.hc3.user = headers.user or os.getenv("HC3USER")
-  Emu.config.hc3.pwd = headers.pwd or os.getenv("HC3PASSWORD")
-  Emu.config.hc3.pin = headers.pin or os.getenv("HC3PIN")
+  Emu.config.hc3.url = headers.url or os.getenv("HC3URL") or config.userConfig.url
+  Emu.config.hc3.user = headers.user or os.getenv("HC3USER") or config.userConfig.user
+  Emu.config.hc3.pwd = headers.pwd or os.getenv("HC3PASSWORD") or config.userConfig.password
+  Emu.config.hc3.pin = headers.pin or os.getenv("HC3PIN") or config.userConfig.pin
   Emu.config.pport = headers.pport or 8265  -- debugger port
   Emu.config.wport = headers.wport or 8266  -- debugger port
   Emu.config.hport = headers.hport or 8267  -- debugger port
@@ -55,6 +55,8 @@ local function startUp()
   -- copy over some debugflags to be overall emulator debug flags
   for _,k in ipairs({"refresh","rawrefresh"}) do Emu.config.dbg[k] = headers.debug[k] end
   Emu.config = table.merge(config.userConfig,Emu.config) -- merge in user config  from .hc3emu.lua
+  
+  if Emu.config.hc3.url:sub(-1) ~= "/" then Emu.config.hc3.url = Emu.config.hc3.url.."/" end
   
   Emu.api = require("hc3emu2.api")(Emu)
   if Emu.offline then require("hc3emu2.offline")(Emu) 
@@ -84,6 +86,9 @@ local function startUp()
   mobdebug = Emu.mobdebug
   
   config.setupRsrscsDir()
+  if headers.installation then 
+    config.installation(headers.installation,Emu.config.hc3) 
+  end
   Emu.templates = json.decode(Emu.lib.readRsrcsFile("devices.json"))
   Emu:process{
     pi = Emu.PI,
@@ -220,7 +225,7 @@ do
   function headerKeys.latitude(v,h,k) h.latitude = validate(v,k,"number") end
   function headerKeys.longitude(v,h,k) h.longitude = validate(v,k,"number") end
   function headerKeys.temp(v,h,k) h.temp = validate(v,k,"string") end
-  function headerKeys.silent(v,h,k) h.nodebug = validate(v,k,"boolean") end
+  function headerKeys.nodebug(v,h,k) h.nodebug = validate(v,k,"boolean") end
   function headerKeys.silent(v,h,k) h.silent = validate(v,k,"boolean") end
   function headerKeys.breakOnLoad(v,h,k) h.breakOnLoad = validate(v,k,"boolean") end
   function headerKeys.breakOnInit(v,h,k) h.breakOnInit = validate(v,k,"boolean") end
@@ -262,6 +267,10 @@ do
     -- eval(prefix,str,expr,typ,dflt,env)
     value = Emu.lib.eval("Header:",value,name,nil,nil,{config=config.userConfig})
     h.vars[#h.vars+1] = { name = name, value = value }
+  end
+  function headerKeys.install(v,h)
+    local user,pass,url = v:match("([^,]+),([^,]+),(.+)")
+    h.installation = {user=user,pass=pass,url=url}
   end
 end
 

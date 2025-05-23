@@ -1,4 +1,4 @@
-_DEVELOP=true
+--_DEVELOP=true
 --%%name=MQTT
 --%%type=com.fibaro.binarySwitch
 
