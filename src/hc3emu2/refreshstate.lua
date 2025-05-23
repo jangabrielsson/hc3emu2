@@ -8,7 +8,6 @@ local function refreshStatePoller(queue)
   local suffix = "&lang=en&rand=7784634785"
   while pollerRunning do
     local data, status = queue.emu:HC3Call("GET", (last and path..("?last="..last) or path) .. suffix, nil, true)
-    --print(status)
     if status ~= 200 then
       queue.emu:ERRORF("Failed to get refresh state: %s",status)
       return
