@@ -327,9 +327,8 @@ function mqtt.Client.connect(uri, options)
   -- @param cl mqtt-client to add to the Copas scheduler
   -- @return `true` on success or `false` and error message on failure
   local function add_mqtt_client(cl)
-    local runner = hc3emu:getRunner()
     if client_registry[cl] then
-      hc3emu:WARNINGF("[LuaMQTT] client '%s' was already added to Copas", cl.opts.id)
+      fibaro.warning(__TAG,"[LuaMQTT] client '%s' was already added to Copas", cl.opts.id)
       return false, "MQTT client was already added to Copas"
     end
     client_registry[cl] = true
@@ -341,7 +340,6 @@ function mqtt.Client.connect(uri, options)
       cl.handle_received_packet = function(mqttdevice, packet)
         count = count + 1
         local co = copas.addnamedthread(handle_received_packet, cl.opts.id..":receive_"..count, mqttdevice, packet)
-        hc3emu:setRunner(runner, co)
         return true
       end
     end
@@ -356,7 +354,6 @@ function mqtt.Client.connect(uri, options)
         end
       end
     end, cl.opts.id .. ":keep_alive")
-    hc3emu:setRunner(runner,timer)
     
     -- add client to connect and listen
     local co = copas.addnamedthread(function()
@@ -373,8 +370,6 @@ function mqtt.Client.connect(uri, options)
         end
       end
     end, cl.opts.id .. ":listener")
-    hc3emu:setRunner(runner,co)
-    
     return true
   end
   

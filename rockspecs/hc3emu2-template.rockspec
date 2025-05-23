@@ -46,6 +46,7 @@ build = {
       ["hc3emu2.utilities"] = "src/hc3emu2/utilities.lua",
       ["hc3emu2.log"] = "src/hc3emu2/log.lua",
       ["hc3emu2.proxy"] = "src/hc3emu2/proxy.lua",
+      ["hc3emu2.offline"] = "src/hc3emu2/offline.lua",
       ["hc3emu2.tools"] = "src/hc3emu2/tools.lua",
       ["hc3emu2.embedui"] = "src/hc3emu2/embedui.lua",
       --["hc3emu2.scene"] = "src/hc3emu2/scene.lua",
@@ -55,6 +56,7 @@ build = {
       ["hc3emu2.helper"] = "src/hc3emu2/helper.lua",
       ["hc3emu2.webserver"] = "src/hc3emu2/webserver.lua",
       ["hc3emu2.simdevices"] = "src/hc3emu2/simdevices.lua",
+      ["hc3emu2.unittest"] = "src/hc3emu2/unittest.lua",
 
       ["hc3emu2.lib.sourcetrigger"] = "src/hc3emu2/lib/sourcetrigger.lua",
       ["hc3emu2.lib.qwikchild"] = "src/hc3emu2/lib/qwikchild.lua",
