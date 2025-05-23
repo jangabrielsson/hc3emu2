@@ -140,7 +140,7 @@ local function setupRsrscsDir(flag)
     ['script.js']={dest=EMUSUB_DIR.."/script.js"},
     ['quickapps.html']={dest=EMUSUB_DIR.."/quickapps.html"},
     ['devices.html']={dest=EMUSUB_DIR.."/devices.html",trans=transVars},
-    ['editSettings.html']={dest=EMUSUB_DIR.."/editSettings.html"},
+    --['editSettings.html']={dest=EMUSUB_DIR.."/editSettings.html"},
     ['emu.html']={dest=EMU_DIR.."/_emu.html"}
   }
   

@@ -61,12 +61,14 @@ luarocks install hc3emu
 The emulator can be configured through:
 1. Settings in the QA file, using --%%directive=value
 2. `hc3emu.lua` in the project directory
-3. `.hc3emu.lua` in the user's home directory. Put credentials here so they don't polute project directory. 
+3. `.hc3emu.lua` in the user's home directory. Put credentials here so they don't polute project directory.
+4. Credentials can also be specified with environment variables or an .env file
 Settings in QA files overrides project settings that overrides home directory settings.
 
 ### QuickApp Configuration
 
 QuickApps are configured using special directives in comments starting with `--%%`:
+User credentials, lije HC3 user,url, and password can not be set here, but must be set in a configuration file or environment variabes/file.
 
 ```lua
 
@@ -75,10 +77,33 @@ QuickApps are configured using special directives in comments starting with `--%
 --%%proxy=MyProxy                 # HC3 proxy name
 --%%dark=true                     # Enable dark mode for logs
 --%%var=foo:config.secret         # Set QuickApp variable (from config file)
---%%debug=sdk:false,info:true     # Configure debug flags
+--%%debug=warnings:true          # Configure a debug flag
 --%%file=lib.lua:lib              # Include external file
---%%save=MyQA.fqa                 # Save as FQA file
+--%%save=MyQA.fqa                 # Save as FQA file when running
 ```
+
+### Configuration files ~./hc3emu.lua and ./.hc3emu.lua
+The file should be a lua file that returns a table.
+```lua
+return {
+  user = "admin",
+  password = "Admin",
+  url = "http://192.168.1.157/",
+  secret = "My secret value"
+}
+```
+The secret field can then be accessed in the QA, like above...
+
+### Environment variables
+There are a credentials that can be set with environment variables
+HC3USER = \<username>
+HC3PASSWORD = \<password>
+HC3URL = http://\<ip>
+HC3PIN = \<pin>
+
+These can also be specifed in an .env file in the working directory and will be picked up that way. This is because for some platforms it can be difficult to set environemnt variables to be seen by applications MacOS)
+
+## Setup
 
 ## Command Line Tools
 

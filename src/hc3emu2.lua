@@ -48,6 +48,7 @@ local function startUp()
   Emu.config.dport = headers.dport or 8172  -- debugger port
   Emu.config.hip = headers.hip or "127.0.0.1"  -- help ip
   Emu.stateTag = headers.state
+  Emu.nodir = headers.nodir
   local globalHeaders = {
     "latitude","longitude","startTime","speedTime","condensedLog",
   }
@@ -85,7 +86,7 @@ local function startUp()
   end
   mobdebug = Emu.mobdebug
   
-  config.setupRsrscsDir()
+  --config.setupRsrscsDir()
   if headers.installation then 
     config.installation(headers.installation,Emu.config.hc3) 
   end
@@ -230,6 +231,7 @@ do
   function headerKeys.breakOnLoad(v,h,k) h.breakOnLoad = validate(v,k,"boolean") end
   function headerKeys.breakOnInit(v,h,k) h.breakOnInit = validate(v,k,"boolean") end
   function headerKeys.save(v,h,k) h.save = v end
+  function headerKeys.nodir(v,h,k) h.nodir = validate(v,k,"boolean") end
   function headerKeys.conceal(v,h,k) h.conceal = validate(v,k,"boolean") end
   function headerKeys.condensedLog(v,h,k) h.condensedLog = validate(v,k,"boolean") end
   function headerKeys.pport(v,h,k) h.pport = validate(v,k,"number") end 
