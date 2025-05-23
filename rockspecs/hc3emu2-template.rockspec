@@ -62,6 +62,7 @@ build = {
       ["hc3emu2.lib.qwikchild"] = "src/hc3emu2/lib/qwikchild.lua",
       ["hc3emu2.lib.eventlib"] = "src/hc3emu2/lib/eventlib.lua",
       ["hc3emu2.lib.sha2"] = "src/hc3emu2/lib/sha2.lua",
+      ["hc3emu2.lib.markdown"] = "src/hc3emu2/lib/markdown.lua",
 
       ["hc3emu2.plugin.image"] = "src/hc3emu2/plugin/image.lua",
       ["hc3emu2.plugin.terminal"] = "src/hc3emu2/plugin/terminal.lua"
