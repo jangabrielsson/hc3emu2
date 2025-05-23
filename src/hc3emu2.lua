@@ -1,4 +1,4 @@
-local VERSION = "1.0.2"
+local VERSION = "v1.1.2"
 
 mainFile = arg[1]
 if arg[2] == "develop" or _DEVELOP then -- Running in developer mode
