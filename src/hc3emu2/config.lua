@@ -13,7 +13,7 @@ if cmdLine:match("actboy168") then debuggerType="actboy168" end
 if cmdLine:match("mobdebug") then debuggerType="mobdebug" end
 local cfgFileName = ".hc3emu.lua"   -- Config file in current directory
 local homeCfgFileName = ".hc3emu.lua"  -- Config file in home directory
-  
+
 local win = (os.getenv('WINDIR') or (os.getenv('OS') or ''):match('[Ww]indows')) and not (os.getenv('OSTYPE') or ''):match('cygwin') -- exclude cygwin
 local fileSeparator = win and '\\' or '/'
 local tempDir = os.getenv("TMPDIR") or os.getenv("TEMP") or os.getenv("TMP") or "/tmp/" -- temp directory
@@ -71,7 +71,7 @@ local function findRsrscsDir()
   if f then f:close() return p:sub(1,len) end
   p = package.searchpath("hc3emu2",package.path)
   assert(p,"Failed to find "..path)
-
+  
   -- Try to locate scoop installed rock
   -- C:\Users\jgab\scoop\apps\luarocks\3.11.1\rocks\lib\luarocks\rocks-5.4\hc3emu\1.0.70-1\rsrcs
   local dir = p:match(".:\\Users\\%w+\\scoop\\apps\\luarocks\\")
@@ -80,7 +80,7 @@ local function findRsrscsDir()
     local p = findFile(dir,file)
     if p then return p:sub(1,len) end
   end
-
+  
   local p = os.getenv("EMU_RSRCS")
   if p then 
     local f = findFile(p,file)
@@ -134,7 +134,7 @@ local function setupRsrscsDir(flag)
     patchVar("EMUSUB_DIR",EMUSUB_DIR)
     return page
   end
-
+  
   local files = {
     ['style.css']={dest=EMUSUB_DIR.."/style.css"},
     ['script.js']={dest=EMUSUB_DIR.."/script.js"},
@@ -143,11 +143,11 @@ local function setupRsrscsDir(flag)
     ['editSettings.html']={dest=EMUSUB_DIR.."/editSettings.html"},
     ['emu.html']={dest=EMU_DIR.."/_emu.html"}
   }
-
+  
   local a,b = lfs.mkdir(EMU_DIR)
   local a,b = lfs.mkdir(EMUSUB_DIR)
   assert((b==nil or b=="File exists"),"Failed to create directory "..EMU_DIR)
-
+  
   if b == "File exists" then
     for file in lfs.dir(EMU_DIR) do
       if file:sub(1,1) ~= "_" and file:sub(-5) == ".html" then
@@ -155,9 +155,9 @@ local function setupRsrscsDir(flag)
       end
     end
   end
-
+  
   if flag ~= "install" and b == "File exists" then return end
-
+  
   for source,dest in pairs(files) do
     local page = loadResource(source)
     if dest.trans then page = dest.trans(page) end
@@ -189,17 +189,71 @@ assert(stat and type(projCfg)=='table',"Config file error: "..path.." "..tostrin
 
 local userConfig = merge(homeCfg,projCfg)
 
+local function formatedLua(tab)
+  local function format(tab,indent)
+    indent = indent or 2
+    local buff = {"{"}
+    for k,v in pairs(tab) do
+      if type(v) == "table" then
+        buff[#buff+1] = fmt("%s%s = %s",string.rep(" ",indent),k,format(v,indent+2))
+        buff[#buff+1]= string.rep(" ",indent).."},"
+      elseif type(v) == "string" then
+        buff[#buff+1] = fmt("%s%s = \"%s\",",string.rep(" ",indent),k,v)
+      else
+        buff[#buff+1] = fmt("%s%s = %s,",string.rep(" ",indent),k,tostring(v))
+      end
+    end
+    return table.concat(buff,"\n")
+  end
+  return format(tab,2).."\n}"
+end
+
+local function installation(creds,hc3)
+  setupRsrscsDir(true)
+  local homeFile = homeDir..fileSeparator..homeCfgFileName
+  local stat,cfg,path = loadLuaFile(homeFile)
+  assert(stat and type(homeCfg)=='table',"Failed to load "..path)
+  cfg.user = creds.user or cfg.user
+  hc3.user = cfg.user or hc3.user
+  cfg.password = creds.pass or cfg.password
+  hc3.pwd = cfg.password or hc3.pwd
+  cfg.url = creds.url or cfg.url
+  hc3.url = cfg.url or hc3.url
+  cfg.pin = creds.url or cfg.pin
+  hc3.pin = cfg.pin or hc3.pin
+  writeFile(homeFile, "return "..formatedLua(cfg))
+  Emu:DEBUG("Set user,password,url in %s",homeFile)
+end
+
+do
+  local f = io.open(".env")
+  if f then
+    local txt = f:read("*a")
+    f:close()
+    txt = txt.."\n"
+    local vars = {}
+    txt:gsub("([%w_]+)%s*=%s*(.-)%s*\n",function(name,value)
+      vars[name] = value
+    end)
+    local getenv = os.getenv
+    function os.getenv(name)
+      if vars[name] ~= nil then return vars[name] else return getenv(name) end
+    end
+  end
+end
+
 return {
   EMU_DIR = EMU_DIR,
   EMUSUB_DIR = EMUSUB_DIR,
   userConfig = userConfig,
   readFile = readFile,
   writeFile = writeFile,
+  installation = installation,
   rsrcsDir = rsrcsDir,
   rsrcsPath = rsrcsPath,
   filePath = function(mname) return package.searchpath(mname,package.path) end,
   readRsrcsFile = function(name) return readFile(rsrcsPath(name)) end,
-
+  
   setupRsrscsDir = setupRsrscsDir,
   ipAddress = myDevicesIpAddress,
   debuggerType = debuggerType,
