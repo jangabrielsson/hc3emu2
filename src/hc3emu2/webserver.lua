@@ -236,6 +236,7 @@ local function prBuff(init)
 end
 
 local function generateUIpage(id,name,fname,UI)
+  if Emu.nodir then return end
   local format,t0 = string.format,os.clock()
   local device = Emu.devices[id].device
   local SIP = Emu.config.pip2
@@ -291,6 +292,7 @@ end
 
 local ref = nil
 local function updateView(id,name,fname,UI)
+  if Emu.nodir then return end
   if ref then return end
   ref = Emu:process{
     pi = Emu.PI,
@@ -311,6 +313,7 @@ function Emu.EVENT.quickApp_updateView(ev)
 end
 
 local function updateEmuPage()
+  if Emu.nodir then return end
   local p = {} 
   for _,e in pairs(pages) do p[#p+1]= e end
   table.sort(p,function(a,b) return a.name < b.name end)
@@ -333,7 +336,7 @@ end
 
 local started = false
 local function generateEmuPage()
-  if started then return else started = true end
+  if started or Emu.nodir then return else started = true end
   Emu:process{
     pi=Emu.PI,
     fun=function()
