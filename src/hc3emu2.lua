@@ -30,26 +30,28 @@ local function startUp()
   mergeLib(Emu.lib,require("hc3emu2.log"))
   mergeLib(Emu.lib,require("hc3emu2.utilities"))
   mergeLib(Emu.lib,require("hc3emu2.tools"))
+  mergeLib(Emu.lib,require("hc3emu2.unittest"))
   mergeLib(Emu.lib,require("hc3emu2.device"))
   Emu.lib.ui = require("hc3emu2.ui")
   
   mainFile = arg[1]
   local src = Emu.lib.readFile(mainFile)
   local headers,eval = Emu:getHeaders(src),Emu.lib.eval
-  Emu.offline = eval("Header:",headers.offline,'boolean','offline',false)
-  Emu.config.dport = eval("Header:",headers.pport,'number','dport',8172) -- debugger port
-  Emu.config.pport = eval("Header:",headers.pport,'number','pport',8265) -- proxy port
-  Emu.config.wport = eval("Header:",headers.wport,'number','wport',8266) -- web port
-  Emu.config.hport = eval("Header:",headers.hport,'number','hport',8267) -- helper port
-  Emu.config.hip = eval("Header:",headers.hip,'string','hport','127.0.0.1')
+  Emu.offline = headers.offline
   Emu.config.hc3.url = headers.url or os.getenv("HC3URL")
   Emu.config.hc3.user = headers.user or os.getenv("HC3USER")
   Emu.config.hc3.pwd = headers.pwd or os.getenv("HC3PASSWORD")
   Emu.config.hc3.pin = headers.pin or os.getenv("HC3PIN")
+  Emu.config.pport = headers.pport or 8265  -- debugger port
+  Emu.config.wport = headers.wport or 8266  -- debugger port
+  Emu.config.hport = headers.hport or 8267  -- debugger port
+  Emu.config.dport = headers.dport or 8172  -- debugger port
+  Emu.config.hip = headers.hip or "127.0.0.1"  -- help ip
   Emu.stateTag = headers.state
-  Emu.config.startTime = headers.startTime
-  Emu.config.speedTime = headers.speedTime
-  Emu.config.condensedLog = headers.condensedLog
+  local globalHeaders = {
+    "latitude","longitude","startTime","speedTime","condensedLog",
+  }
+    for _,v in ipairs(globalHeaders) do Emu.config[v] = headers[v] end
   -- copy over some debugflags to be overall emulator debug flags
   for _,k in ipairs({"refresh","rawrefresh"}) do Emu.config.dbg[k] = headers.debug[k] end
   Emu.config = table.merge(config.userConfig,Emu.config) -- merge in user config  from .hc3emu.lua
@@ -101,7 +103,7 @@ end
 local extraLua =  {
   os = os, require = require, dofile = dofile, loadfile = loadfile, 
   type = type, io = io, print = _print, package = package, coroutine = coroutine,
-  rawset = rawset, rawget = rawget
+  rawset = rawset, rawget = rawget, debug = debug
 }
 
 require("hc3emu2.class")
@@ -225,9 +227,11 @@ do
   function headerKeys.save(v,h,k) h.save = v end
   function headerKeys.conceal(v,h,k) h.conceal = validate(v,k,"boolean") end
   function headerKeys.condensedLog(v,h,k) h.condensedLog = validate(v,k,"boolean") end
-  function headerKeys.pport(v,h,k) h.pport = validate(v,k,"number") end
-  function headerKeys.wport(v,h,k) h.wport = validate(v,k,"number") end
+  function headerKeys.pport(v,h,k) h.pport = validate(v,k,"number") end 
+  function headerKeys.wport(v,h,k) h.wport = validate(v,k,"number") end 
   function headerKeys.hport(v,h,k) h.hport = validate(v,k,"number") end
+  function headerKeys.dport(v,h,k) h.hport = validate(v,k,"number") end 
+  function headerKeys.hip(v,h,k) h.hip = validate(v,k,nil) end 
   function headerKeys.url(v,h) h.url = v end
   function headerKeys.user(v,h) h.user = v end
   function headerKeys.pwd(v,h) h.pwd = v end
@@ -368,6 +372,7 @@ function Emulator:installDevice(d,headers) -- Move to device?
   }
   self:saveState()
   self:post({type='device_created',id=device.id})
+  self.refreshState:addEvent({type='DeviceCreatedEvent',data={id=device.id}})
   return device
 end
 
@@ -405,7 +410,9 @@ function Emulator:startQA(id)
         if file.content == nil then
           file.content = self.lib.readFile(file.fname)
         end
-        load(file.content, file.fname or file.name, "t", env)()
+        local code,res = load(file.content, file.fname or file.name, "t", env)
+        assert(code, "Error loading file: "..file.fname.." "..tostring(res))
+        code()
       end
       env.quickApp = env.QuickApp(struct)
     end

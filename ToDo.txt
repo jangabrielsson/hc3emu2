@@ -5,10 +5,10 @@
 -make luarock - Done
 
 - Directives
-  var - quickAppVariables
-  file - test, and modules
-  uid, manufacturer,model,role,description
-  save - fqa
+  var - quickAppVariables - Done
+  file - test, and modules - Done
+  uid, manufacturer,model,role,description - Done
+  save - fqa - Done
   breakOnLoad,breakOnInit
   nodebug
   silent
