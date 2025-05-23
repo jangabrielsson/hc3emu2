@@ -3,7 +3,8 @@ _DEVELOP=true
 --%%name=Offline
 --%%type=com.fibaro.binarySwitch
 --%%offline=true
---%%install=admin,Admin1477!,http://192.168.1.57
+--%%nodir=true
+--%% install=admin,Admin1477!,http://192.168.1.57
 
 local runTest
 
