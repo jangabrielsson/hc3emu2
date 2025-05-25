@@ -16,7 +16,7 @@ function Device:__init(args)
   self.watches = args.watches or {}
   self.headers = args.headers or {}
   self.pageName = args.pageName
-
+  
   local embedElements = embed.embedUIs[self.device.type] -- Add embed/stock UI elements for device type
   for i,r in ipairs(embedElements or {}) do table.insert(self.UI,i,r) end
   if self.headers.webUI then
@@ -105,17 +105,24 @@ end
 local stdFuns = { 
   'setmetatable', 'getmetatable', 'assert', 'rawget', 'rawset', 'pairs', 
   'print', 'ipairs', 'type', 'tostring', 'tonumber', 'string', 'table', 
-  'math', 'pcall', 'xpcall', "error", "json", "select", "collect_garbage"
+  'math', 'pcall', 'xpcall', "error", "json", "select", "collect_garbage",
+  "next"
 }
+
+local function hc3emuExports(emu) 
+  return { 
+  lua = emu.lua, loadQA = emu.loadQA, loadQAString = emu.loadQAString, uploadFQA = emu.uploadFQA, 
+  getFQA = emu.getFQA, getDevice = function(id) return Emu.devices[id] end,
+  getDevices = function() return Emu.devices end,
+  speedFor = emu.lib.speedFor, offline = emu.offline, refreshState = emu.refreshState,
+  hasState = emu.stateTage ~= nil,
+}
+end
 
 function Device:startQA()
   Emu:DEBUGF('system',"Starting QuickApp %s %s",self.device.name,self.id)
   local id = self.id
-
-  if self.headers.webUI then -- setup for generating web page
-    Emu.web.generateUIpage(id,self.device.name,self.pageName,self.UI)
-  end
-
+  
   if #self.files == 0 then return end
   local env = { 
     api = Emu.api, 
@@ -129,40 +136,45 @@ function Device:startQA()
   
   loadfile(Emu.lib.filePath("hc3emu2.class"), "t", env)()
   loadfile(Emu.lib.filePath("hc3emu2.fibaro"), "t", env)()
-  env.fibaro.hc3emu = Emu
+  env.fibaro.hc3emu = hc3emuExports(Emu)
+  env.fibaro._hc3emu = Emu
   loadfile(Emu.lib.filePath("hc3emu2.net"), "t", env)()
   loadfile(Emu.lib.filePath("hc3emu2.quickapp"), "t", env)()
   env.plugin.mainDeviceId = id
   env.__TAG = struct.name..struct.id
   env._PI.dbg = self.headers and self.headers.debug or {}
   local main = nil
-  for _,file in ipairs(self.files) do
-    if file.content == nil then
-      file.content = Emu.lib.readFile(file.fname)
+  local finished = Emu:createLock(math.huge,true)
+  finished:get()
+  local function start()
+    for _,file in ipairs(self.files) do
+      if file.content == nil then
+        file.content = Emu.lib.readFile(file.fname)
+      end
+      if file.name == "main" then main = file
+      else
+        Emu:DEBUGF('system',"Loading file %s for device %s",file.fname,self.id)
+        local code,res = load(file.content, file.fname or file.name, "t", env)
+        assert(code, "Error loading file: "..file.fname.." "..tostring(res))
+        code()
+      end
     end
-    if file.name == "main" then main = file
-    else
-      Emu:DEBUGF('system',"Loading file %s for device %s",file.fname,self.id)
-      local code,res = load(file.content, file.fname or file.name, "t", env)
-      assert(code, "Error loading file: "..file.fname.." "..tostring(res))
-      code()
+    assert(main, "No main file found")
+    if self.headers.breakOnLoad then
+      local firstLine,onInitLine = Emu.lib.findFirstLine(main.content)
+      if firstLine then Emu.mobdebug.setbreakpoint(main.fname,firstLine) end
     end
-  end
-  assert(main, "No main file found")
-  if self.headers.breakOnLoad then
-    local firstLine,onInitLine = Emu.lib.findFirstLine(main.content)
-    if firstLine then Emu.mobdebug.setbreakpoint(main.fname,firstLine) end
-  end
-  Emu:DEBUGF('system',"Loading file %s for device %s",main.fname,self.id)
-  local function run()
+    Emu:DEBUGF('system',"Loading file %s for device %s",main.fname,self.id)
     local code,res = load(main.content, main.fname or main.name, "t", env)
     assert(code, "Error loading main file: "..main.fname.." "..tostring(res)) 
     code()
     Emu:DEBUGF('system',"QuickApp process starting %s",self.id)
     env.quickApp = env.QuickApp(struct)
     Emu:post({type='quickapp_started',id=id})
+    finished:release()
   end
-  env._PI.gate(run)
+  env.setTimeout(start,0)
+  finished:get()
   if self.headers.save then Emu.lib.saveQA(struct.id) end
 end
 

@@ -84,63 +84,22 @@ local store = {
   ['settings/location'] = Store{
     name="settings/location",idx=nil,
   },
+  ['settings/info'] = Store{
+    name="settings/info",idx=nil,
+  },
+  home = Store{
+    name="home",idx=nil,
+  },
   weather = Store{
     name="weather",idx=nil,
   }
 }
 
-local function defaultResources()
-  Emu.devices[1] = Device{
-    resource = true,
-    id = 1,
-    device = { 
-      id = 1, name = "zwave", roomID = 219,
-      type = "com.fibaro.zwavePrimaryController",
-      properties = {
-        sunriseHour = "03:57",
-        sunsetHour = "21:32",
-      }
-    }
-  }
-  store['settings/location']['_'] = {
-    "INIT",{
-      houseNumber = 0,
-      timezone = "Europe/Stockholm",
-      timezoneOffset = 7200,
-      ntp = true,
-      ntpServer = "pool.ntp.org",
-      date = { day = 24, month = 5, year = 2025},
-      time = { hour = 6, minute = 8 },
-      latitude = Emu.config.latitude or 59.3169518987572,
-      longitude = Emu.config.longitude or 18.06379775049387,
-      city = "Gatan 6, Stockholm, Sweden",
-      temperatureUnit = "C",
-      windUnit = "km/h",
-      timeFormat = 24,
-      dateFormat = "dd.mm.yy",
-      decimalMark = "."
-    }
-  }
-  
-  store.weather.data = {
-    "INIT",{
-      Wind = 5.962133916683182,
-      WindUnit = "km/h",
-      Temperature = 1.4658129805029452,
-      WeatherCondition = "WeatherCondition",
-      Humidity = 6.027456183070403,
-      TemperatureUnit = "TemperatureUnit",
-      ConditionCode = 0,
-      WeatherConditionConverted = "WeatherConditionConverted"
-    }
-  }
-end
-
 local function setup(Emu)
   local api = Emu.api
   local HTTP = API.HTTP
   
-  defaultResources()
+  require("hc3emu2.offline_data")(store,Emu)
   
   local function add(path,method)
     local function fun(...)
@@ -230,7 +189,34 @@ local function setup(Emu)
   add("GET/settings/location", function(ctx)
     return {strip(store['settings/location'],true),HTTP.OK}
   end)
+  add("PUT/settings/location", function(ctx)
+    for k,v in pairs(ctx.data) do
+      store['settings/location'][k] = {'PUT',v}
+    end
+    return {ctx.data,HTTP.OK}
+  end)
   
+  add("GET/settings/info", function(ctx)
+    return {strip(store['settings/info'],true),HTTP.OK}
+  end)
+  add("PUT/settings/location", function(ctx)
+    for k,v in pairs(ctx.data) do
+      store['settings/location'][k] = {'PUT',v}
+    end
+    return {ctx.data,HTTP.OK}
+  end)
+
+    
+  add("GET/home", function(ctx)
+    return {strip(store['home'],true),HTTP.OK}
+  end)
+  add("PUT/home", function(ctx)
+    for k,v in pairs(ctx.data) do
+      store['home'][k] = {'PUT',v}
+    end
+    return {ctx.data,HTTP.OK}
+  end)
+
   add("GET/weather", function(ctx)
     return {strip(store.weather,true),HTTP.OK}
   end)

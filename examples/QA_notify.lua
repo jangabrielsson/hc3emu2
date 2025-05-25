@@ -1,10 +1,10 @@
 --%%name=Notifier
 --%%type=com.fibaro.binarySwitch
---%%proxy=NotifyProxy
+--%%proxy=true
 
 do
   local refs = {}
-  function QuickApp.INTERACTIVE_OK_BUTTON(_,ref)
+  function QuickApp.INTERACTIVE_OK_BUTTON(_,ref) -- Must be proxy for action to find its way back to the emulator
     ref,refs[ref]=refs[ref],nil
     if ref then ref(true) end
   end
@@ -41,4 +41,8 @@ function QuickApp:onInit()
   self:pushYesNo(923,"Test","Do you want to turn on the light?",function(val)
     if val then fibaro.call(self.id,"turnOn") end
   end)
+end
+
+function QuickApp:Test(...)
+  self:debug("Test", ...)
 end

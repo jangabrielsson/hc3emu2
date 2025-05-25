@@ -130,6 +130,7 @@ function Master:speed(flag)
   copas.wakeup(self.co)
 end
 function Master:speedFor(hours,cb)
+  --print("speedFor",cb)
   self._speed = true
   self:setTimeout(function() 
     if cb then pcall(cb) end self:speed(false)

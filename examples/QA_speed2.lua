@@ -4,7 +4,7 @@
 --%%type=com.fibaro.multilevelSwitch
 --%%debug=timer1:true,db:true
 --%% offline=true
---%%speed=24*7 -- One week
+--%% speed=24*7 -- One week
 
 function QuickApp:interval()
   setInterval(function() -- Ping every day
@@ -16,7 +16,7 @@ function QuickApp:onInit()
   self:debug("onInit",self.name,self.id)
   setTimeout(function() 
     print("PING")
-    fibaro.hc3emu.lib.speedFor(7*24,function(speed) 
+    fibaro.hc3emu.lib.speedFor(7*24,function(speed) -- Don't work with header speed!
       if speed then return end
       setTimeout(function() print("Ping after ~3s") end,3000)
     end)

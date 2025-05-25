@@ -122,7 +122,7 @@ function API:call(method, path, data, silent)
   elseif not self.emu.offline then
     res,code,headers = self.emu:HC3Call(method, path, data)
   end
-  if code > self.HTTP.NO_CONTENT and not silent then logError(method,path,code) end
+  if not tonumber(code) or code > self.HTTP.NO_CONTENT and not silent then logError(method,path,code) end
   return res,code,headers
 end
 
@@ -285,6 +285,11 @@ function API:setupRoutes()
     end
     data.isChild = true
     headers = { webUI = dev.headers.webUI }
+    if data.initialProperties and data.initialProperties.uiView then
+      local uiView = data.initialProperties.uiView
+      local callbacks = data.initialProperties.uiCallbacks or {}
+      headers.UI = Emu.lib.ui.uiView2UI(uiView,callbacks)
+    end
     return emu:installDevice(data,{},headers),HTTP.OK
   end)
 
