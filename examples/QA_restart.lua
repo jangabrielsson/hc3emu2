@@ -1,7 +1,6 @@
-if require and not QuickApp then require('hc3emu') end
-
 --%%name=Restart
 --%%type=com.fibaro.binarySwitch
+--%%debug=system:true
 
 fibaro.hc3emu.count = fibaro.hc3emu.count or 0
 

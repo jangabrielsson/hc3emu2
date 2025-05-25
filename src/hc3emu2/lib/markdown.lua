@@ -4,7 +4,7 @@
 -- Utility functions
 ----------------------------------------------------------------------
 
-local unpack = table.unpack or unpack
+local unpack = table.unpack
 
 -- Returns the result of mapping the values in table t through the function f
 local function map(t, f)

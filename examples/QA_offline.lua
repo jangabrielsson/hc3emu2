@@ -1,5 +1,3 @@
-
-_DEVELOP=true
 --%%name=Offline
 --%%type=com.fibaro.binarySwitch
 --%%offline=true

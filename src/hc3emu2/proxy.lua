@@ -140,7 +140,7 @@ local function existingProxy(d,headers)
       device.properties.viewLayout,
       device.properties.uiCallbacks or {}
     )
-    Emu:registerDevice{ id=device.id, device=device, UI=ui, headers=headers }
+    local dev = Device{ id=device.id, device=device, UI=ui, headers=headers }
     local children = Emu.api.hc3.get("/devices?parentId="..device.id) or {}
     for _,child in ipairs(children) do
       child.isProxy,child.isChild = true, true
@@ -148,16 +148,15 @@ local function existingProxy(d,headers)
         child.properties.viewLayout,
         child.properties.uiCallbacks or {}
       )
-      Emu:registerDevice{ id=child.id, device=child, UI=ui, headers=headers }
+      local cdev = Device{ id=child.id, device=child, UI=ui, headers=headers }
+      Emu.devices[child.id] = cdev
       Emu:DEBUG("Existing Child proxy found: %s %s",child.id,child.name)
     end
     Emu:saveState()
     Emu.proxyId = device.id -- Just save the last proxy to be used for restricted API calls
     start()
     Emu.api.hc3.post("/devices/"..device.id.."/action/CONNECT",{args={{ip=Emu.config.pip,port=Emu.config.pport}}})
-    Emu:post({type='device_created',id=device.id})
-    for _,c in ipairs(children) do Emu:post({type='device_created',id=c.id}) end
-    return device
+    return dev
   end
 end
 

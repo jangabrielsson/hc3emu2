@@ -1,3 +1,35 @@
+local fileNum = 0
+local function createTempName(suffix)
+  fileNum = fileNum + 1
+  return os.date("hc3emu%M%M")..fileNum..suffix
+end
+
+local function findFirstLine(src)
+  local n,first,init = 0,nil,nil
+  for line in string.gmatch(src,"([^\r\n]*\r?\n?)") do
+    n = n+1
+    line = line:match("^%s*(.*)")
+    if not (line=="" or line:match("^[%-]+")) then 
+      if not first then first = n end
+    end
+    if line:match("%s*QuickApp%s*:%s*onInit%s*%(") then
+      if not init then init = n end
+    end
+  end
+  return first or 1,init
+end
+
+local function loadQAString(src,optionalDirectives) -- Load QA from string and run it
+  local path = Emu.config.tempDir..createTempName(".lua")
+  local f = io.open(path,"w")
+  assert(f,"Can't open file "..path)
+  f:write(src)
+  f:close()
+  ---@diagnostic disable-next-line: need-check-nil
+  return Emu:installQuickAppFile(path)
+end
+
+
 local function markArray(t) if type(t)=='table' then json.util.InitArray(t) end end
 local function arrayifyFqa(fqa)
   markArray(fqa.initialInterfaces)
@@ -71,8 +103,17 @@ local function saveQA(id,fileName) -- Save installed QA to disk as .fqa  //Move 
   Emu:DEBUG("Saved QuickApp to %s",fileName)
 end
 
+local function loadQA(path,optionalHeaders,noRun)   -- Load QA from file and maybe run it
+  local struct = Emu:installQuickAppFile(path,optionalHeaders)
+  return struct
+end
+
 return {
+  createTempName = createTempName,
+  findFirstLine = findFirstLine,
+  loadQAString = loadQAString,
   uploadFQA = uploadFQA,
   getFQA = getFQA,
   saveQA = saveQA,
+  loadQA = loadQA,
 }

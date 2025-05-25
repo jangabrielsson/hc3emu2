@@ -9,7 +9,7 @@ local function Store(args)
   defaultValues[args.name] = args.dflts
   return setmetatable(store, {
     __index = function(t,k)
-      if k == '_data' then return {data,HTTP.OK}
+      if k == '_data' then return data
       elseif data[k] then return {data[k],HTTP.OK}
       else return {nil,HTTP.NOT_FOUND} end
     end,
@@ -25,13 +25,15 @@ local function Store(args)
         if data[k]~=nil then
           data[k] = nil
         else error({nil,HTTP.NOT_FOUND}) end
+      elseif method == 'INIT' then
+        data = value
       else error("Bad method") end
     end,
   })
 end
 
-
-local function strip(store) 
+local function strip(store,raw) 
+  if raw then return store._data end
   local result = {}
   for _,v in pairs(store._data) do result[#result+1] = v end
   return result
@@ -79,11 +81,66 @@ local store = {
   customEvents = Store{
     name="customEvents",idx='name',
   },
+  ['settings/location'] = Store{
+    name="settings/location",idx=nil,
+  },
+  weather = Store{
+    name="weather",idx=nil,
+  }
 }
+
+local function defaultResources()
+  Emu.devices[1] = Device{
+    resource = true,
+    id = 1,
+    device = { 
+      id = 1, name = "zwave", roomID = 219,
+      type = "com.fibaro.zwavePrimaryController",
+      properties = {
+        sunriseHour = "03:57",
+        sunsetHour = "21:32",
+      }
+    }
+  }
+  store['settings/location']['_'] = {
+    "INIT",{
+      houseNumber = 0,
+      timezone = "Europe/Stockholm",
+      timezoneOffset = 7200,
+      ntp = true,
+      ntpServer = "pool.ntp.org",
+      date = { day = 24, month = 5, year = 2025},
+      time = { hour = 6, minute = 8 },
+      latitude = Emu.config.latitude or 59.3169518987572,
+      longitude = Emu.config.longitude or 18.06379775049387,
+      city = "Gatan 6, Stockholm, Sweden",
+      temperatureUnit = "C",
+      windUnit = "km/h",
+      timeFormat = 24,
+      dateFormat = "dd.mm.yy",
+      decimalMark = "."
+    }
+  }
+  
+  store.weather.data = {
+    "INIT",{
+      Wind = 5.962133916683182,
+      WindUnit = "km/h",
+      Temperature = 1.4658129805029452,
+      WeatherCondition = "WeatherCondition",
+      Humidity = 6.027456183070403,
+      TemperatureUnit = "TemperatureUnit",
+      ConditionCode = 0,
+      WeatherConditionConverted = "WeatherConditionConverted"
+    }
+  }
+end
 
 local function setup(Emu)
   local api = Emu.api
   local HTTP = API.HTTP
+  
+  defaultResources()
   
   local function add(path,method)
     local function fun(...)
@@ -170,6 +227,19 @@ local function setup(Emu)
     store.customEvents[ctx.vars.name] = {'DELETE'}
   end)
   
+  add("GET/settings/location", function(ctx)
+    return {strip(store['settings/location'],true),HTTP.OK}
+  end)
+  
+  add("GET/weather", function(ctx)
+    return {strip(store.weather,true),HTTP.OK}
+  end)
+  add("PUT/weather", function(ctx)
+    for k,v in pairs(ctx.data) do
+      store.weather[k] = {'PUT',v}
+    end
+    return {ctx.data,HTTP.OK}
+  end)
 end
 
 

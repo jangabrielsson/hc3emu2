@@ -61,7 +61,9 @@ build = {
       ["hc3emu2.lib.sourcetrigger"] = "src/hc3emu2/lib/sourcetrigger.lua",
       ["hc3emu2.lib.qwikchild"] = "src/hc3emu2/lib/qwikchild.lua",
       ["hc3emu2.lib.eventlib"] = "src/hc3emu2/lib/eventlib.lua",
+      ["hc3emu2.lib.eventmgr"] = "src/hc3emu2/lib/eventmgr.lua",
       ["hc3emu2.lib.sha2"] = "src/hc3emu2/lib/sha2.lua",
+      ["hc3emu2.lib.aeslua53.lua"] = "src/hc3emu2/lib/aeslua53.lua",
       ["hc3emu2.lib.markdown"] = "src/hc3emu2/lib/markdown.lua",
 
       ["hc3emu2.plugin.image"] = "src/hc3emu2/plugin/image.lua",

@@ -107,6 +107,7 @@ Master = Master
 class 'Master'
 function Master:__init()
   self.queue = createQueue()
+  self.gate = copas.semaphore.new(1,0,math.huge)
 end
 function Master:add(t,fun,id) 
   local ref = self.queue:add(t,fun) 
@@ -138,7 +139,7 @@ end
 function Master:normalTick()
   local now = userMilli()
   local v = self:peek()
-  if not v then copas.pauseforever(self.co)
+  if not v then copas.pauseforever(self.co) -- Wait for someone from outside to wake us up
   elseif v.time > now then
     copas.pause(v.time-now)
   else
@@ -149,7 +150,7 @@ function Master:normalTick()
 end
 function Master:speedTick()
   local v = self:pop()
-  if not v then copas.pauseforever(self.co)
+  if not v then copas.pauseforever(self.co) -- Wait for someone from outside to wake us up
   else
     timeOffset = v.time - copas.gettime()
     pcall(v.fun)
@@ -161,11 +162,13 @@ function Master:run()
   local function loop()
     mobdebug.on()
     while true do
+      self.gate:give()
       if self._speed then 
         self:speedTick()
       else
         self:normalTick()
       end
+      self.gate:take()
     end
   end
   self.co = copas.addthread(loop)
@@ -238,6 +241,7 @@ end
 function Emu:clearInterval(ref) scheduler:clearInterval(ref) end
 
 return {
+  masterGate = scheduler.gate,
   setTime = setTime,
   userTime = userTime,
   userMilli = userMilli,

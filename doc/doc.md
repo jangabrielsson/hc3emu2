@@ -105,7 +105,49 @@ These can also be specifed in an .env file in the working directory and will be 
 
 ## Setup
 
-## Command Line Tools
+### VSCode
+Add a launch option to .vscode/.launch.json, 
+or add the launch option in your vscode User Settings to have the luanch option available in all projects
+```json
+    {
+      "name": "hc3emu2: Current File",
+      "type": "luaMobDebug",
+      "request": "launch",
+      "workingDirectory": "${workspaceFolder}",
+      "sourceBasePath": "${workspaceFolder}",
+      "listenPort": 8172,
+      "stopOnEntry": false,
+      "sourceEncoding": "UTF-8",
+      "interpreter": "lua",
+      "arguments": [
+        "-e",
+        "require('hc3emu2')",
+        "run",
+        "${relativeFile}"
+      ],
+      "env": {
+        "HC3URL": "${config:hc3emu.url}",
+        "HC3USER": "${config:hc3emu.user}",
+        "HC3PASSWORD": "${config:hc3emu.password}"
+      },
+      "listenPublicly": true
+    },
+```
+In this example, we also set the environment variables using values from our User Settings file. Remove if you provide credentials differently.
+
+### ZeroBrane Studio
+Install the zerobrane package file from the repo [here](https://raw.githubusercontent.com/jangabrielsson/hc3emu2/refs/heads/main/tools/HC3EMUplugin.lua) into .~/zbstudio/packages/HC3EMUplugin.lua
+The file is a Zerobrane studio package file that provides API completions for QuickApps and an interpreter option in the 
+Project -> Interpreter -> Hc3Emu emulator
+to run your QuickApp files.
+
+## CLI
+
+It is also possible to run the emulator with a provided QA file using the command line.
+Ex.
+```bash
+>lua -e "require('hc3emu2')" run MyQA.lua
+```
 
 ### vscode.lua Tool
 

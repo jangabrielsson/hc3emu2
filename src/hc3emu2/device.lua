@@ -1,5 +1,5 @@
 local fmt = string.format
-
+local copas = require("copas")
 local embed = require("hc3emu2.embedui")
 
 Device = Device
@@ -7,6 +7,7 @@ class 'Device'
 function Device:__init(args)
   self.id = args.id
   self.device = args.device
+  if args.resource then return end -- "Non QA devices, ex. deviceId 1"
   self.files = args.files or {}
   self.env = args.env
   self.vars = args.vars   -- internalStorageVars
@@ -15,7 +16,7 @@ function Device:__init(args)
   self.watches = args.watches or {}
   self.headers = args.headers or {}
   self.pageName = args.pageName
-  
+
   local embedElements = embed.embedUIs[self.device.type] -- Add embed/stock UI elements for device type
   for i,r in ipairs(embedElements or {}) do table.insert(self.UI,i,r) end
   if self.headers.webUI then
@@ -27,7 +28,7 @@ function Device:__init(args)
       self.pageName = fmt("%s.html",name)
     end
   end
-
+  
   local index = {}
   self:initializeUI(self.UI,index)
   setmetatable(self.UI,{
@@ -101,12 +102,68 @@ function Device:initializeUI(UI,index)
   end
 end
 
-  function Emu.EVENT.device_created(event,emu)
-    local dev = emu.devices[event.id]
-    if dev.headers.webUI then -- setup for generating web page
-      Emu.web.generateUIpage(dev.device.id,dev.device.name,dev.pageName,dev.UI)
-    end
-    emu:startQA(event.id) 
+local stdFuns = { 
+  'setmetatable', 'getmetatable', 'assert', 'rawget', 'rawset', 'pairs', 
+  'print', 'ipairs', 'type', 'tostring', 'tonumber', 'string', 'table', 
+  'math', 'pcall', 'xpcall', "error", "json", "select", "collect_garbage"
+}
+
+function Device:startQA()
+  Emu:DEBUGF('system',"Starting QuickApp %s %s",self.device.name,self.id)
+  local id = self.id
+
+  if self.headers.webUI then -- setup for generating web page
+    Emu.web.generateUIpage(id,self.device.name,self.pageName,self.UI)
   end
 
-  return {}
+  if #self.files == 0 then return end
+  local env = { 
+    api = Emu.api, 
+    os = { time = Emu.lib.userTime, date = Emu.lib.userDate, exit = os.exit, clock = os.clock() } 
+  }
+  local struct = self.device
+  for _,v in ipairs(stdFuns) do env[v] = _G[v] end
+  env._G = env
+  env._emu = Emu
+  self.env = env
+  
+  loadfile(Emu.lib.filePath("hc3emu2.class"), "t", env)()
+  loadfile(Emu.lib.filePath("hc3emu2.fibaro"), "t", env)()
+  env.fibaro.hc3emu = Emu
+  loadfile(Emu.lib.filePath("hc3emu2.net"), "t", env)()
+  loadfile(Emu.lib.filePath("hc3emu2.quickapp"), "t", env)()
+  env.plugin.mainDeviceId = id
+  env.__TAG = struct.name..struct.id
+  env._PI.dbg = self.headers and self.headers.debug or {}
+  local main = nil
+  for _,file in ipairs(self.files) do
+    if file.content == nil then
+      file.content = Emu.lib.readFile(file.fname)
+    end
+    if file.name == "main" then main = file
+    else
+      Emu:DEBUGF('system',"Loading file %s for device %s",file.fname,self.id)
+      local code,res = load(file.content, file.fname or file.name, "t", env)
+      assert(code, "Error loading file: "..file.fname.." "..tostring(res))
+      code()
+    end
+  end
+  assert(main, "No main file found")
+  if self.headers.breakOnLoad then
+    local firstLine,onInitLine = Emu.lib.findFirstLine(main.content)
+    if firstLine then Emu.mobdebug.setbreakpoint(main.fname,firstLine) end
+  end
+  Emu:DEBUGF('system',"Loading file %s for device %s",main.fname,self.id)
+  local function run()
+    local code,res = load(main.content, main.fname or main.name, "t", env)
+    assert(code, "Error loading main file: "..main.fname.." "..tostring(res)) 
+    code()
+    Emu:DEBUGF('system',"QuickApp process starting %s",self.id)
+    env.quickApp = env.QuickApp(struct)
+    Emu:post({type='quickapp_started',id=id})
+  end
+  env._PI.gate(run)
+  if self.headers.save then Emu.lib.saveQA(struct.id) end
+end
+
+return {}

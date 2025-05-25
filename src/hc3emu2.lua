@@ -1,7 +1,15 @@
 local VERSION = "1.1.2"
 
-mainFile = arg[1]
-if arg[2] == "develop" or _DEVELOP then -- Running in developer mode
+local mode, mainFile
+local startupMode = { run=true, develop=true, test=true }
+for i=0,4 do
+  if startupMode[arg[i]] then mode = arg[i] mainFile = arg[i+1] break end
+end
+
+assert(mode,"Missing mode command line argument")
+assert(mainFile,"Missing file command line argument")
+if mode == "develop" or _DEVELOP then -- Running in developer mode
+  print("Developer mode")
   _DEVELOP = true
   package.path = ";src/?;src/?.lua;"..package.path
 end
@@ -14,6 +22,7 @@ local socket = require("socket")
 copas.https = require("ssl.https")
 local ltn12 = require("ltn12")
 local lfs = require("lfs")
+require("copas.http")
 
 -- Figure out where we are and what we run...
 local config = require("hc3emu2.config")
@@ -23,6 +32,7 @@ local copiMap = setmetatable({}, { __mode = "k" }) -- Weak table for coroutine t
 local function startUp()
   Emu = Emulator() -- Global
   Emu.config.rsrcsDir = config.rsrcsDir
+  Emu.config.tempDir = config.tempDir
   Emu.config.EMU_DIR = config.EMU_DIR
   Emu.config.EMUSUB_DIR = config.EMUSUB_DIR
   
@@ -34,7 +44,6 @@ local function startUp()
   mergeLib(Emu.lib,require("hc3emu2.device"))
   Emu.lib.ui = require("hc3emu2.ui")
   
-  mainFile = arg[1]
   local src = Emu.lib.readFile(mainFile)
   local headers,eval = Emu:getHeaders(src),Emu.lib.eval
   Emu.offline = headers.offline
@@ -54,7 +63,7 @@ local function startUp()
   }
     for _,v in ipairs(globalHeaders) do Emu.config[v] = headers[v] end
   -- copy over some debugflags to be overall emulator debug flags
-  for _,k in ipairs({"refresh","rawrefresh"}) do Emu.config.dbg[k] = headers.debug[k] end
+  for _,k in ipairs({"refresh","rawrefresh","system"}) do Emu.config.dbg[k] = headers.debug[k] end
   Emu.config = table.merge(config.userConfig,Emu.config) -- merge in user config  from .hc3emu.lua
   
   if Emu.config.hc3.url:sub(-1) ~= "/" then Emu.config.hc3.url = Emu.config.hc3.url.."/" end
@@ -75,7 +84,7 @@ local function startUp()
   Emu.config.pip = config.ipAddress -- Proxy server IP (used by HC3 to find emulator)
   Emu.config.pip2 = os.getenv("HC3EMUHOST") or Emu.config.pip -- Running in container, we may have different ip...
   
-  Emu.mobdebug = { on = function() end, start = function(_,_) end, setbreakpoint = function() end }
+  Emu.mobdebug = { on = function() end, start = function(_,_) end, setbreakpoint = function(_,_) end }
   if not Emu.nodebug then
     if config.debuggerType == "actboy168" then
       -- functions?
@@ -84,9 +93,9 @@ local function startUp()
       Emu.mobdebug.start('localhost',Emu.config.dport or 8172) 
     end
   end
-  mobdebug = Emu.mobdebug
+  mobdebug = Emu.mobdebug 
   
-  --config.setupRsrscsDir()
+  if not Emu.nodir then config.setupRsrscsDir() end
   if headers.installation then 
     config.installation(headers.installation,Emu.config.hc3) 
   end
@@ -96,6 +105,7 @@ local function startUp()
     fun = function() 
       if Emu.config.startTime then Emu.lib.setTime(Emu.config.startTime) end
       if Emu.config.speedTime then Emu.lib.speedFor(Emu.config.speedTime) end
+      Emu.sunriseHour,Emu.sunsetHour = Emu.lib.sunCalc()
       Emu.lib.midnightLoop()
       Emu.lib.startScheduler()
       Emu.web.startServer()
@@ -103,6 +113,14 @@ local function startUp()
       Emu:installQuickAppCode(mainFile,src,headers) 
     end
   }
+
+  function Emu.EVENT.midnight()
+    local count = Emu.lib.masterGate:get_count()
+    if count > 0 then Emu.lib.masterGate:take() end
+    Emu.sunriseHour,Emu.sunsetHour = Emu.lib.sunCalc() 
+    if count > 0 then Emu.lib.masterGate:give() end
+  end
+
   Emu:start()
 end
 
@@ -180,12 +198,14 @@ function Emulator:HC3Call(method,path,data,silent)
   assert(creds.url,"Missing hc3emu.URL - Please set url to HC3")
   assert(creds.user,"Missing hc3emu.USER - Please set user for HC3")
   assert(creds.pwd,"Missing hc3emu.PASSWORD - Please set password for HC3")
+  --self.lib.masterGate:take()
   local res,stat,headers = self:httpRequest(method,creds.url.."api"..path,{
     ["Accept"] = '*/*',
     ["X-Fibaro-Version"] = 2,
     ["Fibaro-User-PIN"] = self.PIN,
   },
   data,35000,creds.user,creds.pwd,silent)
+  --self.lib.masterGate:give()
   if stat == 401 then self:ERRORF("HC3 authentication failed, Emu access cancelled") BLOCKED = true end
   if stat == 'closed' then self:ERRORF("HC3 connection closed %s",path) end
   if stat == 500 then self:ERRORF("HC3 error 500 %s",path) end
@@ -193,12 +213,6 @@ function Emulator:HC3Call(method,path,data,silent)
   if stat and stat >= 400 then return nil,stat end
   local jf,data = pcall(json.decode,res)
   return (jf and data or res),stat
-end
-
-function Emulator:registerDevice(args)
-  assert(args.id,"Missing device id")
-  self.devices[args.id] = Device(args)
-  return self.devices[args.id]
 end
 
 local function validate(v,k,typ)
@@ -244,6 +258,7 @@ do
   function headerKeys.pwd(v,h) h.pwd = v end
   function headerKeys.pin(v,h) h.pin = v end
   function headerKeys.u(v,h) h.UI[#h.UI+1] = v end
+  function headerKeys.breakOnLoad(v,h,k) h.breakOnLoad = validate(v,k,"boolean") end
   function headerKeys.debug(v,h)
     local flags = v:split(",")
     for _,flagv in ipairs(flags) do 
@@ -276,13 +291,27 @@ do
   end
 end
 
-function Emulator:getHeaders(code)
+function Emulator:getHeaders(src,extraHeaders)
   local headers = { debug = {}, files = {}, UI={}, vars = {} }
-  for key,fun in pairs(headerKeys) do 
-    code:gsub("%-%-%%%%"..key.."=([^\n]+)",function(v) fun(v,headers,key) end)
+  local code = src
+  local eod = src:find("%-%-ENDOFHEADERS") -- Embedded headers
+  if eod then code = src:sub(1,eod-1) end
+  if code:sub(-1) ~= "\n" then code = code.."\n" end
+  code:gsub("%-%-%%%%(.-)=(.-)\n",function(key,str) 
+    if headerKeys[key] then
+      headerKeys[key](str,headers,key)
+    else print(fmt("Unknown header key: '%s' - ignoring",key)) end
+   end)
+  for key,value in pairs(extraHeaders or {}) do
+    if headerKeys[key] then
+      headerKeys[key](value,headers,key)
+    else print(fmt("Unknown extra header key: '%s' - ignoring",key)) end
   end
   local UI = {}
   for _,v in ipairs(headers.UI) do UI[#UI+1] = validate(v,"UI","table") end
+  local files = {}
+  for name,path in pairs(headers.files) do files[#files+1] = { name=name, fname=path, isMain=false, isOpen=false, type="lua" } end
+  headers.files = files
   headers.UI = UI
   return headers
 end
@@ -335,14 +364,27 @@ function Emulator:createUI(UI) -- Move to ui.lua ?
 end
 
 local ID = 5000
-function Emulator:installDevice(d,headers) -- Move to device?
+function Emulator:installDevice(d,files,headers) -- Move to device?
+  Emu:DEBUGF('system',"Installing device %s %s",d.type,d.name or "unnamed")
+
   headers = headers or {}
+  files = files or {}
+  for _,f in ipairs(headers.files or {}) do files[#files+1] = f end
+
   local isProxy = headers.proxy
   if isProxy then                                  -- Existing proxy device?
-    local device = self.lib.existingProxy(d,headers)
-    if device then 
-      --if headers.logUI then Emu.lib.ui.logUI(device.id) end
-      return device 
+    local dev = self.lib.existingProxy(d,headers)
+    if dev then 
+      if headers.logUI then
+        -- local count = self.lib.masterGate:get_count()
+        -- if count > 0 then self.lib.masterGate:take() end -- Stop everything while we log the UI
+        self.lib.ui.logUI(dev.id) 
+        -- if count > 0 then self.lib.masterGate:give() end
+      end
+      dev.files = files
+      self.devices[dev.id] = dev
+      dev:startQA()
+      return dev.device
     end
   end
   -- Create new device
@@ -375,77 +417,35 @@ function Emulator:installDevice(d,headers) -- Move to device?
     if headers.logUI then Emu.lib.ui.logUI(device.id) end
   elseif d.id then device.id = d.id
   else device.id = ID; ID = ID + 1 end
-  Emu:registerDevice{
+  local dev = Device{
     id=device.id,
     device=device,
+    files = files,
     headers=headers or {},
     UI=headers.UI
   }
   self:saveState()
-  self:post({type='device_created',id=device.id})
+  self.devices[device.id] = dev
   self.refreshState:addEvent({type='DeviceCreatedEvent',data={id=device.id}})
-  return device
+  dev:startQA()
+  Emu:DEBUGF('system',"Installing device done %s",dev.id)
+  return dev.device
 end
 
-local stdFuns = { 
-  'setmetatable', 'getmetatable', 'assert', 'rawget', 'rawset', 'pairs', 
-  'print', 'ipairs', 'type', 'tostring', 'tonumber', 'string', 'table', 
-  'math', 'pcall', 'xpcall', "error", "json", "select", "collect_garbage"
-}
-
-function Emulator:startQA(id)
-  local dev = self.devices[id]
-  if #dev.files == 0 then return end
-  local env = { 
-    api = self.api, 
-    os = { time = self.lib.userTime, date = self.lib.userDate, exit = os.exit, clock = os.clock() } 
-  }
-  local struct = dev.device
-  for _,v in ipairs(stdFuns) do env[v] = _G[v] end
-  env._G = env
-  env._emu = self
-  dev.env = env
-  
-  loadfile(self.lib.filePath("hc3emu2.class"), "t", env)()
-  loadfile(self.lib.filePath("hc3emu2.fibaro"), "t", env)()
-  env.fibaro.hc3emu = self
-  loadfile(self.lib.filePath("hc3emu2.net"), "t", env)()
-  loadfile(self.lib.filePath("hc3emu2.quickapp"), "t", env)()
-  env.plugin.mainDeviceId = id
-  env.__TAG = struct.name..struct.id
-  env._PI.dbg = dev.headers and dev.headers.debug or {}
-  self:process{
-    pi = env._PI,
-    fun = function()
-      for _,file in ipairs(dev.files) do
-        if file.content == nil then
-          file.content = self.lib.readFile(file.fname)
-        end
-        local code,res = load(file.content, file.fname or file.name, "t", env)
-        assert(code, "Error loading file: "..file.fname.." "..tostring(res))
-        code()
-      end
-      env.quickApp = env.QuickApp(struct)
-    end
-  }
-  if dev.headers.save then self.lib.saveQA(struct.id) end
-end
-
-function Emulator:installQuickAppCode(fname,code,headers)
-  local headers = headers or self:getHeaders(code)
+function Emulator:installQuickAppCode(fname,code,headers,optionalHeaders)
+  local headers = headers or self:getHeaders(code,optionalHeaders)
   local device = {
     name = headers.name or "MyQA",
     type = headers.type or "com.fibaro.binarySwitch",
   }
-  device = self:installDevice(device,headers)
-  table.insert(self.devices[device.id].files,{fname = fname, name='main', content = code})
+  device = self:installDevice(device,{{fname = fname, name='main', content = code}},headers)
   self:saveState()
-  return device
+  return device,self.devices[device.id]
 end
 
-function Emulator:installQuickAppFile(fname)
+function Emulator:installQuickAppFile(fname,optionalHeaders)
   local code = self.lib.readFile(fname)
-  return self:installQuickAppCode(fname, code)
+  return self:installQuickAppCode(fname, code, nil, optionalHeaders)
 end
 
 function Emulator:installFQA(fqa)
@@ -454,10 +454,9 @@ function Emulator:installFQA(fqa)
     name = fqa.name,
     type = fqa.type,
   }
-  device = self:installDevice(device,headers)
-  self.devices[device.id].files = fqa.files or {}
+  struct,dev = self:installDevice(device,fqa.files or {},headers)
   self:saveState()
-  return device
+  return struct,dev
 end
 
 function Emulator:debugOutput(tag, msg, typ, time) 
@@ -498,9 +497,13 @@ local function wrapFun(fun,pi,typ)
 end
 Emulator.wrapFun = wrapFun -- export
 
+function Emulator:createLock(timeout) return copas.lock.new(timeout or math.huge) end
+
 function Emulator:process(args) 
   return copas.addthread(wrapFun(args.fun,args.pi,args.typ),table.unpack(args.args or {})) 
 end
+
+function Emulator:sleep(s) copas.sleep(s) end
 
 function Emulator:start() copas() end
 
