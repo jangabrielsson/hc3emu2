@@ -9,7 +9,7 @@
   file - test, and modules - Done
   uid, manufacturer,model,role,description - Done
   save - fqa - Done
-  breakOnLoad,breakOnInit
+  breakOnLoad,breakOnInit - Done
   nodebug
   silent
   temp

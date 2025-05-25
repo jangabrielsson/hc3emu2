@@ -16,8 +16,8 @@
       "interpreter": "lua",
       "arguments": [
         "-e",
-        "dofile(package.searchpath('hc3emu2',package.path))",
-        "x",
+        "require('hc3emu2')",
+        "run",
         "${relativeFile}"
       ],
       "env": {
@@ -39,8 +39,8 @@
       "interpreter": "lua",
       "arguments": [
         "${workspaceFolder}${pathSeparator}src${pathSeparator}hc3emu2.lua",
-        "${relativeFile}",
-        "develop"
+        "develop",
+        "${relativeFile}"
       ],
       "env": {
         "HC3URL": "${config:hc3emu.url}",

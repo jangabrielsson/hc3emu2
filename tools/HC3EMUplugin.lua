@@ -1,13 +1,13 @@
+---@diagnostic disable: undefined-global
 VERSION = "0.1"
-
-local idech3 = ID("HC3.copyHC3")
-local idech31 = ID("HC3.sdkHC3")
-local idech33 = ID("HC3.uploadHC3")
-local idech33b = ID("HC3.backupHC3")
-local idech33d = ID("HC3.downloadRsrcHC3")
-local ide_deploy = ID("HC3.deployQA")
-local idem = ID("HC3.web")
-local idet = ID("HC3.templ")
+local idech3 = ide.ID("HC3.copyHC3")
+local idech31 = ide.ID("HC3.sdkHC3")
+local idech33 = ide.ID("HC3.uploadHC3")
+local idech33b = ide.ID("HC3.backupHC3")
+local idech33d = ide.ID("HC3.downloadRsrcHC3")
+local ide_deploy = ide.ID("HC3.deployQA")
+local idem = ide.ID("HC3.web")
+local idet = ide.ID("HC3.templ")
 
 local lfs = require("lfs")
 local sdkFile = "TQAE.lua"
@@ -494,7 +494,7 @@ local interpreter = {
       end
     end
     local params = ide.config.arg.any or ide.config.arg.lua
-    local code = ([[-e "io.stdout:setvbuf('no')" "%s" %s]]):format(tmpluafile,filepath)
+    local code = ([[-e "io.stdout:setvbuf('no')" "%s" run %s]]):format(tmpluafile,filepath)
     local cmd = '"'..exe..'" '..code..(params and " "..params or "")
 
     -- modify CPATH to work with other Lua versions

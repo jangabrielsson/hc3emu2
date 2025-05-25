@@ -186,9 +186,13 @@ function API:setupRoutes()
     end
   end)
   self:add("GET/devices/<id>/properties/<name>",function(ctx)
-    local dev = devices[ctx.vars.id]
+    local id,name = ctx.vars.id,ctx.vars.name
+    if id == 1 and (name == "sunriseHour" or name == "sunsetHour") then
+      return {value=emu[name],modified=0},HTTP.OK
+    end
+    local dev = devices[id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
-    return dev.device.properties[ctx.vars.name],HTTP.OK
+    return dev.device.properties[name],HTTP.OK
   end)
 
   self:add("POST/devices/<id>/action/<name>",function(ctx)
@@ -202,6 +206,7 @@ function API:setupRoutes()
           dev.env.onAction(id,{ deviceId = id, actionName = ctx.vars.name, args = ctx.data.args })
         end
       }
+      emu:sleep(0.01)
       return nil,HTTP.OK
     end
   end)
@@ -263,7 +268,7 @@ function API:setupRoutes()
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.post(ctx.path,ctx.data) end
     elseif not dev.device.isChild then
       dev.env._PI:cancelTimers()
-      emu:startQA(id)
+      dev:startQA()
       return nil,HTTP.OK
     else return nil,HTTP.NOT_IMPLEMENTED end
   end)
@@ -280,7 +285,7 @@ function API:setupRoutes()
     end
     data.isChild = true
     headers = { webUI = dev.headers.webUI }
-    return emu:installDevice(data,headers),HTTP.OK
+    return emu:installDevice(data,{},headers),HTTP.OK
   end)
 
   self:add("DELETE/plugins/removeChildDevice/<id>",function(ctx)

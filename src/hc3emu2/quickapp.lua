@@ -20,20 +20,6 @@ function class(name)
   return function(p) getmetatable(cls).__index = p end
 end
 
-_PI = { timers = {}, env = _G, dbg={} } -- Process info to keep track of
-function _PI.cancelTimers() -- Cancel all timer started by QA (for restarts)
-  for ref,_ in pairs(_PI.timers) do print("Cancelling",tostring(ref)) _emu:clearTimeout(ref) end
-  _PI.timers = {}
-end
-function _PI.addTimer(ref) _PI.timers[ref] = true return ref end
-function _PI.cancelTimer(ref) _PI.timers[ref] = nil return ref end
-function _PI.errorHandler(err,traceback)
-  fibaro.error(__TAG,err)
-  if traceback then _print(traceback) end
-end
-function _PI.debugHandler(flag,...) if flag==true or _PI.dbg[flag] then fibaro.debug(__TAG,_emu.lib.formatArg(...)) end end
-function _PI.name() return __TAG end
-
 plugin = plugin or {}
 function plugin.getDevice(deviceId) return api.get("/devices/"..deviceId) end
 function plugin.deleteDevice(deviceId) return api.delete("/devices/"..deviceId) end
@@ -41,16 +27,6 @@ function plugin.getProperty(deviceId, propertyName) return api.get("/devices/"..
 function plugin.getChildDevices(deviceId) return api.get("/devices?parentId="..deviceId) end
 function plugin.createChildDevice(opts) return api.post("/plugins/createChildDevice", opts) end
 function plugin.restart(id) return api.post("/plugins/restart",{deviceId=id or plugin.mainDeviceId}) end
-
-function setInterval(fun,delay) return _PI.addTimer(_emu:setInterval(fun,delay,_PI)) end
-function setTimeout(fun,delay) 
-  local ref
-  local function cb() _PI.cancelTimer(ref) fun() end
-  ref = _PI.addTimer(_emu:setTimeout(cb,delay,_PI))
-  return ref
-end
-function clearTimeout(ref) _emu:clearTimeout(_PI.cancelTimer(ref)) end
-function clearInterval(ref) _emu:clearInterval(_PI.cancelTimer(ref)) end
 
 class 'QuickAppBase'
 function QuickAppBase:__init(dev)

@@ -1,6 +1,49 @@
 fibaro = {}
 local fmt = string.format
 
+------------- Process info for running environment ---------------- 
+_PI = { timers = {}, env = _G, dbg={} } -- Process info to keep track of
+function _PI.cancelTimers() -- Cancel all timer started by QA (for restarts)
+  for ref,typ in pairs(_PI.timers) do 
+    _emu:DEBUGF('system',"Cancelling timer %s",tostring(ref)) 
+    _emu:clearTimeout(ref)
+    if typ == 'interval' then _emu:clearInterval(ref) else _emu:clearTimeout(ref) end
+  end
+  _PI.timers = {}
+end
+function _PI.addTimer(ref,typ) _PI.timers[ref] = typ return ref end
+function _PI.cancelTimer(ref) _PI.timers[ref] = nil return ref end
+function _PI.errorHandler(err,traceback)
+  fibaro.error(__TAG,err)
+  if traceback then _print(traceback) end
+end
+function _PI.debugHandler(flag,...) if flag==true or _PI.dbg[flag] then fibaro.debug(__TAG,fmt(_emu.lib.formatArgs(...))) end end
+function _PI.name() return __TAG end
+
+local lock = _emu.createLock()
+local function gate(fun,...)
+  lock:get()
+  local res = {pcall(fun,...)}
+  lock:release()
+  if res[1] then return table.unpack(res,2) else error(res[2],2) end
+end
+_PI.gate = gate
+
+function setInterval(fun,delay) 
+  local function cb() gate(fun) end
+  return _PI.addTimer(_emu:setInterval(cb,delay,_PI),'interval') 
+end
+function setTimeout(fun,delay) 
+  local ref
+  local function cb() _PI.cancelTimer(ref) gate(fun) end
+  ref = _PI.addTimer(_emu:setTimeout(cb,delay,_PI),'timeout')
+  return ref
+end
+function clearTimeout(ref) _emu:clearTimeout(_PI.cancelTimer(ref)) end
+function clearInterval(ref) _emu:clearInterval(_PI.cancelTimer(ref)) end
+
+-----------------------------------------------------------------
+---
 function __ternary(c, t,f) if c then return t else return f end end
 function __fibaro_get_devices() return api.get("/devices/") end
 function __fibaro_get_device(deviceId) return api.get("/devices/"..deviceId) end
@@ -332,16 +375,16 @@ end
 
 function fibaro.getSceneVariable(name)
   __assert_type(name, "string")
-  local scene = E:getRunner()
-  assert(scene.kind == "SceneRunner","fibaro.getSceneVariable must be called from a scene")
-  return scene:getVariable(name)
+  --local scene = E:getRunner()
+  --assert(scene.kind == "SceneRunner","fibaro.getSceneVariable must be called from a scene")
+  --return scene:getVariable(name)
 end
 
 function fibaro.setSceneVariable(name,value)
   __assert_type(name, "string")
-  local scene = E:getRunner()
-  assert(scene.kind == "SceneRunner","fibaro.setSceneVariable must be called from a scene")
-  scene:setVariable(name,value) 
+  --local scene = E:getRunner()
+  --assert(scene.kind == "SceneRunner","fibaro.setSceneVariable must be called from a scene")
+  --scene:setVariable(name,value) 
 end
 
 hub = fibaro
