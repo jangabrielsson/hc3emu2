@@ -20,13 +20,11 @@ function commands.getDeviceStructure(params,io)
     io.write("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\nContent-Length: 36\r\n\r\n{\"error\":\"Invalid device ID parameter\"}")
     return true
   end
-  
   local device = Emu.devices[id].device
   if not device then
     io.write("HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nContent-Length: 30\r\n\r\n{\"error\":\"Device not found\"}")
     return true
   end
-  
   local structure = json.encodeFormated(device)
   io.write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: "..(#structure).."\r\n\r\n"..structure)
   return true
@@ -309,6 +307,19 @@ function Emu.EVENT.quickApp_updateView(ev)
   local dev = Emu.devices[id]
   if dev.pageName then
     updateView(dev.device.id,dev.device.name,dev.pageName,dev.UI)
+  end
+end
+
+function Emu.EVENT.quickapp_started(ev)
+  local id = ev.id
+  local dev = Emu.devices[id]
+  if dev.pageName then
+    generateUIpage(id,dev.device.name,dev.pageName,dev.UI)
+  end
+  for cid,child in pairs(Emu.devices) do
+    if child.device.parentId == id and child.pageName then
+      generateUIpage(cid,child.device.name,child.pageName,child.UI)
+    end
   end
 end
 

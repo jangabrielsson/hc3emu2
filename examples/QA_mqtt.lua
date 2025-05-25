@@ -57,4 +57,5 @@ end
 function QuickApp:onInit()
   self:pong('ClientB')
   self:ping('ClientA')
+  --setInterval(function() print("Tick") end, 1000)
 end

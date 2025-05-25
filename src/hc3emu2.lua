@@ -63,7 +63,7 @@ local function startUp()
   }
     for _,v in ipairs(globalHeaders) do Emu.config[v] = headers[v] end
   -- copy over some debugflags to be overall emulator debug flags
-  for _,k in ipairs({"refresh","rawrefresh","system"}) do Emu.config.dbg[k] = headers.debug[k] end
+  for _,k in ipairs({"refresh","rawrefresh","system","http","notrace"}) do Emu.config.dbg[k] = headers.debug[k] end
   Emu.config = table.merge(config.userConfig,Emu.config) -- merge in user config  from .hc3emu.lua
   
   if Emu.config.hc3.url:sub(-1) ~= "/" then Emu.config.hc3.url = Emu.config.hc3.url.."/" end
@@ -182,7 +182,7 @@ function Emulator:httpRequest(method,url,headers,data,timeout,user,pwd,silent)
     r,status,h = copas.https.request(req)
   else r,status,h = copas.http.request(req) end
   local t1 = socket.gettime()
-  --if not silent then self:DEBUGF('http',"HTTP %s %s %s (%.3fs)",method,url,status,t1-t0) end
+  if not silent then self:DEBUGF('http',"HTTP %s %s %s (%.3fs)",method,url,status,t1-t0) end
   if tonumber(status) and status < 300 then
     return resp[1] and table.concat(resp) or nil, status, h
   else
@@ -198,16 +198,14 @@ function Emulator:HC3Call(method,path,data,silent)
   assert(creds.url,"Missing hc3emu.URL - Please set url to HC3")
   assert(creds.user,"Missing hc3emu.USER - Please set user for HC3")
   assert(creds.pwd,"Missing hc3emu.PASSWORD - Please set password for HC3")
-  --self.lib.masterGate:take()
   local res,stat,headers = self:httpRequest(method,creds.url.."api"..path,{
     ["Accept"] = '*/*',
     ["X-Fibaro-Version"] = 2,
     ["Fibaro-User-PIN"] = self.PIN,
   },
   data,35000,creds.user,creds.pwd,silent)
-  --self.lib.masterGate:give()
   if stat == 401 then self:ERRORF("HC3 authentication failed, Emu access cancelled") BLOCKED = true end
-  if stat == 'closed' then self:ERRORF("HC3 connection closed %s",path) end
+  if stat == 'closed' then self:ERRORF("HC3 connection closed "..path) end
   if stat == 500 then self:ERRORF("HC3 error 500 %s",path) end
   if not tonumber(stat) then return res,stat end
   if stat and stat >= 400 then return nil,stat end
@@ -257,7 +255,7 @@ do
   function headerKeys.user(v,h) h.user = v end
   function headerKeys.pwd(v,h) h.pwd = v end
   function headerKeys.pin(v,h) h.pin = v end
-  function headerKeys.u(v,h) h.UI[#h.UI+1] = v end
+  function headerKeys.u(v,h) h._UI[#h.UI+1] = v end
   function headerKeys.breakOnLoad(v,h,k) h.breakOnLoad = validate(v,k,"boolean") end
   function headerKeys.debug(v,h)
     local flags = v:split(",")
@@ -270,10 +268,12 @@ do
     local function addFile(val) 
       local path,m = val:match("(.-),(.-);?%s*$")
       if not path then path,m = val:match("(.-):(.+);?%s*$") end
-      if path:match("%$") then 
-        path = package.searchpath(path:sub(2),package.path)
-      end
       assert(path and m,"Bad file directive: "..val)
+      if path:match("%$") then 
+        local lib = path:sub(2)
+        path = package.searchpath(lib,package.path)
+        assert(path,"File library not found: "..lib)
+      end
       assert(lfs.attributes(path),"File not found: "..path)
       h.files[m] = path
     end
@@ -292,12 +292,15 @@ do
 end
 
 function Emulator:getHeaders(src,extraHeaders)
-  local headers = { debug = {}, files = {}, UI={}, vars = {} }
+  local headers = { debug = {}, files = {}, _UI={}, vars = {} }
   local code = src
   local eod = src:find("%-%-ENDOFHEADERS") -- Embedded headers
   if eod then code = src:sub(1,eod-1) end
-  if code:sub(-1) ~= "\n" then code = code.."\n" end
-  code:gsub("%-%-%%%%(.-)=(.-)\n",function(key,str) 
+  if code:sub(1) ~= "\n" then code = "\n"..code end
+
+  code:gsub("\n%-%-%%%%([%w_]-)=([^\n]*)",function(key,str) 
+    str = str:match("^%s*(.-)%s*$") or str
+    str = str:match("^(.*)%s* %-%- (.*)$") or str
     if headerKeys[key] then
       headerKeys[key](str,headers,key)
     else print(fmt("Unknown header key: '%s' - ignoring",key)) end
@@ -307,8 +310,8 @@ function Emulator:getHeaders(src,extraHeaders)
       headerKeys[key](value,headers,key)
     else print(fmt("Unknown extra header key: '%s' - ignoring",key)) end
   end
-  local UI = {}
-  for _,v in ipairs(headers.UI) do UI[#UI+1] = validate(v,"UI","table") end
+  local UI = (extraHeaders or {}).UI or {}
+  for _,v in ipairs(headers._UI) do UI[#UI+1] = validate(v,"UI","table") end
   local files = {}
   for name,path in pairs(headers.files) do files[#files+1] = { name=name, fname=path, isMain=false, isOpen=false, type="lua" } end
   headers.files = files
@@ -317,7 +320,7 @@ function Emulator:getHeaders(src,extraHeaders)
 end
 
 function Emulator:loadState()
-  local state = json.decode(self.lib.readFile(".state.db",true) or "{}")
+  local state = json.decode(self.lib.readFile("./.state.db",true) or "{}")
   if state.tag ~= self.stateTag then return end
   local d = 0
   for k,_ in pairs(self.devices) do self.devices[k] = nil end
@@ -326,7 +329,7 @@ function Emulator:loadState()
 end
 
 function Emulator:saveState()
-  local f = io.open(".state.db", "w")
+  local f = io.open("./.state.db", "w")
   if not f then return end
   local devices = {}
   for _,dev in pairs(self.devices) do devices[#devices+1] = dev:toArgs() end
@@ -371,15 +374,17 @@ function Emulator:installDevice(d,files,headers) -- Move to device?
   files = files or {}
   for _,f in ipairs(headers.files or {}) do files[#files+1] = f end
 
+  if headers.proxy and self.offline then
+    headers.proxy = false -- No proxies in offline mode
+    Emu:DEBUG("Proxy devices not supported in offline mode -ignored")
+  end
+
   local isProxy = headers.proxy
   if isProxy then                                  -- Existing proxy device?
     local dev = self.lib.existingProxy(d,headers)
     if dev then 
       if headers.logUI then
-        -- local count = self.lib.masterGate:get_count()
-        -- if count > 0 then self.lib.masterGate:take() end -- Stop everything while we log the UI
-        self.lib.ui.logUI(dev.id) 
-        -- if count > 0 then self.lib.masterGate:give() end
+        self.lib.ui.logUI(dev.id)
       end
       dev.files = files
       self.devices[dev.id] = dev
@@ -487,8 +492,8 @@ local function wrapFun(fun,pi,typ)
     copas.setthreadname(pi and pi.name() or "EmuThread")
     copas.seterrorhandler(function(msg,co,skt)
       local tb = pruneTB(copas.gettraceback(typ or "Emulator",co,skt))
-      if pi then pi.errorHandler(msg,tb)
-      else print("Error: ", msg) print(tb) end
+      if pi then pi.errorHandler(Emu:createErrorMsg{msg=msg,trace=tb})
+      else print("Error: ", tostring(msg)) print(tb) end
       os.exit() -- stop on error
       --copas.removethread(co)
     end)
@@ -497,7 +502,19 @@ local function wrapFun(fun,pi,typ)
 end
 Emulator.wrapFun = wrapFun -- export
 
-function Emulator:createLock(timeout) return copas.lock.new(timeout or math.huge) end
+function Emulator:createLock(timeout,reentrant) return copas.lock.new(timeout or math.huge,reentrant) end
+function Emulator:createErrorMsg(args)
+  if type(args.msg) == 'table' then return args.msg end
+  return setmetatable({err=args.msg,trace=args.trace or self.lua.debug.traceback(2)},{
+    __tostring = function(_)
+      local err = args.msg
+      if not Emu.config.dbg.notrace then
+        err = err .. "\n" .. (args.trace or self.lua.debug.traceback(2))
+      end
+      return err 
+    end,
+  })
+end
 
 function Emulator:process(args) 
   return copas.addthread(wrapFun(args.fun,args.pi,args.typ),table.unpack(args.args or {})) 

@@ -31,7 +31,8 @@ function net.HTTPClient()
         options.success({status=status,data=res,headers=headers})
       elseif options.error then options.error(status) end
     end
-    async(call)
+    --async(call)
+    setTimeout(call,0) -- Let other timers run while waiting for the request
   end
   return self
 end

@@ -47,6 +47,7 @@ build = {
       ["hc3emu2.log"] = "src/hc3emu2/log.lua",
       ["hc3emu2.proxy"] = "src/hc3emu2/proxy.lua",
       ["hc3emu2.offline"] = "src/hc3emu2/offline.lua",
+      ["hc3emu2.offline_data"] = "src/hc3emu2/offline_data.lua",
       ["hc3emu2.tools"] = "src/hc3emu2/tools.lua",
       ["hc3emu2.embedui"] = "src/hc3emu2/embedui.lua",
       --["hc3emu2.scene"] = "src/hc3emu2/scene.lua",

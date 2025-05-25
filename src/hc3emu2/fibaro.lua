@@ -12,7 +12,17 @@ function _PI.cancelTimers() -- Cancel all timer started by QA (for restarts)
   _PI.timers = {}
 end
 function _PI.addTimer(ref,typ) _PI.timers[ref] = typ return ref end
-function _PI.cancelTimer(ref) _PI.timers[ref] = nil return ref end
+function _PI.cancelTimer(ref) 
+  _PI.timers[ref] = nil 
+  if next(_PI.timers) == nil then
+    _emu:DEBUGF('system',"No timers left")
+  else
+    _emu:DEBUGF('system',"Cancelling timer %s",tostring(ref)) 
+    if _PI.timers[ref] == 'interval' then _emu:clearInterval(ref) else _emu:clearTimeout(ref) end
+  end
+  _emu:DEBUGF('system',"Timer %s cancelled",tostring(ref))
+  return ref 
+end
 function _PI.errorHandler(err,traceback)
   fibaro.error(__TAG,err)
   if traceback then _print(traceback) end
@@ -23,17 +33,27 @@ function _PI.name() return __TAG end
 local lock = _emu.createLock()
 local function gate(fun,...)
   lock:get()
-  local res = {pcall(fun,...)}
+  local function ef(err)
+    if type(err) == "table" then return err end
+    err = err:gsub("%[string \"","[file \"")
+    local trace = _emu.lua.debug.traceback()
+    return _emu:createErrorMsg{msg=err,trace=trace}
+  end
+  local res ={xpcall(fun,ef,...)}
   lock:release()
   if res[1] then return table.unpack(res,2) else error(res[2],2) end
 end
 _PI.gate = gate
 
 function setInterval(fun,delay) 
+  assert(type(fun) == "function", "setInterval requires a function as first argument")
+  assert(type(delay) == "number", "setInterval requires a number as second argument")
   local function cb() gate(fun) end
   return _PI.addTimer(_emu:setInterval(cb,delay,_PI),'interval') 
 end
 function setTimeout(fun,delay) 
+  assert(type(fun) == "function", "setTimeout requires a function as first argument")
+  assert(type(delay) == "number", "setTimeout requires a number as second argument")
   local ref
   local function cb() _PI.cancelTimer(ref) gate(fun) end
   ref = _PI.addTimer(_emu:setTimeout(cb,delay,_PI),'timeout')

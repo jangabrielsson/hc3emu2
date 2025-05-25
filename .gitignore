@@ -7,6 +7,7 @@ test.lua
 *.log
 .env
 hc3emu.json
+.state.db
 push_rockspec.sh
 setup.html
 *.out

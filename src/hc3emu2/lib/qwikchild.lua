@@ -315,14 +315,9 @@ do
   
   function QuickApp:initChildren(children) -- 
     -- CHeck if we run in emulator and warn if not setup correctly
-    if fibaro.hc3emu and not fibaro.hc3emu.DBG.offline then 
-      if not self.isProxy then
-        self:warning("initChildren may not work well without when using HC3emu online")
+    if fibaro.hc3emu and fibaro.hc3emu.offline and not fibaro.hc3emu.stateTag then 
+        self:warning("Recommend to have a state file for remembering children between runs in offline mode")
         --os.exit(-1)
-      end
-    end
-    if fibaro.hc3emu and not fibaro.hc3emu.DBG.state then
-      self:warning("Recommend to have a state file for remembering children between runs")
     end
     
     if self:loadExistingChildren(children) then return end
