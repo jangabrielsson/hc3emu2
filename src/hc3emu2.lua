@@ -38,6 +38,23 @@ local config = require("hc3emu2.config")
 
 local copiMap = setmetatable({}, { __mode = "k" }) -- Weak table for coroutine to process info mapping
 
+local debugFlags = {
+  system = {typ='boolean',descr="System debug (combined)",comb={api=true,http=true,device=true,timer=true}},
+  api = {typ='boolean',descr="Log API errors"},
+  device = {typ='boolean',descr="Device lifecycle debug"},
+  http = {typ='boolean',descr="log HTTP requests"},
+  timer = {typ='boolean',descr="Timer operations"},
+  time = {typ='boolean',descr="Time operations"},
+  onAction = {typ='boolean',descr="Log onAction calls"},
+  onUIEvent = {typ='boolean',descr="Log onUIEvent calls"},
+  notrace = {typ='boolean',descr="No trace log"},
+  rawrefresh = {typ='boolean',descr="Raw refresh log"},
+  refresh = {typ='boolean',descr="Refresh log"},
+  warn = {typ='boolean',descr="Warning log"},
+  server = {typ='boolean',descr="Server log"},
+  web = {typ='boolean',descr="Web server log"},
+}
+
 local function startUp()
   Emu = Emulator() -- Global
   Emu.config.rsrcsDir = config.rsrcsDir
@@ -231,52 +248,99 @@ end
 
 local headerKeys = {}
 do
+  --@D type=<type> - Type of the QA, ex. --%%type=com.fibaro.binarySwitch
   function headerKeys.type(v,h) h.type = v end 
+  --@D name=<name> - Name of the QA, ex. --%%name=My QuickApp
   function headerKeys.name(v,h) h.name = v end
+  --@D proxy=<true|false> - Make this device a proxy device
   function headerKeys.proxy(v,h,k) h.proxy = validate(v,k,"boolean") end
+  --@D proxy_new=<true|false> - Recreate proxy if exists? Default false
   function headerKeys.proxy_new(v,h,k) h.proxy_new = validate(v,k,"boolean") end
+  --@D proxy_set_ui=<true|false> - Set UI for the proxy device at every startup? Default false
   function headerKeys.proxy_set_ui(v,h,k) h.proxy_set_ui = validate(v,k,"boolean") end
+  --@D state=<tag> - Tag for the state file, ex. --%%state=MyQAState
   function headerKeys.state(v,h) h.state = v end
+  --@D time=<time> - Start time for the emulator, ex. --%%time=2027/10/10/12:00:00
   function headerKeys.time(v,h,k) h.startTime = v end
+  --@D speed=<time> - Hours to speed the emulator, ex. --%%speed=24*7 -- speed for 1 week
   function headerKeys.speed(v,h,k) h.speedTime = validate(v,k,"number") end
+  --@D offline=<true|false> - Run in offline mode, ex. --%%offline=true
   function headerKeys.offline(v,h,k) h.offline = validate(v,k,"boolean") end
+  --@D logui=<true|false> - Log proxy's current UI at startup, ex. --%%logui=true
   function headerKeys.logui(v,h,k) h.logUI = validate(v,k,"boolean") end
+  --@D webui=<true|false> - Enable emulated web UI for the QA, ex. --%%webui=true
   function headerKeys.webui(v,h,k) h.webUI = validate(v,k,"boolean") end
+  --@D uid=<string> - uid property of the QA, ex. --%%uid=12345678-1234-5678-1234-567812345678
   function headerKeys.uid(v,h,k) h.uid = validate(v,k,"string") end
+  --@D manufacturer=<string> - Manufacturer property of the QA, ex. --%%manufacturer=MyCompany
   function headerKeys.manufacturer(v,h,k) h.manufacturer = validate(v,k,"string") end
+  --@D model=<string> - Model property of the QA, ex. --%%model=MyModel
   function headerKeys.model(v,h,k) h.model = validate(v,k,"string") end
+  --@D role=<string> - Device role of the QA, ex. --%%role=Light
   function headerKeys.role(v,h,k) h.role = validate(v,k,"string") end
+  --@D description=<string> - Description property of the QA, ex. --%%description=My QuickApp
   function headerKeys.description(v,h,k) h.description = validate(v,k,"string") end
+  --@D latitude=<number> - Latitude of the system, ex. --%%latitude=59.3293
   function headerKeys.latitude(v,h,k) h.latitude = validate(v,k,"number") end
+  --@D longitude=<number> - Longitude of the system, ex. --%%longitude=18.0686
   function headerKeys.longitude(v,h,k) h.longitude = validate(v,k,"number") end
+  --@D temp=<path> - Path to the temporary directory, ex. --%%temp=/tmp/hc3emu
   function headerKeys.temp(v,h,k) h.temp = validate(v,k,"string") end
+  --@D nodebug=<true|false> - Disable debugging, ex. --%%nodebug=true
   function headerKeys.nodebug(v,h,k) h.nodebug = validate(v,k,"boolean") end
+  --@D norun=<true|false> - Load but do not run the QuickApp, ex. --%%norun=true
   function headerKeys.norun(v,h,k) h.norun = validate(v,k,"boolean") end
+  --@D silent=<true|false> - Do not print debug messages, ex. --%%silent=true
   function headerKeys.silent(v,h,k) h.silent = validate(v,k,"boolean") end
+  --@D breakOnLoad=<true|false> - Break on first line when loading the QuickApp, ex. --%%breakOnLoad=true
   function headerKeys.breakOnLoad(v,h,k) h.breakOnLoad = validate(v,k,"boolean") end
+  --@D breakOnInit=<true|false> - Break on first line of QuickApp:onInit(), ex. --%%breakOnInit=true
   function headerKeys.breakOnInit(v,h,k) h.breakOnInit = validate(v,k,"boolean") end
+  --@D save=<path> - Save the QA as a .fqa when running, ex. --%%save=myQA.fqa
   function headerKeys.save(v,h,k) h.save = v end
+  --@D nodir=<true|false> - Do not create emu directory, ex. --%%nodir=true
   function headerKeys.nodir(v,h,k) h.nodir = validate(v,k,"boolean") end
+  --@D conceal=<true|false> - Conceal quickApp variables when saving QA, ex. --%%conceal=password:"Set this to the password"
   function headerKeys.conceal(v,h,k) h.conceal = validate(v,k,"boolean") end
+  --@D condensedLog=<true|false> - Use condensed log format, ex. --%%condensedLog=true
   function headerKeys.condensedLog(v,h,k) h.condensedLog = validate(v,k,"boolean") end
+  --@D pport=<number> - Port for the proxy, ex. --%%pport=8265
   function headerKeys.pport(v,h,k) h.pport = validate(v,k,"number") end 
+  --@D wport=<number> - Port for the web server, ex. --%%wport=8266
   function headerKeys.wport(v,h,k) h.wport = validate(v,k,"number") end 
+  --@D hport=<number> - Port for the help server, ex. --%%hport=8267
   function headerKeys.hport(v,h,k) h.hport = validate(v,k,"number") end
+  --@D dport=<number> - Port for the debugger, ex. --%%dport=8172
   function headerKeys.dport(v,h,k) h.hport = validate(v,k,"number") end 
+  --@D hip=<ip> - IP for the help server, ex. --%%hip=127.0.0.1
   function headerKeys.hip(v,h,k) h.hip = validate(v,k,nil) end 
+  --@D url=<url> - URL for the HC3, ex. --%%url=http://192.168.1.57/
   function headerKeys.url(v,h) h.url = v end
+  --@D user=<user> - User for the HC3, ex. --%%user=admin
   function headerKeys.user(v,h) h.user = v end
+  --@D pwd=<password> - Password for the HC3, ex. --%%pwd=admin
   function headerKeys.pwd(v,h) h.pwd = v end
+  --@D pin=<pin> - PIN for the HC3, ex. --%%pin=1234
   function headerKeys.pin(v,h) h.pin = v end
+  --@D u=<table> - Add UI element to the QuickApp, ex. --%%u={button="btn1",text="Click me",onReleased="myFunction"}
   function headerKeys.u(v,h) h._UI[#h._UI+1] = v end
-  function headerKeys.breakOnLoad(v,h,k) h.breakOnLoad = validate(v,k,"boolean") end
+  --@D debug=<flags> - Set debug flags, ex. --%%debug=system:true,api:true,onAction:true
   function headerKeys.debug(v,h)
     local flags = v:split(",")
     for _,flagv in ipairs(flags) do 
       local flag,val = flagv:match("(.*):(.*)")
       h.debug[flag] = Emu.lib.eval("Header:",val,flag)
+      if debugFlags[flag] then
+        if debugFlags[flag].typ ~= type(h.debug[flag]) then
+          error(fmt("Bad type for debug flag: '%s' - expected %s, got %s",flag,debugFlags[flag].typ,type(h.debug[flag])),2)
+        end
+        if debugFlags[flag].comb then
+          for k,v in pairs(debugFlags[flag].comb) do h.debug[k] = v end
+        end
+      end
     end
   end
+  --@D file=<path,method> - Add file to the QuickApp, ex. --%%file=./myfile.lua,init
   function headerKeys.file(v,h)
     local function addFile(val) 
       local path,m = val:match("(.-),(.-);?%s*$")
@@ -292,12 +356,14 @@ do
     end
     addFile(v)
   end
+  --@D var=<name:value> - Add variable to the QuickApp, ex. --%%var=MyVar:"MyValue"
   function headerKeys.var(v,h)
     local name,value = v:match("(.-):(.*)")
     -- eval(prefix,str,expr,typ,dflt,env)
     value = Emu.lib.eval("Header:",value,name,nil,nil,{config=config.userConfig})
     h.vars[#h.vars+1] = { name = name, value = value }
   end
+  --@D install=<user,pass,url> - Install the QuickApp on the HC3, ex. --%%install=admin,admin,http://192.168.1.57/
   function headerKeys.install(v,h)
     local user,pass,url = v:match("([^,]+),([^,]+),(.+)")
     h.installation = {user=user,pass=pass,url=url}
@@ -381,7 +447,7 @@ end
 
 local ID = 5000
 function Emulator:installDevice(d,files,headers) -- Move to device?
-  Emu:DEBUGF('system',"Installing device %s %s",d.type,d.name or "unnamed")
+  Emu:DEBUGF('device',"Installing device %s %s",d.type,d.name or "unnamed")
 
   headers = headers or {}
   files = files or {}
@@ -444,9 +510,9 @@ function Emulator:installDevice(d,files,headers) -- Move to device?
   }
   self:saveState()
   self.devices[device.id] = dev
-  self.refreshState:addEvent({type='DeviceCreatedEvent',data={id=device.id}})
+  self:refreshEvent('DeviceCreatedEvent',{id=device.id})
   if not headers.norun then dev:startQA() end
-  Emu:DEBUGF('system',"Installing device done %s",dev.id)
+  Emu:DEBUGF('device',"Installing device done %s",dev.id)
   return dev.device
 end
 
@@ -535,6 +601,10 @@ end
 
 function Emulator:process(args) 
   return copas.addthread(wrapFun(args.fun,args.pi,args.typ),table.unpack(args.args or {})) 
+end
+
+function Emulator:refreshEvent(typ,data)
+  self.refreshState:addEvent({type=typ,data=data})
 end
 
 function Emulator:sleep(s) copas.sleep(s) end

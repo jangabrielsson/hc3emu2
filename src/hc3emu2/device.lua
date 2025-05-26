@@ -109,6 +109,7 @@ local stdFuns = {
   "next"
 }
 
+local hc3emuFuns = nil
 local function hc3emuExports(emu) 
   return { 
   lua = emu.lua, loadQA = emu.lib.loadQA, loadQAString = emu.lib.loadQAString, uploadFQA = emu.lib.uploadFQA, 
@@ -116,12 +117,13 @@ local function hc3emuExports(emu)
   getDevices = function() return Emu.devices end,
   speedFor = emu.lib.speedFor, offline = emu.offline, refreshState = emu.refreshState,
   hasState = emu.stateTage ~= nil, taskargs = emu.taskArgs, runTest = emu.lib.runTest,
-  createSimDevice = emu.lib.createSimDevice
+  createSimDevice = emu.lib.createSimDevice, readFile = emu.lib.readFile,
+  SocketServer = SocketServer,
 }
 end
 
 function Device:startQA()
-  Emu:DEBUGF('system',"Starting QuickApp %s %s",self.device.name,self.id)
+  Emu:DEBUGF('device',"Starting QuickApp %s %s",self.device.name,self.id)
   local id = self.id
   
   if #self.files == 0 then return end
@@ -137,7 +139,8 @@ function Device:startQA()
   
   loadfile(Emu.lib.filePath("hc3emu2.class"), "t", env)()
   loadfile(Emu.lib.filePath("hc3emu2.fibaro"), "t", env)()
-  env.fibaro.hc3emu = hc3emuExports(Emu)
+  hc3emuFuns = hc3emuFuns or hc3emuExports(Emu)
+  env.fibaro.hc3emu = hc3emuFuns
   env.fibaro._hc3emu = Emu
   loadfile(Emu.lib.filePath("hc3emu2.net"), "t", env)()
   loadfile(Emu.lib.filePath("hc3emu2.quickapp"), "t", env)()
@@ -154,7 +157,7 @@ function Device:startQA()
       end
       if file.name == "main" then main = file
       else
-        Emu:DEBUGF('system',"Loading file %s for device %s",file.fname,self.id)
+        Emu:DEBUGF('device',"Loading file %s for device %s",file.fname,self.id)
         local code,res = load(file.content, file.fname or file.name, "t", env)
         assert(code, "Error loading file: "..file.fname.." "..tostring(res))
         code()
@@ -165,11 +168,11 @@ function Device:startQA()
       local firstLine,onInitLine = Emu.lib.findFirstLine(main.content)
       if firstLine then Emu.mobdebug.setbreakpoint(main.fname,firstLine) end
     end
-    Emu:DEBUGF('system',"Loading file %s for device %s",main.fname,self.id)
+    Emu:DEBUGF('device',"Loading file %s for device %s",main.fname,self.id)
     local code,res = load(main.content, main.fname or main.name, "t", env)
     assert(code, "Error loading main file: "..main.fname.." "..tostring(res)) 
     code()
-    Emu:DEBUGF('system',"QuickApp process starting %s",self.id)
+    Emu:DEBUGF('device',"QuickApp process starting %s",self.id)
     env.quickApp = env.QuickApp(struct)
     Emu:post({type='quickapp_started',id=id})
     finished:destroy()
@@ -177,6 +180,7 @@ function Device:startQA()
   env.setTimeout(start,0)
   finished:get()
   if self.headers.save then Emu.lib.saveQA(struct.id) end
+  if self.headers.project then Emu.lib.saveProject(struct.id,self) end
 end
 
 return {}

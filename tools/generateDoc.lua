@@ -37,8 +37,8 @@ local function parseDoc(s)
   return out
 end
 
-local directives = parseDoc(readFile("src/emu.lua"))
-table.sort(directives)
+local directives = parseDoc(readFile("src/hc3emu2.lua"))
+--table.sort(directives)
 for _,d in ipairs(directives) do
   d = d:gsub("(.-)ex%.(.*)",function(a,b) return a.."\nex."..b end) or d
   print(d)

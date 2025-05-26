@@ -67,8 +67,8 @@ Settings in QA files overrides project settings that overrides home directory se
 
 ### QuickApp Configuration
 
-QuickApps are configured using special directives in comments starting with `--%%`:
-User credentials, lije HC3 user,url, and password can not be set here, but must be set in a configuration file or environment variabes/file.
+QuickApps are configured using special headers directives in comments starting with `--%%`:
+User credentials, like HC3 user,url, and password should not be set here, but should be set in a configuration file or environment variabes/file.
 
 ```lua
 
@@ -81,6 +81,105 @@ User credentials, lije HC3 user,url, and password can not be set here, but must 
 --%%file=lib.lua:lib              # Include external file
 --%%save=MyQA.fqa                 # Save as FQA file when running
 ```
+
+#### List of headers
+--%%type=\<type> - Type of the QA, 
+ex. --%%type=com.fibaro.binarySwitch
+--%%name=\<name> - Name of the QA, 
+ex. --%%name=My QuickApp
+--%%proxy=\<true|false> - Make this device a proxy device
+--%%proxy_new=\<true|false> - Recreate proxy if exists? Default false
+--%%proxy_set_ui=\<true|false> - Set UI for the proxy device at every startup? Default false
+--%%state=\<tag> - Tag for the state file, 
+ex. --%%state=MyQAState
+--%%time=\<time> - Start time for the emulator, 
+ex. --%%time=2027/10/10/12:00:00
+--%%speed=\<time> - Hours to speed the emulator, 
+ex. --%%speed=24*7 -- speed for 1 week
+--%%offline=\<true|false> - Run in offline mode, 
+ex. --%%offline=true
+--%%logui=\<true|false> - Log proxy's current UI at startup, 
+ex. --%%logui=true
+--%%webui=\<true|false> - Enable emulated web UI for the QA, 
+ex. --%%webui=true
+--%%uid=\<string> - uid property of the QA, 
+ex. --%%uid=12345678-1234-5678-1234-567812345678
+--%%manufacturer=\<string> - Manufacturer property of the QA, 
+ex. --%%manufacturer=MyCompany
+--%%model=\<string> - Model property of the QA, 
+ex. --%%model=MyModel
+--%%role=\<string> - Device role of the QA, 
+ex. --%%role=Light
+--%%description=\<string> - Description property of the QA, 
+ex. --%%description=My QuickApp
+--%%latitude=\<number> - Latitude of the system, 
+ex. --%%latitude=59.3293
+--%%longitude=\<number> - Longitude of the system, 
+ex. --%%longitude=18.0686
+--%%temp=\<path> - Path to the temporary directory, 
+ex. --%%temp=/tmp/hc3emu
+--%%nodebug=\<true|false> - Disable debugging, 
+ex. --%%nodebug=true
+--%%norun=\<true|false> - Load but do not run the QuickApp, 
+ex. --%%norun=true
+--%%silent=\<true|false> - Do not print debug messages, 
+ex. --%%silent=true
+--%%breakOnLoad=\<true|false> - Break on first line when loading the QuickApp, 
+ex. --%%breakOnLoad=true
+--%%breakOnInit=\<true|false> - Break on first line of QuickApp:onInit(), 
+ex. --%%breakOnInit=true
+--%%save=\<path> - Save the QA as a .fqa when running, 
+ex. --%%save=myQA.fqa
+--%%nodir=\<true|false> - Do not create emu directory, 
+ex. --%%nodir=true
+--%%conceal=\<true|false> - Conceal quickApp variables when saving QA, 
+ex. --%%conceal=password:"Set this to the password"
+--%%condensedLog=\<true|false> - Use condensed log format, 
+ex. --%%condensedLog=true
+--%%pport=\<number> - Port for the proxy, 
+ex. --%%pport=8265
+--%%wport=\<number> - Port for the web server, 
+ex. --%%wport=8266
+--%%hport=\<number> - Port for the help server, 
+ex. --%%hport=8267
+--%%dport=\<number> - Port for the debugger, 
+ex. --%%dport=8172
+--%%hip=\<ip> - IP for the help server, 
+ex. --%%hip=127.0.0.1
+--%%url=\<url> - URL for the HC3, 
+ex. --%%url=http://192.168.1.57/
+--%%user=\<user> - User for the HC3, 
+ex. --%%user=admin
+--%%pwd=\<password> - Password for the HC3, 
+ex. --%%pwd=admin
+--%%pin=\<pin> - PIN for the HC3, 
+ex. --%%pin=1234
+--%%u=\<table> - Add UI element to the QuickApp, 
+ex. --%%u={button="btn1",text="Click me",onReleased="myFunction"}
+--%%debug=\<flags> - Set debug flags, 
+ex. --%%debug=system:true,api:true,onAction:true
+--%%file=\<path,method> - Add file to the QuickApp, 
+ex. --%%file=./myfile.lua,init
+--%%var=\<name:value> - Add variable to the QuickApp, 
+ex. --%%var=MyVar:"MyValue"
+--%%install=\<user,pass,url> - Install the QuickApp on the HC3, 
+ex. --%%install=admin,admin,http://192.168.1.57/
+
+#### List of debug flags
+  system=\<boolean> --System debug (combined)
+  api=\<boolean> --Log API errors
+  device=\<boolean> --Device lifecycle debug
+  http=\<boolean> --log HTTP requests
+  timer=\<boolean> --Timer operations
+  time=\<boolean> --Time operations
+  onAction=\<boolean> --Log onAction calls
+  onUIEvent=\<boolean> --Log onUIEvent calls
+  notrace=\<boolean> --No trace log
+  rawrefresh=\<boolean> --Raw refresh log
+  refresh=\<boolean> --Refresh log
+  warn=\<boolean> --Warning log
+  server=\<boolean> --Server log
+  web=\<boolean> --Web server log
 
 ### Configuration files ~./hc3emu.lua and ./.hc3emu.lua
 The file should be a lua file that returns a table.
