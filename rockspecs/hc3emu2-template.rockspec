@@ -35,6 +35,7 @@ build = {
    type = "builtin",
    modules = {
       hc3emu2 = "src/hc3emu2.lua", -- Proxy to load package or developer file
+      ["hc3emu2.emu"] = "src/hc3emu2/emu.lua",
       ["hc3emu2.device"] = "src/hc3emu2/device.lua",
       ["hc3emu2.fibaro"] = "src/hc3emu2/fibaro.lua",
       ["hc3emu2.quickapp"] = "src/hc3emu2/quickapp.lua",
