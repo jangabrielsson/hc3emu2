@@ -15,4 +15,5 @@
   temp
   latitude, longitude
 
+- _DEVELOP root
 - Clean up webserver with proper handling and API
