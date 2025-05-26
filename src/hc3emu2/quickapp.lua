@@ -74,6 +74,12 @@ function QuickAppBase:updateProperty(name,value)
 end
 
 function QuickAppBase:updateView(elm,prop,value)
+  api.post("/plugins/updateView", {
+    deviceId = self.id,
+    componentName = elm,
+    propertyName = prop,
+    newValue = value
+  })
 end
 
 function QuickAppBase:setVariable(name, value)

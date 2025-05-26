@@ -173,11 +173,14 @@ local function setup(Emu)
   end)
   add("POST/customEvents", function(ctx)
     local data = dflts('customEvents',ctx.data)
-    store.customEvents[ctx.vars.name] = {'POST',data}
+    store.customEvents[ctx.data.name] = {'POST',data}
     return {data,HTTP.CREATED}
   end)
-  add("POST/customEvents", function(ctx)
-    store.customEvents[ctx.vars.name] = {'POST',ctx.data}
+  add("POST/customEvents/<name>", function(ctx)
+    Emu:refreshEvent('CustomEvent', {
+      name = ctx.vars.name,
+    })
+    return {nil,HTTP.OK}
   end)
   add("PUT/customEvents/<name>", function(ctx)
     store.customEvents[ctx.vars.name] = {'PUT',ctx.data}

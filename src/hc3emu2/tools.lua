@@ -110,6 +110,18 @@ local function loadQA(path,optionalHeaders,noRun)   -- Load QA from file and may
   return struct
 end
 
+local function saveProject(id,dev)  -- Save project to .project file
+  local r = {}
+  for _,f in ipairs(dev.files) do
+    r[f.name] = f.fname
+  end
+  r.main = self.fname
+  local f = io.open(".project","w")
+  assert(f,"Can't open file "..".project")
+  f:write(json.encodeFormated({files=r,id=id}))
+  f:close()
+end
+
 return {
   createTempName = createTempName,
   findFirstLine = findFirstLine,
@@ -118,4 +130,5 @@ return {
   getFQA = getFQA,
   saveQA = saveQA,
   loadQA = loadQA,
+  saveProject = saveProject,
 }

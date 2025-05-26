@@ -192,7 +192,7 @@ function API:setupRoutes()
     end
     local dev = devices[id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
-    return dev.device.properties[name],HTTP.OK
+    return {value=dev.device.properties[name],modified=0},HTTP.OK
   end)
 
   self:add("POST/devices/<id>/action/<name>",function(ctx)
@@ -211,7 +211,25 @@ function API:setupRoutes()
     end
   end)
 
-  self:add("GET/devices/<id>/action/<name>",function(ctx)
+ self:add("GET/devices/<id>/action/<name>",function(ctx)
+   local id = ctx.vars.id
+    local dev = devices[id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path,ctx.data) end
+    else
+      local action = ctx.vars.name
+      local data,args = {},{}
+      for k,v in pairs(ctx.query) do data[#data+1] = {k,v} end
+      table.sort(data,function(a,b) return a[1] < b[1] end)
+      for _,d in ipairs(data) do args[#args+1] = d[2] end
+      emu:process{
+        pi=dev.env._PI,
+        fun=function()
+          dev.env.onAction(id,{ deviceId = id, actionName = action, args =args})
+        end
+      }
+      emu:sleep(0.01)
+      return nil,HTTP.OK
+    end
   end)
 
   self:add("PUT/devices/<id>",function(ctx)
@@ -242,6 +260,13 @@ function API:setupRoutes()
       local value = ctx.data.value
       if dev.device.properties[prop] ~= value then
         -- Generate refreshState event
+        if not dev.device.isProxy then
+          emu:refreshEvent('DevicePropertyUpdatedEvent',{
+            deviceId = id,
+            propertyName = prop,
+            newValue = value,
+          })
+      end
         dev:watching(prop,value)
       end
       dev.device.properties[prop] = value
@@ -254,7 +279,7 @@ function API:setupRoutes()
     local dev = devices[ctx.data.deviceId]
     if not dev then return hc3.post(ctx.path,ctx.data) end
     local data = ctx.data
-    dev:updateView(data.elementId,ctx.data.propertyName,ctx.data.value)
+    dev:updateView(data.componentName,ctx.data.propertyName,ctx.data.newValue)
     if dev.device.isProxy then return hc3.post(ctx.path,ctx.data)
     else return nil,HTTP.OK end
   end)

@@ -54,7 +54,7 @@ local function setTime(t,update)
   if type(t) == 'string' then t = parseTime(t) end
   timeOffset = t - orgTime() 
   if update ~= false then Emu:post({type='time_changed'}) end
-  Emu:DEBUGF('info',"Time set to %s",userDate("%c"))
+  Emu:DEBUGF('time',"Time set to %s",userDate("%c"))
 end
 
 local function createQueue()

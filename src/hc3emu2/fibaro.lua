@@ -5,7 +5,7 @@ local fmt = string.format
 _PI = { timers = {}, env = _G, dbg={} } -- Process info to keep track of
 function _PI.cancelTimers() -- Cancel all timer started by QA (for restarts)
   for ref,typ in pairs(_PI.timers) do 
-    _emu:DEBUGF('system',"Cancelling timer %s",tostring(ref)) 
+    _emu:DEBUGF('timer',"Cancelling timer %s",tostring(ref)) 
     _emu:clearTimeout(ref)
     if typ == 'interval' then _emu:clearInterval(ref) else _emu:clearTimeout(ref) end
   end
@@ -15,11 +15,11 @@ function _PI.addTimer(ref,typ) _PI.timers[ref] = typ return ref end
 function _PI.cancelTimer(ref,op) 
   local typ = _PI.timers[ref]
   _PI.timers[ref] = nil 
-  --_emu:DEBUGF('system',"%s timer %s",op,tostring(ref)) 
+  --_emu:DEBUGF('timer',"%s timer %s",op,tostring(ref)) 
   if typ == 'interval' then _emu:clearInterval(ref) else _emu:clearTimeout(ref) end
-  _emu:DEBUGF('system',"Timer %s %s",tostring(ref),op)
+  _emu:DEBUGF('timer',"Timer %s %s",tostring(ref),op)
   if next(_PI.timers) == nil then
-    _emu:DEBUGF('system',"No timers left")
+    _emu:DEBUGF('timer',"No timers left")
   end
   return ref 
 end
