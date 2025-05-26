@@ -35,6 +35,7 @@ build = {
    type = "builtin",
    modules = {
       hc3emu2 = "src/hc3emu2.lua", -- Proxy to load package or developer file
+      ["hc3emu2.emu"] = "src/hc3emu2/emu.lua",
       ["hc3emu2.device"] = "src/hc3emu2/device.lua",
       ["hc3emu2.fibaro"] = "src/hc3emu2/fibaro.lua",
       ["hc3emu2.quickapp"] = "src/hc3emu2/quickapp.lua",
@@ -47,6 +48,7 @@ build = {
       ["hc3emu2.log"] = "src/hc3emu2/log.lua",
       ["hc3emu2.proxy"] = "src/hc3emu2/proxy.lua",
       ["hc3emu2.offline"] = "src/hc3emu2/offline.lua",
+      ["hc3emu2.offline_data"] = "src/hc3emu2/offline_data.lua",
       ["hc3emu2.tools"] = "src/hc3emu2/tools.lua",
       ["hc3emu2.embedui"] = "src/hc3emu2/embedui.lua",
       --["hc3emu2.scene"] = "src/hc3emu2/scene.lua",
@@ -61,11 +63,14 @@ build = {
       ["hc3emu2.lib.sourcetrigger"] = "src/hc3emu2/lib/sourcetrigger.lua",
       ["hc3emu2.lib.qwikchild"] = "src/hc3emu2/lib/qwikchild.lua",
       ["hc3emu2.lib.eventlib"] = "src/hc3emu2/lib/eventlib.lua",
+      ["hc3emu2.lib.eventmgr"] = "src/hc3emu2/lib/eventmgr.lua",
       ["hc3emu2.lib.sha2"] = "src/hc3emu2/lib/sha2.lua",
+      ["hc3emu2.lib.aeslua53.lua"] = "src/hc3emu2/lib/aeslua53.lua",
       ["hc3emu2.lib.markdown"] = "src/hc3emu2/lib/markdown.lua",
 
       ["hc3emu2.plugin.image"] = "src/hc3emu2/plugin/image.lua",
-      ["hc3emu2.plugin.terminal"] = "src/hc3emu2/plugin/terminal.lua"
+      ["hc3emu2.plugin.terminal"] = "src/hc3emu2/plugin/terminal.lua",
+      ["hc3emu2.plugin.taskrunner"] = "src/hc3emu2/plugin/taskrunner.lua"
   },
   copy_directories = { "doc", "src/rsrcs" }
 }
