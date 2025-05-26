@@ -43,6 +43,7 @@ end
 
 local transformTable
 local function debugOutput(tag, str, typ, time)
+  str = tostring(str)
   time = time or Emu.lib.userTime and Emu.lib.userTime() or os.time()
   for _,p in ipairs(log.logFilter) do if str:find(p) then return end end
   str = str:gsub("<table (.-)>(.-)</table>",transformTable) -- Remove table tags
