@@ -1,4 +1,4 @@
-local hc3emu = fibaro._hc3emu
+local hc3emu = _emu
 local require = hc3emu.lua.require
 local socket = require("socket")
 local copas = require("copas")

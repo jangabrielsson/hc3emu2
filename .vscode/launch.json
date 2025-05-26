@@ -38,7 +38,8 @@
       "sourceEncoding": "UTF-8",
       "interpreter": "lua",
       "arguments": [
-        "${workspaceFolder}${pathSeparator}src${pathSeparator}hc3emu2.lua",
+        "-e",
+        "require('hc3emu2')",
         "run",
         "${relativeFile}",
         "develop"

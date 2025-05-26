@@ -115,7 +115,6 @@ local function saveProject(id,dev)  -- Save project to .project file
   for _,f in ipairs(dev.files) do
     r[f.name] = f.fname
   end
-  r.main = self.fname
   local f = io.open(".project","w")
   assert(f,"Can't open file "..".project")
   f:write(json.encodeFormated({files=r,id=id}))
