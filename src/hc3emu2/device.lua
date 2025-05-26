@@ -111,11 +111,12 @@ local stdFuns = {
 
 local function hc3emuExports(emu) 
   return { 
-  lua = emu.lua, loadQA = emu.loadQA, loadQAString = emu.loadQAString, uploadFQA = emu.uploadFQA, 
-  getFQA = emu.getFQA, getDevice = function(id) return Emu.devices[id] end,
+  lua = emu.lua, loadQA = emu.lib.loadQA, loadQAString = emu.lib.loadQAString, uploadFQA = emu.lib.uploadFQA, 
+  getFQA = emu.lib.getFQA, getDevice = function(id) return Emu.devices[id] end,
   getDevices = function() return Emu.devices end,
   speedFor = emu.lib.speedFor, offline = emu.offline, refreshState = emu.refreshState,
-  hasState = emu.stateTage ~= nil,
+  hasState = emu.stateTage ~= nil, taskargs = emu.taskArgs, runTest = emu.lib.runTest,
+  createSimDevice = emu.lib.createSimDevice
 }
 end
 
@@ -171,7 +172,7 @@ function Device:startQA()
     Emu:DEBUGF('system',"QuickApp process starting %s",self.id)
     env.quickApp = env.QuickApp(struct)
     Emu:post({type='quickapp_started',id=id})
-    finished:release()
+    finished:destroy()
   end
   env.setTimeout(start,0)
   finished:get()

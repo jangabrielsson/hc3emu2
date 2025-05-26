@@ -7,16 +7,13 @@
 --%%u={{button='b5',text='-',onReleased="b5"},{button='b6',text='+',onReleased="b6"}}
 function QuickApp:onInit()
   self:debug(self.name,self.id)
-  local emu = fibaro.hc3emu
-  local qa = fibaro.hc3emu:getQA(self.id)
-  local mainQA = fibaro.hc3emu:getQA(emu.mainDeviceId)
-  qa.dbg = mainQA.dbg
+  local parentId = self:getVariable("parent")
 end
 
 local modifier = {"Pressed","HeldDown","Released","Released"}
-local dispatcher = fibaro.hc3emu.dispatcher
+local refresh = fibaro.hc3emu.refreshState
 function QuickApp:post(keyId,keyAttribute)
-  dispatcher:addEvent({type='CentralSceneEvent',data={id=plugin.mainDeviceId, keyId=keyId, keyAttribute=keyAttribute}})
+  refresh:addEvent({type='CentralSceneEvent',data={id=plugin.mainDeviceId, keyId=keyId, keyAttribute=keyAttribute}})
 end
 
 function QuickApp:b1() self:post(1,"Pressed") end

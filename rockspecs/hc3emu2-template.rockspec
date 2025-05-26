@@ -68,7 +68,8 @@ build = {
       ["hc3emu2.lib.markdown"] = "src/hc3emu2/lib/markdown.lua",
 
       ["hc3emu2.plugin.image"] = "src/hc3emu2/plugin/image.lua",
-      ["hc3emu2.plugin.terminal"] = "src/hc3emu2/plugin/terminal.lua"
+      ["hc3emu2.plugin.terminal"] = "src/hc3emu2/plugin/terminal.lua",
+      ["hc3emu2.plugin.taskrunner"] = "src/hc3emu2/plugin/taskrunner.lua"
   },
   copy_directories = { "doc", "src/rsrcs" }
 }

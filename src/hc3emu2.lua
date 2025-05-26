@@ -1,17 +1,26 @@
 local VERSION = "1.1.2"
 
-local mode, mainFile
-local startupMode = { run=true, develop=true, test=true }
+local mode, mainFile, develop, taskFile
+local startupMode = { 
+  run=true, test=true,
+  uploadQA=true, downloadUnpack=true, updateFile=true
+}
 for i=0,4 do
-  if startupMode[arg[i]] then mode = arg[i] mainFile = arg[i+1] break end
+  if startupMode[arg[i]] then mode,mainFile,develop = arg[i],arg[i+1],arg[i+2] break end
 end
 
 assert(mode,"Missing mode command line argument")
 assert(mainFile,"Missing file command line argument")
-if mode == "develop" or _DEVELOP then -- Running in developer mode
+if develop == "develop" or _DEVELOP then -- Running in developer mode
   print("Developer mode")
   _DEVELOP = true
   package.path = ";src/?;src/?.lua;"..package.path
+end
+
+if mode ~= "run" then
+  local taskrunner = package.searchpath("hc3emu2.plugin.taskrunner",package.path)
+  taskArgs = {cmd=mode,args={mainFile}}
+  mainFile = taskrunner
 end
 
 local fmt = string.format
@@ -35,13 +44,16 @@ local function startUp()
   Emu.config.tempDir = config.tempDir
   Emu.config.EMU_DIR = config.EMU_DIR
   Emu.config.EMUSUB_DIR = config.EMUSUB_DIR
-  
+  Emu.config.fileSeparator = config.fileSeparator
+  Emu.taskArgs = taskArgs
+
   local function mergeLib(lib1,lib2) for k,v in pairs(lib2 or {}) do lib1[k] = v end end
   mergeLib(Emu.lib,require("hc3emu2.log"))
   mergeLib(Emu.lib,require("hc3emu2.utilities"))
   mergeLib(Emu.lib,require("hc3emu2.tools"))
   mergeLib(Emu.lib,require("hc3emu2.unittest"))
   mergeLib(Emu.lib,require("hc3emu2.device"))
+  mergeLib(Emu.lib,require("hc3emu2.simdevices"))
   Emu.lib.ui = require("hc3emu2.ui")
   
   local src = Emu.lib.readFile(mainFile)
@@ -239,6 +251,7 @@ do
   function headerKeys.longitude(v,h,k) h.longitude = validate(v,k,"number") end
   function headerKeys.temp(v,h,k) h.temp = validate(v,k,"string") end
   function headerKeys.nodebug(v,h,k) h.nodebug = validate(v,k,"boolean") end
+  function headerKeys.norun(v,h,k) h.norun = validate(v,k,"boolean") end
   function headerKeys.silent(v,h,k) h.silent = validate(v,k,"boolean") end
   function headerKeys.breakOnLoad(v,h,k) h.breakOnLoad = validate(v,k,"boolean") end
   function headerKeys.breakOnInit(v,h,k) h.breakOnInit = validate(v,k,"boolean") end
@@ -255,7 +268,7 @@ do
   function headerKeys.user(v,h) h.user = v end
   function headerKeys.pwd(v,h) h.pwd = v end
   function headerKeys.pin(v,h) h.pin = v end
-  function headerKeys.u(v,h) h._UI[#h.UI+1] = v end
+  function headerKeys.u(v,h) h._UI[#h._UI+1] = v end
   function headerKeys.breakOnLoad(v,h,k) h.breakOnLoad = validate(v,k,"boolean") end
   function headerKeys.debug(v,h)
     local flags = v:split(",")
@@ -432,7 +445,7 @@ function Emulator:installDevice(d,files,headers) -- Move to device?
   self:saveState()
   self.devices[device.id] = dev
   self.refreshState:addEvent({type='DeviceCreatedEvent',data={id=device.id}})
-  dev:startQA()
+  if not headers.norun then dev:startQA() end
   Emu:DEBUGF('system',"Installing device done %s",dev.id)
   return dev.device
 end
@@ -475,6 +488,10 @@ function Emulator:handleEvent(event)
   for _,f in ipairs(self.EVENT[event.type] or {}) do
     f(event,self)
   end
+end
+
+function Emulator:getPI(co)
+  return copiMap[co or coroutine.running()]
 end
 
 local function pruneTB(tb)

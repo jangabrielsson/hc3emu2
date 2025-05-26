@@ -1,8 +1,7 @@
-local hc3emu = fibaro.hc3emu
+local hc3emu = fibaro._hc3emu
 local require = hc3emu.lua.require
 local socket = require("socket")
 local copas = require("copas")
-local hc3emu = fibaro.hc3emu
 local mobdebug = hc3emu.mobdebug
 
 local function async(fun,...)

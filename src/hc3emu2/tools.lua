@@ -104,6 +104,8 @@ local function saveQA(id,fileName) -- Save installed QA to disk as .fqa  //Move 
 end
 
 local function loadQA(path,optionalHeaders,noRun)   -- Load QA from file and maybe run it
+  optionalHeaders = optionalHeaders or {}
+  optionalHeaders.norun = tostring(noRun==true) -- If noRun is true, don't run the QuickApp
   local struct = Emu:installQuickAppFile(path,optionalHeaders)
   return struct
 end

@@ -1,0 +1,59 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+      {
+        "label": "QA2, upload",
+        "type": "shell",
+        "command": "lua", 
+        "args": [
+          "-e",
+          "require('hc3emu2')",
+          "uploadQA",
+          "${relativeFile}"
+        ]
+      },
+      {
+        "label": "Test picker",
+        "type": "shell",
+        "command": "echo",
+        "args": [ "${input:pickEnvFile}" ]
+      }
+    ],
+    "inputs": [
+      {
+        "type": "promptString",
+        "id": "QA_id",
+        "description": "deviceId of QA from HC3 you want to download?",
+        "default": "-"
+      },
+      {
+        "type": "promptString",
+        "id": "path_id",
+        "description": "path where to store the QA",
+        "default": "dev"
+      },
+      {
+        "type": "promptString",
+        "id": "QA_name",
+        "description": "'.' for open file, or QA path name",
+        "default": "."
+      },
+      {
+        "id": "pickEnvFile",
+        "type": "command",
+        "command": "launch-file-picker.pick",
+        "args": {
+          "options": {
+            "title": "pick env file",
+            "path": ".",
+            "filterExt": ".env"
+          },
+          "output": {
+            "defaultPath": "client/env/dev.env"
+          }
+        }
+      }     
+    ]
+  }

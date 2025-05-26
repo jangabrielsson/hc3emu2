@@ -1,4 +1,5 @@
 --%%name=SyncTest
+--%%debug=system:true
 
 local function httpRequest()
   local loc = api.get("/settings/location")
