@@ -249,7 +249,7 @@ do
   --@D webui=<true|false> - Enable emulated web UI for the QA, ex. --%%webui=true
   function headerKeys.webui(v,h,k) h.webUI = validate(v,k,"boolean") end
   --@D uid=<string> - uid property of the QA, ex. --%%uid=12345678-1234-5678-1234-567812345678
-  function headerKeys.uid(v,h,k) h.uid = validate(v,k,"string") end
+  function headerKeys.uid(v,h,k) h.uid = v end
   --@D manufacturer=<string> - Manufacturer property of the QA, ex. --%%manufacturer=MyCompany
   function headerKeys.manufacturer(v,h,k) h.manufacturer = validate(v,k,"string") end
   --@D model=<string> - Model property of the QA, ex. --%%model=MyModel
@@ -353,6 +353,16 @@ function Emulator:getHeaders(src,extraHeaders)
   local code = src
   local eod = src:find("%-%-ENDOFHEADERS") -- Embedded headers
   if eod then code = src:sub(1,eod-1) end
+
+  --@D include=<file> - Include a file with additional directives. Format <direct>=<value>
+  local include = code:match("%-%-%%%%include=(.-)%s*\n")
+  if include then
+    local f = io.open(include)
+    assert(f,"Can't open include file "..tostring(include))
+    local src = f:read("*all") f:close()
+    code = code..src.."\n"
+  end
+
   if code:sub(1) ~= "\n" then code = "\n"..code end
 
   code:gsub("\n%-%-%%%%([%w_]-)=([^\n]*)",function(key,str) 

@@ -104,7 +104,7 @@ end
 
 local stdFuns = { 
   'setmetatable', 'getmetatable', 'assert', 'rawget', 'rawset', 'pairs', 
-  'print', 'ipairs', 'type', 'tostring', 'tonumber', 'string', 'table', 
+  'print', 'ipairs', 'tostring', 'tonumber', 'string', 'table', 
   'math', 'pcall', 'xpcall', "error", "json", "select", "collect_garbage",
   "next"
 }
@@ -129,10 +129,11 @@ function Device:startQA()
   if #self.files == 0 then return end
   local env = { 
     api = Emu.api, 
-    os = { time = Emu.lib.userTime, date = Emu.lib.userDate, exit = os.exit, clock = os.clock() } 
+    os = { time = Emu.lib.userTime, date = Emu.lib.userDate, exit = os.exit, clock = os.clock, difftime = os.difftime } 
   }
   local struct = self.device
   for _,v in ipairs(stdFuns) do env[v] = _G[v] end
+  env.type = function(e) local t = type(e) return t == "table" and e.__USERDATA and "userdata" or t end
   env._G = env
   env._emu = Emu
   self.env = env

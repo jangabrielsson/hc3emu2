@@ -53,7 +53,6 @@ function task.updateFile(fname)
       else 
         printf("Updated QA:%s, file%s, QAfile:%s ",p.id,fn,qn)
       end
-      SUCCESS()
       os.exit(0)
     end
   end
@@ -66,7 +65,6 @@ function task.downloadUnpack(id,path)
   local deviceId = tonumber(id)
   __assert_type(id, "number")
   emu.downloadFQA(id,path)
-  SUCCESS()
 end
 
 __TAG = "TASKRUNNER"
