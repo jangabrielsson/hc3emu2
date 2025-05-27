@@ -1,5 +1,5 @@
 # HC3 QuickApp Emulator
-![HC3 Emulator](./hc3emusmall.png)
+![HC3 Emulator](./doc/hc3emusmall.png)
 
 ## Overview
 
@@ -21,14 +21,16 @@ Forum thread discussing the emulator (and questions) [here](https://forum.fibaro
 
 ```bash
 # Install via LuaRocks
-luarocks install hc3emu
+luarocks install hc3emu2
 
 # Install specific version
-luarocks install hc3emu <version>
+luarocks install hc3emu2 <version>
 
 # Update to latest version
-luarocks install hc3emu
+luarocks install hc3emu2
 ```
+There is an older version, named only 'hc3emu', that can also be installed but is nit supported anymore.
+
 
 - For Windows installation see [here](https://forum.fibaro.com/topic/78728-quickapp-emulator-hc3emu/page/2/#findComment-290650)
 - For Windows WSL installation see [here](https://forum.fibaro.com/topic/78728-quickapp-emulator-hc3emu/page/2/#findComment-290649)
@@ -67,119 +69,117 @@ Settings in QA files overrides project settings that overrides home directory se
 
 ### QuickApp Configuration
 
-QuickApps are configured using special headers directives in comments starting with `--%%`:
+QuickApps are configured using special headers directives in comments starting with `--%%`\<name>=\<value>
 User credentials, like HC3 user,url, and password should not be set here, but should be set in a configuration file or environment variabes/file.
 
 ```lua
-
 --%%name=MyQuickApp               # Name of the QuickApp
 --%%type=com.fibaro.binarySwitch  # Device type
---%%proxy=MyProxy                 # HC3 proxy name
---%%dark=true                     # Enable dark mode for logs
+--%%proxy=true                    # Create HC3 proxy (named MyQuickAppProxy)
 --%%var=foo:config.secret         # Set QuickApp variable (from config file)
---%%debug=warnings:true          # Configure a debug flag
+--%%debug=api:true                # Configure a debug flag
 --%%file=lib.lua:lib              # Include external file
 --%%save=MyQA.fqa                 # Save as FQA file when running
 ```
 
 #### List of headers
---%%type=\<type> - Type of the QA, 
+- --%%type=\<type> - Type of the QA, 
 ex. --%%type=com.fibaro.binarySwitch
---%%name=\<name> - Name of the QA, 
+- --%%name=\<name> - Name of the QA, 
 ex. --%%name=My QuickApp
---%%proxy=\<true|false> - Make this device a proxy device
---%%proxy_new=\<true|false> - Recreate proxy if exists? Default false
---%%proxy_set_ui=\<true|false> - Set UI for the proxy device at every startup? Default false
---%%state=\<tag> - Tag for the state file, 
+- --%%proxy=\<true|false> - Make this device a proxy device
+- --%%proxy_new=\<true|false> - Recreate proxy if exists? Default false
+- --%%proxy_set_ui=\<true|false> - Set UI for the proxy device at every startup? Default false
+- --%%state=\<tag> - Tag for the state file, 
 ex. --%%state=MyQAState
---%%time=\<time> - Start time for the emulator, 
+- --%%time=\<time> - Start time for the emulator, 
 ex. --%%time=2027/10/10/12:00:00
---%%speed=\<time> - Hours to speed the emulator, 
+- --%%speed=\<time> - Hours to speed the emulator, 
 ex. --%%speed=24*7 -- speed for 1 week
---%%offline=\<true|false> - Run in offline mode, 
+- --%%offline=\<true|false> - Run in offline mode, 
 ex. --%%offline=true
---%%logui=\<true|false> - Log proxy's current UI at startup, 
+- --%%logui=\<true|false> - Log proxy's current UI at startup, 
 ex. --%%logui=true
---%%webui=\<true|false> - Enable emulated web UI for the QA, 
+- --%%webui=\<true|false> - Enable emulated web UI for the QA, 
 ex. --%%webui=true
---%%uid=\<string> - uid property of the QA, 
+- --%%uid=\<string> - uid property of the QA, 
 ex. --%%uid=12345678-1234-5678-1234-567812345678
---%%manufacturer=\<string> - Manufacturer property of the QA, 
+- --%%manufacturer=\<string> - Manufacturer property of the QA, 
 ex. --%%manufacturer=MyCompany
---%%model=\<string> - Model property of the QA, 
+- --%%model=\<string> - Model property of the QA, 
 ex. --%%model=MyModel
---%%role=\<string> - Device role of the QA, 
+- --%%role=\<string> - Device role of the QA, 
 ex. --%%role=Light
---%%description=\<string> - Description property of the QA, 
+- --%%description=\<string> - Description property of the QA, 
 ex. --%%description=My QuickApp
---%%latitude=\<number> - Latitude of the system, 
+- --%%latitude=\<number> - Latitude of the system, 
 ex. --%%latitude=59.3293
---%%longitude=\<number> - Longitude of the system, 
+- --%%longitude=\<number> - Longitude of the system, 
 ex. --%%longitude=18.0686
---%%temp=\<path> - Path to the temporary directory, 
+- --%%temp=\<path> - Path to the temporary directory, 
 ex. --%%temp=/tmp/hc3emu
---%%nodebug=\<true|false> - Disable debugging, 
+- --%%nodebug=\<true|false> - Disable debugging, 
 ex. --%%nodebug=true
---%%norun=\<true|false> - Load but do not run the QuickApp, 
+- --%%norun=\<true|false> - Load but do not run the QuickApp, 
 ex. --%%norun=true
---%%silent=\<true|false> - Do not print debug messages, 
+- --%%silent=\<true|false> - Do not print debug messages, 
 ex. --%%silent=true
---%%breakOnLoad=\<true|false> - Break on first line when loading the QuickApp, 
+- --%%breakOnLoad=\<true|false> - Break on first line when loading the QuickApp, 
 ex. --%%breakOnLoad=true
---%%breakOnInit=\<true|false> - Break on first line of QuickApp:onInit(), 
+- --%%breakOnInit=\<true|false> - Break on first line of QuickApp:onInit(), 
 ex. --%%breakOnInit=true
---%%save=\<path> - Save the QA as a .fqa when running, 
+- --%%save=\<path> - Save the QA as a .fqa when running, 
 ex. --%%save=myQA.fqa
---%%nodir=\<true|false> - Do not create emu directory, 
+- --%%nodir=\<true|false> - Do not create emu directory, 
 ex. --%%nodir=true
---%%conceal=\<true|false> - Conceal quickApp variables when saving QA, 
+- --%%conceal=\<true|false> - Conceal quickApp variables when saving QA, 
 ex. --%%conceal=password:"Set this to the password"
---%%condensedLog=\<true|false> - Use condensed log format, 
+- --%%condensedLog=\<true|false> - Use condensed log format, 
 ex. --%%condensedLog=true
---%%pport=\<number> - Port for the proxy, 
+- --%%pport=\<number> - Port for the proxy, 
 ex. --%%pport=8265
---%%wport=\<number> - Port for the web server, 
+- --%%wport=\<number> - Port for the web server, 
 ex. --%%wport=8266
---%%hport=\<number> - Port for the help server, 
+- --%%hport=\<number> - Port for the help server, 
 ex. --%%hport=8267
---%%dport=\<number> - Port for the debugger, 
+- --%%dport=\<number> - Port for the debugger, 
 ex. --%%dport=8172
---%%hip=\<ip> - IP for the help server, 
+- --%%hip=\<ip> - IP for the help server, 
 ex. --%%hip=127.0.0.1
---%%url=\<url> - URL for the HC3, 
+- --%%url=\<url> - URL for the HC3, 
 ex. --%%url=http://192.168.1.57/
---%%user=\<user> - User for the HC3, 
+- --%%user=\<user> - User for the HC3, 
 ex. --%%user=admin
---%%pwd=\<password> - Password for the HC3, 
+- --%%pwd=\<password> - Password for the HC3, 
 ex. --%%pwd=admin
---%%pin=\<pin> - PIN for the HC3, 
+- --%%pin=\<pin> - PIN for the HC3, 
 ex. --%%pin=1234
---%%u=\<table> - Add UI element to the QuickApp, 
+- --%%u=\<table> - Add UI element to the QuickApp, 
 ex. --%%u={button="btn1",text="Click me",onReleased="myFunction"}
---%%debug=\<flags> - Set debug flags, 
+- --%%debug=\<flags> - Set debug flags, 
 ex. --%%debug=system:true,api:true,onAction:true
---%%file=\<path,method> - Add file to the QuickApp, 
+- --%%file=\<path,method> - Add file to the QuickApp, 
 ex. --%%file=./myfile.lua,init
---%%var=\<name:value> - Add variable to the QuickApp, 
+- --%%var=\<name:value> - Add variable to the QuickApp, 
 ex. --%%var=MyVar:"MyValue"
---%%install=\<user,pass,url> - Install the QuickApp on the HC3, 
+- --%%install=\<user,pass,url> - Install the QuickApp on the HC3, 
 ex. --%%install=admin,admin,http://192.168.1.57/
 
 #### List of debug flags
-  system=\<boolean> --System debug (combined)
-  api=\<boolean> --Log API errors
-  device=\<boolean> --Device lifecycle debug
-  http=\<boolean> --log HTTP requests
-  timer=\<boolean> --Timer operations
-  time=\<boolean> --Time operations
-  onAction=\<boolean> --Log onAction calls
-  onUIEvent=\<boolean> --Log onUIEvent calls
-  notrace=\<boolean> --No trace log
-  rawrefresh=\<boolean> --Raw refresh log
-  refresh=\<boolean> --Refresh log
-  warn=\<boolean> --Warning log
-  server=\<boolean> --Server log
-  web=\<boolean> --Web server log
+  - system=\<boolean> --System debug (combined)
+  - api=\<boolean> --Log API errors
+  - device=\<boolean> --Device lifecycle debug
+  - http=\<boolean> --log HTTP requests
+  - timer=\<boolean> --Timer operations
+  - time=\<boolean> --Time operations
+  - onAction=\<boolean> --Log onAction calls
+  - onUIEvent=\<boolean> --Log onUIEvent calls
+  - notrace=\<boolean> --No trace log
+  - rawrefresh=\<boolean> --Raw refresh log
+  - refresh=\<boolean> --Refresh log
+  - warn=\<boolean> --Warning log
+  - server=\<boolean> --Server log
+  - web=\<boolean> --Web server log
 
 ### Configuration files ~./hc3emu.lua and ./.hc3emu.lua
 The file should be a lua file that returns a table.
@@ -200,7 +200,7 @@ HC3PASSWORD = \<password>
 HC3URL = http://\<ip>
 HC3PIN = \<pin>
 
-These can also be specifed in an .env file in the working directory and will be picked up that way. This is because for some platforms it can be difficult to set environemnt variables to be seen by applications MacOS)
+These can also be specifed in an .env file in the working directory and will be picked up that way. This is because for some platforms it can be difficult to set environment variables to be seen by applications ex. MacOS)
 
 ## Setup
 
@@ -248,15 +248,13 @@ Ex.
 >lua -e "require('hc3emu2')" run MyQA.lua
 ```
 
-### vscode.lua Tool
+### Tasks in vsode
 
-Located in `/tools/vscode.lua`, this tool provides VSCode tasks integration with commands:
+Located [here](https://raw.githubusercontent.com/jangabrielsson/hc3emu2/refs/heads/main/.vscode/tasks.json), is a tasks.json file that provides VSCode tasks integration with commands like:
 
 - `downloadQA(id, path)`: Download QuickApp from HC3
 - `uploadQA(fname)`: Upload QuickApp to HC3
 - `updateFile(fname)`: Update single file in QuickApp
-
-See .vscode/tasks.json for usage
 
 To use the updateFile command the workspace needs a `.project` file.
 It's auto generated with the --%%project=<quickapp_id> directive that allows the command/task to push the file to the right QA on the HC3
@@ -371,48 +369,49 @@ etc etc.
 
 ## Debugging
 
-The emulator provides various debug flags that can be enabled:
-
+The emulator provides various debug flags that can be enabled, listed in a section above.
+The emulator uses the standard Lua debugger (mobdebug), supporting its features.
+To test if running in the emulator (as opposed to on the HC3) one can test for the presence of fibaro.hc3emu
+Ex.
 ```lua
---%%debug=info:true       # Log general info
---%%debug=api:true        # Log api.* calls
---%%debug=timer:true      # Log start/stop of timers (setTimeout)
---%%debug=http:true       # Log HTTP requests
---%%debug=onAction:true   # Log Action callbacks
---%%debug=onUIEvent:true  # Log UI events
+if fibaro.hc3emu then
+  print("Running in the emulator!")
+end
 ```
 
 ## Best Practices
 
-1. Always include the emulator header:
+1. Use state persistence for development:
 ```lua
-if require and not QuickApp then require("hc3emu") end
+--%%state=<id>
 ```
-
-2. Use state persistence for development:
-```lua
---%%state=myqa.state
-```
-Running in offline mode this file will be used for storing device and resource states between runs.
+Running in offline mode this will create a state file that will be used for storing device and resource states between runs.
 For QAs that use the QA internalStorage api, it's recommended to turn this on.
+When <id> is changed, a new tate db will be created at run.
 
-3. Organize code in multiple files:
+2. Organize code in multiple files:
 ```lua
 --%%file=utils.lua:utils
 --%%file=api.lua:api
 ```
-First is the path to the lua file, second is the name the file will have in the QA.
-
-4. Test UI interactions using proxy mode:
+First is the path to the lua file, second is the name the file will have in the QA. THey will be packaged and included in the saved .fqa file. In the emulator it behaves more or less like a lua require(\<file>)
+Usually the path is a workspace relative path, but it's possible to spcify installed lua modules with a '$' prefix.
+Ex.
 ```lua
---%%proxy=MyTestProxy
+--%%file=$hc3emu.lib.eventlib,events
+```
+In this case it will fetch the file required by require('hc3emu.lib.eventlib')
+Be aware that the code needs to be pure lua and compatible with the HC3, or there will be problems later when trying to upload the QA to the HC3...
+
+3. Test UI interactions using proxy mode:
+```lua
+--%%proxy=true
 ```
 
 ## Common Issues
 
 1. **Missing Credentials**: Ensure URL, USER, and PASSWORD are configured when not in offline mode. If the emulator fails calling the HC3 (unathorized), it will block further requests. This to prevent that the HC3 blocks to emulator IP due to too many failed login requests... Fix credentials, and restart the emulator.
 2. **File Permissions**: Check write permissions for state and save files
-3. **Proxy Conflicts**: Use unique proxy names or remove existing proxies
 
 ## Contributing
 
