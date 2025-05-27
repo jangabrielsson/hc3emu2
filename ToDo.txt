@@ -13,7 +13,7 @@
   nodebug
   silent
   temp
-  latitude, longitude
+  latitude, longitude - Done
 
-- _DEVELOP root
+- _DEVELOP root - Done
 - Clean up webserver with proper handling and API
