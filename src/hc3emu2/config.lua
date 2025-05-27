@@ -7,7 +7,7 @@ lfs = require("lfs")
 socket = require("socket")
 local fmt = string.format
 
-local cmdLine = arg[-1] or ""
+local cmdLine = arg[-3] or ""
 local debuggerType = "unknown"
 if cmdLine:match("actboy168") then debuggerType="actboy168" end
 if cmdLine:match("mobdebug") then debuggerType="mobdebug" end
@@ -18,6 +18,8 @@ local win = (os.getenv('WINDIR') or (os.getenv('OS') or ''):match('[Ww]indows'))
 local fileSeparator = win and '\\' or '/'
 local tempDir = os.getenv("TMPDIR") or os.getenv("TEMP") or os.getenv("TMP") or "/tmp/" -- temp directory
 local homeDir = os.getenv("HOME") or os.getenv("homepath") or ""
+local currentDir = lfs.currentdir()
+print("currentdir", currentDir)
 local isVscode = package.path:lower():match("vscode") ~= nil
 local isZerobrane = package.path:lower():match("zerobrane") ~= nil
 
@@ -263,6 +265,7 @@ return {
   fileSeparator = fileSeparator,
   tempDir = tempDir,
   homeDir = homeDir,
+  currentDir = currentDir,
   isVscode = isVscode,
   isZerobrane = isZerobrane,
 }
