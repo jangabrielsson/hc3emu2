@@ -113,6 +113,7 @@ local hc3emuFuns = nil
 local function hc3emuExports(emu) 
   return { 
   lua = emu.lua, loadQA = emu.lib.loadQA, loadQAString = emu.lib.loadQAString, uploadFQA = emu.lib.uploadFQA, 
+  downloadFQA = emu.lib.downloadFQA,
   getFQA = emu.lib.getFQA, getDevice = function(id) return Emu.devices[id] end,
   getDevices = function() return Emu.devices end,
   speedFor = emu.lib.speedFor, offline = emu.offline, refreshState = emu.refreshState,

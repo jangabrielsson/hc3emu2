@@ -1,4 +1,6 @@
 {
+  // Rename to `settings.json` to use this file as your settings configuration (there is also a global settings file).
+
   "Lua.workspace.library": [
     "/Users/jangabrielsson/.vscode/extensions/gsonsoft-development.hc3emu-helper-0.0.6/hc3emu-library"
   ],
