@@ -1,6 +1,8 @@
 --%%name=PotatoMaster
 --%%type=com.fibaro.multilevelSwitch
---%%debug=system:true
+--%% debug=system:true
+--%%offline=true
+--%%debug=http:true
 
 function QuickApp:onInit()
   self:debug("onInit",self.name,self.id)
