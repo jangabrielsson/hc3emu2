@@ -4,7 +4,7 @@
   "version": "2.0.0",
   "tasks": [
       {
-        "label": "QA, upload",
+        "label": "QA, upload current file as QA to HC3",
         "type": "shell",
         "command": "lua", 
         "args": [
@@ -12,6 +12,29 @@
           "\"require('hc3emu2')\"",
           "uploadQA",
           "${relativeFile}"
+        ]
+      },
+      {
+        "label": "QA, update file (part of .project)",
+        "type": "shell",
+        "command": "lua", 
+        "args": [
+          "-e",
+          "\"require('hc3emu2')\"",
+          "updateFile",
+          "${relativeFile}"
+        ]
+      },
+      {
+        "label": "QA, Download and unpack from HC3",
+        "type": "shell",
+        "command": "lua", 
+        "args": [
+          "-e",
+          "\"require('hc3emu2')\"",
+          "downloadQA",
+          "${input:QA_id}",
+          "${input:path_id}"
         ]
       },
       {
