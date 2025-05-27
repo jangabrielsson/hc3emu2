@@ -232,6 +232,7 @@ or add the launch option in your vscode User Settings to have the luanch option 
       "listenPublicly": true
     },
 ```
+The file is available [here](https://raw.githubusercontent.com/jangabrielsson/hc3emu2/refs/heads/main/.vscode/launch.example)
 In this example, we also set the environment variables using values from our User Settings file. Remove if you provide credentials differently.
 
 ### ZeroBrane Studio
@@ -250,7 +251,7 @@ Ex.
 
 ### Tasks in vsode
 
-Located [here](https://raw.githubusercontent.com/jangabrielsson/hc3emu2/refs/heads/main/.vscode/tasks.json), is a tasks.json file that provides VSCode tasks integration with commands like:
+Located [here](https://raw.githubusercontent.com/jangabrielsson/hc3emu2/refs/heads/main/.vscode/tasks.example), is a tasks.json file that provides VSCode tasks integration with commands like:
 
 - `downloadQA(id, path)`: Download QuickApp from HC3
 - `uploadQA(fname)`: Upload QuickApp to HC3
