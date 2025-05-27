@@ -4,12 +4,12 @@
   "version": "2.0.0",
   "tasks": [
       {
-        "label": "QA2, upload",
+        "label": "QA, upload",
         "type": "shell",
         "command": "lua", 
         "args": [
           "-e",
-          "require('hc3emu2')",
+          "\"require('hc3emu2')\"",
           "uploadQA",
           "${relativeFile}"
         ]

@@ -62,7 +62,7 @@ local function getFQA(id) -- Creates FQA structure from installed QA
   local files = {}
   for _,f in ipairs(dev.files) do
     if f.content == nil then f.content = Emu.lib.readFile(f.fname) end
-    files[#files+1] = {name=f.name, isMain=false, isOpen=false, type='lua', content=f.content}
+    files[#files+1] = {name=f.name, isMain=f.name=='main', isOpen=false, type='lua', content=f.content}
   end
   local initProps = {}
   local savedProps = {

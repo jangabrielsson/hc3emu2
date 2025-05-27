@@ -1,13 +1,8 @@
 --%%name=LibTest
 --%%type=com.fibaro.binarySwitch
 --%%debug=system:true
+--%%save=encrypt.fqa
 --%%file=$hc3emu2.lib.aeslua53:aes
-
-local function foo()
-  print("Hello from foo")
-  setTimeout(foo,1000)
-end
---setTimeout(foo,1000)
 
 function QuickApp:onInit()
   self:debug(self.name,self.id)

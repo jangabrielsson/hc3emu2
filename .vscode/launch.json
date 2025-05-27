@@ -20,11 +20,6 @@
         "run",
         "${relativeFile}"
       ],
-      "env": { // Ex. use the environment variables from the config. Can also use a .env file in the workspace folder.
-        "HC3URL": "${config:hc3emu.url}",
-        "HC3USER": "${config:hc3emu.user}",
-        "HC3PASSWORD": "${config:hc3emu.password}"
-      },
       "listenPublicly": true
     },
     {
