@@ -16,6 +16,7 @@ class 'MyChild'(QwikAppChild)
 function MyChild:__init(dev)
   QwikAppChild.__init(self,dev)
   self:debug("MyChild initialized",self.name,self.id)
+  local a = self:internalStorageGet("foo")
 end
 function MyChild:myButton1()
   self:debug("myButton1 pressed")
