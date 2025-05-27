@@ -1,3 +1,4 @@
+Emu=Emu
 local fileNum = 0
 local function createTempName(suffix)
   fileNum = fileNum + 1
@@ -110,6 +111,84 @@ local function loadQA(path,optionalHeaders,noRun)   -- Load QA from file and may
   return struct
 end
 
+
+local function unpackFQAAux(id,fqa,path) -- Unpack fqa and save it to disk
+  assert(type(path) == "string", "path must be a string")
+  local fname = ""
+  fqa = fqa or E.api.hc3.get("/quickApp/export/"..id) 
+  assert(fqa, "Failed to download fqa")
+  local name = fqa.name
+  local typ = fqa.type
+  local files = fqa.files
+  local props = fqa.initialProperties or {}
+  local ifs = fqa.initialInterfaces or {}
+  ifs = remove(ifs,"quickApp")
+  if next(ifs) == nil then ifs = nil end
+  
+  if path:sub(-4):lower() == ".lua" then
+    fname = path:match("([^/\\]+)%.[Ll][uU][Aa]$")
+    path = path:sub(1,-(#fname+4+1))
+  else
+    if path:sub(-1) ~= sep then path = path..sep end
+    fname = name:gsub("[%s%-%.%%!%?%(%)]","_")
+    if id then if fname:match("_$") then fname = fname..id else fname = fname.."_"..id end end
+  end
+  
+  local mainIndex
+  for i,f in ipairs(files) do if files[i].isMain then mainIndex = i break end end
+  assert(mainIndex,"No main file found")
+  local mainContent = files[mainIndex].content
+  table.remove(files,mainIndex)
+  
+  mainContent = mainContent:gsub("(%-%-%%%%.-\n)","") -- Remove old directives
+  
+  local pr = printBuff()
+  pr:printf('if require and not QuickApp then require("hc3emu") end')
+  pr:printf('--%%%%name=%s',name)
+  pr:printf('--%%%%type=%s',typ)
+  if ifs then pr:printf('--%%%%interfaces=%s',json.encode(ifs):gsub('.',{['[']='{', [']']='}'})) end
+  
+  local qvars = props.quickAppVariables or {}
+  for _,v in ipairs(qvars) do
+    pr:printf('--%%%%var=%s:%s',v.name,type(v.value)=='string' and '"'..v.value..'"' or v.value)
+  end
+  
+  if props.quickAppUuid then pr:printf('--%%%%uid=%s',props.quickAppUuid) end
+  if props.model then pr:printf('--%%%%model=%s',props.model) end
+  if props.manufacturer then pr:printf('--%%%%manufacturer=%s',props.manufacturer) end
+  if props.deviceRole then pr:printf('--%%%%role=%s',props.deviceRole) end
+  if props.userDescription then pr:printf('--%%%%description=%s',props.userDescription) end
+  
+  for _,f in ipairs(files) do
+    local fn = path..fname.."_"..f.name..".lua"
+    saveFile(fn,f.content)
+    pr:printf("--%%%%file=%s:%s",fn,f.name)
+  end
+  
+  local UI = ""
+  if id then
+    Emu.lib.ui.logUI(id,function(str) UI = str end)
+  else
+    local UIstruct = Emu.lib.ui.viewLayout2UI(props.viewLayout or {},props.uiCallbacks or {})
+    Emu.lib.ui.dumpUI(UIstruct,function(str) UI = str end)
+  end
+  UI = UI:match(".-\n(.*)") or ""
+  pr:print(UI)
+  
+  pr:print("")
+  pr:print(mainContent)
+  local mainFilePath = path..fname..".lua"
+  saveFile(mainFilePath,pr:tostring())
+  return mainFilePath
+end
+
+--@F 
+local function downloadFQA(id,path) -- Download QA from HC3,unpack and save it to disk
+  assert(type(id) == "number", "id must be a number")
+  assert(type(path) == "string", "path must be a string")
+  return unpackFQAAux(id,nil,path)
+end
+
 local function saveProject(id,dev)  -- Save project to .project file
   local r = {}
   for _,f in ipairs(dev.files) do
@@ -129,5 +208,6 @@ return {
   getFQA = getFQA,
   saveQA = saveQA,
   loadQA = loadQA,
+  downloadFQA = downloadFQA,
   saveProject = saveProject,
 }
