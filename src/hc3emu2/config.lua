@@ -19,7 +19,6 @@ local fileSeparator = win and '\\' or '/'
 local tempDir = os.getenv("TMPDIR") or os.getenv("TEMP") or os.getenv("TMP") or "/tmp/" -- temp directory
 local homeDir = os.getenv("HOME") or os.getenv("homepath") or ""
 local currentDir = lfs.currentdir()
-print("currentdir", currentDir)
 local isVscode = package.path:lower():match("vscode") ~= nil
 local isZerobrane = package.path:lower():match("zerobrane") ~= nil
 
