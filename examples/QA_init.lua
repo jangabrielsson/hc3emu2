@@ -2,7 +2,7 @@
 --%%debug=http:true
 --%%offline=true
 --%%state=true
---%%conceal=token:<put you HASS api token here>
+--%%conceal=token:"<put you HASS api token here>"
 
 function QuickApp:onInit()
 

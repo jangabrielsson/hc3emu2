@@ -1,4 +1,5 @@
 fibaro = {}
+_emu = _emu
 local fmt = string.format
 
 ------------- Process info for running environment ---------------- 
