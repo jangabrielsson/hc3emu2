@@ -244,6 +244,8 @@ do
   function headerKeys.proxy_set_ui(v,h,k) h.proxy_set_ui = validate(v,k,"boolean") end
   --@D state=<tag> - Tag for the state file, ex. --%%state=MyQAState
   function headerKeys.state(v,h) h.state = v end
+  --@D project=<deviceId> - Id of the QA on the HC3, ex. --%%project=42
+  function headerKeys.project(v,h,k) h.project = validate(v,k,"number") end
   --@D time=<time> - Start time for the emulator, ex. --%%time=2027/10/10/12:00:00
   function headerKeys.time(v,h,k) h.startTime = v end
   --@D speed=<time> - Hours to speed the emulator, ex. --%%speed=24*7 -- speed for 1 week
