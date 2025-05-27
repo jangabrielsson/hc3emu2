@@ -15,7 +15,6 @@ function _PI.addTimer(ref,typ) _PI.timers[ref] = typ return ref end
 function _PI.cancelTimer(ref,op) 
   local typ = _PI.timers[ref]
   _PI.timers[ref] = nil 
-  --_emu:DEBUGF('timer',"%s timer %s",op,tostring(ref)) 
   if typ == 'interval' then _emu:clearInterval(ref) else _emu:clearTimeout(ref) end
   _emu:DEBUGF('timer',"Timer %s %s",tostring(ref),op)
   if next(_PI.timers) == nil then
@@ -26,6 +25,9 @@ end
 function _PI.errorHandler(err,traceback)
   fibaro.error(__TAG,err)
   if traceback then _print(traceback) end
+end
+function _PI.warningHandler(flag,...)
+if flag==true or _PI.dbg[flag] then fibaro.warning(__TAG,fmt(_emu.lib.formatArgs(...))) end 
 end
 function _PI.debugHandler(flag,...) 
   if flag==true or _PI.dbg[flag] then fibaro.debug(__TAG,fmt(_emu.lib.formatArgs(...))) end 

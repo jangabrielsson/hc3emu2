@@ -110,7 +110,7 @@ end
 function QuickAppBase:internalStorageSet(key, val, hidden)
   __assert_type(key, 'string')
   local data = { name = key, value = val, isHidden = hidden }
-  local _, stat = api.put("/plugins/" .. self.id .. "/variables/" .. key, data, true)
+  local _, stat = api.put("/plugins/" .. self.id .. "/variables/" .. key, data, false)
   --print(key,stat)
   if stat > 206 then
     local _, stat = api.post("/plugins/" .. self.id .. "/variables", data)

@@ -155,12 +155,18 @@ function Emulator:__init()
     if flag==true or self.config.dbg[flag] then self:debugOutput("EMU",fmt(self.lib.formatArgs(...)),"DEBUG") end
   end
   function self.PI.errorHandler(err,tb) self:debugOutput("EMU",err,"ERROR") if tb then print(tb) end end
+  function self.PI.warningHandler(flag,...) 
+    if flag==true or self.config.dbg[flag] then self:debugOutput("EMU",fmt(self.lib.formatArgs(...)),"WARNING") end
+  end
   function self.PI.name() return "Hc3Emu" end
 end
 
 function Emulator:DEBUG(...) self:DEBUGF(true,...) end
 function Emulator:DEBUGF(flag,...) 
   local pi = copiMap[coroutine.running()] or self.PI pi.debugHandler(flag,...) 
+end
+function Emulator:WARNINGF(flag,...) 
+  local pi = copiMap[coroutine.running()] or self.PI pi.warningHandler(flag,...) 
 end
 function Emulator:ERRORF(...) local pi = copiMap[coroutine.running()] pi.errorHandler(...) end
 
