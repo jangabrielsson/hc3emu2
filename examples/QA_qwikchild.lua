@@ -43,16 +43,16 @@ local children = {
       {slider='s1',text='S1',onChanged='mySlider'}
     },
   },
-  -- bar22 = {
-  --   name = "Bar2",
-  --   type = "com.fibaro.multilevelSwitch",
-  --   className = "MyChild"
-  -- },
-  -- bar3 = {
-  --   name = "Bar3",
-  --   type = "com.fibaro.multilevelSwitch",
-  --   className = "MyChild"
-  -- },
+  bar22 = {
+    name = "Bar2",
+    type = "com.fibaro.multilevelSwitch",
+    className = "MyChild"
+  },
+  bar3 = {
+    name = "Bar3",
+    type = "com.fibaro.multilevelSwitch",
+    className = "MyChild"
+  },
 }
 function QuickApp:onInit()
   self:initChildren(children)
