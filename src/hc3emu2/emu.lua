@@ -306,6 +306,15 @@ do
   function headerKeys.pwd(v,h) h.pwd = v end
   --@D pin=<pin> - PIN for the HC3, ex. --%%pin=1234
   function headerKeys.pin(v,h) h.pin = v end
+  --@D interfaces=<list expr> - Set interfaces, ex. --%%interfaces={"energy","battery"}
+  function headerKeys.interfaces(v,h,k)
+    -- local ifs = {} --self.baseFlags.interfaces
+    --if ifs then ifs = ifs:split(",") self.baseFlags.interfaces= nil end
+    h.interfaces = validate(v,k,'table')
+    -- for _,i in ipairs(ifs or {}) do
+    --   if not table.member(i,flags.interfaces) then table.insert(flags.interfaces,i) end
+    -- end
+  end
   --@D u=<table> - Add UI element to the QuickApp, ex. --%%u={button="btn1",text="Click me",onReleased="myFunction"}
   function headerKeys.u(v,h) h._UI[#h._UI+1] = v end
   --@D debug=<flags> - Set debug flags, ex. --%%debug=system:true,api:true,onAction:true
