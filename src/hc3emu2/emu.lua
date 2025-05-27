@@ -33,6 +33,8 @@ local debugFlags = {
   web = {typ='boolean',descr="Web server log"},
 }
 
+local function mergeLib(lib1,lib2) for k,v in pairs(lib2 or {}) do lib1[k] = v end end
+
 local function startUp()
   Emu = Emulator() -- Global
   Emu.config.rsrcsDir = config.rsrcsDir
@@ -41,8 +43,8 @@ local function startUp()
   Emu.config.EMUSUB_DIR = config.EMUSUB_DIR
   Emu.config.fileSeparator = config.fileSeparator
   Emu.taskArgs = taskArgs
-
-  local function mergeLib(lib1,lib2) for k,v in pairs(lib2 or {}) do lib1[k] = v end end
+  Emu.plugin = {}
+  
   mergeLib(Emu.lib,require("hc3emu2.log"))
   mergeLib(Emu.lib,require("hc3emu2.utilities"))
   mergeLib(Emu.lib,require("hc3emu2.tools"))
@@ -68,7 +70,7 @@ local function startUp()
   local globalHeaders = {
     "latitude","longitude","startTime","speedTime","condensedLog",
   }
-    for _,v in ipairs(globalHeaders) do Emu.config[v] = headers[v] end
+  for _,v in ipairs(globalHeaders) do Emu.config[v] = headers[v] end
   -- copy over some debugflags to be overall emulator debug flags
   for _,k in ipairs({"refresh","rawrefresh","system","http","notrace"}) do Emu.config.dbg[k] = headers.debug[k] end
   Emu.config = table.merge(config.userConfig,Emu.config) -- merge in user config  from .hc3emu.lua
@@ -120,20 +122,29 @@ local function startUp()
       Emu:installQuickAppCode(mainFile,src,headers) 
     end
   }
-
+  
   function Emu.EVENT.midnight()
     local count = Emu.lib.masterGate:get_count()
     if count > 0 then Emu.lib.masterGate:take() end
     Emu.sunriseHour,Emu.sunsetHour = Emu.lib.sunCalc() 
     if count > 0 then Emu.lib.masterGate:give() end
   end
+  
+  local orgPrint = print
+  function print(...)
+    if Emu.__printHook then
+      local b = {}
+      for _,e in ipairs({...}) do b[#b+1] = tostring(e) end
+      Emu.__printHook(table.concat(b,' ')) 
+    else orgPrint(...) end
+  end
 
   Emu:start()
 end
 
 local extraLua =  {
-  os = os, require = require, dofile = dofile, loadfile = loadfile, 
-  type = type, io = io, print = _print, package = package, coroutine = coroutine,
+  os = os, require = require, dofile = dofile, loadfile = loadfile, load = load,
+  type = type, io = io, print = print, package = package, coroutine = coroutine,
   rawset = rawset, rawget = rawget, debug = debug
 }
 
@@ -339,6 +350,18 @@ do
       end
     end
   end
+
+  --@D plugin=<path | modul> -- load library to fibaro.hc3emu.plugin
+  function headerKeys.plugin(v,h)
+    local path = v
+    if path:match("%$") then 
+      local lib = path:sub(2)
+      path = package.searchpath(lib,package.path)
+      assert(path,"Plugin not found: "..lib)
+    end
+    assert(lfs.attributes(path),"Plugin not found: "..path)
+    mergeLib(Emu.plugin,dofile(path))
+  end
   --@D file=<path,method> - Add file to the QuickApp, ex. --%%file=./myfile.lua,init
   function headerKeys.file(v,h)
     local function addFile(val) 
@@ -376,7 +399,7 @@ function Emulator:getHeaders(src,extraHeaders)
   local code = src
   local eod = src:find("%-%-ENDOFHEADERS") -- Embedded headers
   if eod then code = src:sub(1,eod-1) end
-
+  
   --@D include=<file> - Include a file with additional directives. Format <direct>=<value>
   local include = code:match("%-%-%%%%include=(.-)%s*\n")
   if include then
@@ -385,16 +408,16 @@ function Emulator:getHeaders(src,extraHeaders)
     local src = f:read("*all") f:close()
     code = code..src.."\n"
   end
-
+  
   if code:sub(1) ~= "\n" then code = "\n"..code end
-
+  
   code:gsub("\n%-%-%%%%([%w_]-)=([^\n]*)",function(key,str) 
     str = str:match("^%s*(.-)%s*$") or str
     str = str:match("^(.*)%s* %-%- (.*)$") or str
     if headerKeys[key] then
       headerKeys[key](str,headers,key)
     else print(fmt("Unknown header key: '%s' - ignoring",key)) end
-   end)
+  end)
   for key,value in pairs(extraHeaders or {}) do
     if headerKeys[key] then
       headerKeys[key](value,headers,key)
@@ -461,16 +484,16 @@ end
 local ID = 5000
 function Emulator:installDevice(d,files,headers) -- Move to device?
   Emu:DEBUGF('device',"Installing device %s %s",d.type,d.name or "unnamed")
-
+  
   headers = headers or {}
   files = files or {}
   for _,f in ipairs(headers.files or {}) do files[#files+1] = f end
-
+  
   if headers.proxy and self.offline then
     headers.proxy = false -- No proxies in offline mode
     Emu:DEBUG("Proxy devices not supported in offline mode -ignored")
   end
-
+  
   local isProxy = headers.proxy
   if isProxy then                                  -- Existing proxy device?
     local dev = self.lib.existingProxy(d,headers)

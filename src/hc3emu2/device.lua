@@ -110,6 +110,7 @@ local stdFuns = {
   "next"
 }
 
+SocketServer = SocketServer
 local hc3emuFuns = nil
 local function hc3emuExports(emu) 
   return { 
@@ -121,6 +122,7 @@ local function hc3emuExports(emu)
   hasState = emu.stateTage ~= nil, taskargs = emu.taskArgs, runTest = emu.lib.runTest,
   createSimDevice = emu.lib.createSimDevice, readFile = emu.lib.readFile,
   SocketServer = SocketServer, config = emu.config,
+  plugin = emu.plugin
 }
 end
 

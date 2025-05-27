@@ -1,4 +1,4 @@
-local E = Emulator.emulator
+Emu = Emu
 local fmt = string.format
 local copas = require("copas")
 
@@ -53,21 +53,24 @@ local isPoller = false
 local function keyPoller()
   if isPoller then return end
   isPoller = true
-  E.util.systemTask(function()
-    while true do
-      local key, keytype = sys.readansi(0.01)
-      if keytype == 'char' and key:byte() == exitKey then
-        print("Exit key pressed, exiting")
-        shutdownTerm()
-        os.exit(0)
+  Emu:process{
+    fun = function()
+      while true do
+        local key, keytype = sys.readansi(0.01)
+        if keytype == 'char' and key:byte() == exitKey then
+          print("Exit key pressed, exiting")
+          shutdownTerm()
+          os.exit(0)
+        end
+        if key and keyHandler then keyHandler(key, keytype) end
+        copas.pause(0.01)
       end
-      if key and keyHandler then keyHandler(key, keytype) end
-      copas.pause(0.01)
     end
-  end)
+  }
 end
 
-E.terminal = {}
-E.terminal.setExitKey = function(b) setupTerm() exitKey = b end
-E.terminal.setKeyHandler = function(f) setupTerm() keyPoller() keyHandler = f end
-function E.terminal.clear() print("\027[2J") end
+local exports = {}
+exports.setExitKey = function(b) setupTerm() exitKey = b end
+exports.setKeyHandler = function(f) setupTerm() keyPoller() keyHandler = f end
+exports.clear = function() print("\027[2J") end
+return exports
