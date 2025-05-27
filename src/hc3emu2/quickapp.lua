@@ -32,8 +32,12 @@ class 'QuickAppBase'
 function QuickAppBase:__init(dev)
   self.id = dev.id
   self.type = dev.type
-  self.roomID = dev.roomID
   self.name = dev.name
+  self.enabled = dev.enabled
+  self.parentId = dev.parentId
+  self.roomID = dev.roomID
+  self.properties = dev.properties
+  self.interfaces = dev.interfaces
   self.properties = table.copy(dev.properties)
   self.uiCallbacks = {}
 end
@@ -81,6 +85,37 @@ function QuickAppBase:updateView(elm,prop,value)
     newValue = value
   })
 end
+
+
+function QuickAppBase:hasInterface(name) return table.member(name, self.interfaces) end
+
+function QuickAppBase:addInterfaces(values)
+  assert(type(values) == "table")
+  self:updateInterfaces("add",values)
+  for _, v in pairs(values) do
+    table.insert(self.interfaces, v)
+  end
+end
+
+function QuickAppBase:deleteInterfaces(values)
+  assert(type(values) == "table")
+  self:updateInterfaces("delete", values)
+  for _, value in pairs(values) do
+    for key, interface in pairs(self.interfaces) do
+      if interface == value then
+        table.remove(self.interfaces, key)
+        break
+      end
+    end
+  end
+end
+
+function QuickAppBase:updateInterfaces(action, interfaces)
+  api.post("/plugins/interfaces", {action = action, deviceId = self.id, interfaces = interfaces})
+end
+function QuickAppBase:setName(name) api.put("/devices/"..self.id,{name=name}) end
+function QuickAppBase:setEnabled(enabled) api.put("/devices/"..self.id,{enabled=enabled}) end
+function QuickAppBase:setVisible(visible) api.put("/devices/"..self.id,{visible=visible}) end
 
 function QuickAppBase:setVariable(name, value)
   local qvars,found = self.properties.quickAppVariables,false

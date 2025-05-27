@@ -285,7 +285,13 @@ do
   --@D nodir=<true|false> - Do not create emu directory, ex. --%%nodir=true
   function headerKeys.nodir(v,h,k) h.nodir = validate(v,k,"boolean") end
   --@D conceal=<true|false> - Conceal quickApp variables when saving QA, ex. --%%conceal=password:"Set this to the password"
-  function headerKeys.conceal(v,h,k) h.conceal = validate(v,k,"boolean") end
+  function headerKeys.conceal(v,h,k) 
+    h.conceal = h.conceal or {}
+    local name,value = v:match("(.-):(.*)")
+    -- eval(prefix,str,expr,typ,dflt,env)
+    value = Emu.lib.eval("Header:",value,name,nil,nil,{config=config.userConfig})
+    h.conceal[name] = value
+  end
   --@D condensedLog=<true|false> - Use condensed log format, ex. --%%condensedLog=true
   function headerKeys.condensedLog(v,h,k) h.condensedLog = validate(v,k,"boolean") end
   --@D pport=<number> - Port for the proxy, ex. --%%pport=8265
