@@ -1,3 +1,4 @@
+Emu = Emu
 local fmt = string.format
 local copas = require("copas")
 local embed = require("hc3emu2.embedui")
