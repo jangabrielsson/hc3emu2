@@ -111,7 +111,7 @@ end
 
 local function logError(method, path, code)
   local err = string.format("api Error %s %s: %s",method,path,code)
-  print(err)
+  Emu:WARNINGF('api',err)
 end
 
 function API:call(method, path, data, silent) 

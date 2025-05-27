@@ -4,6 +4,7 @@
 --%% proxy=MyProxy
 --%%save=savestore.fqa
 --%%offline=true
+--%% debug=api:true
 --%%var=debug:"main,wsc,child,color,battery,speaker,send,late"
 
 -- This QA is not allowed to calll the HC3 at all. Other http calls are allowed.

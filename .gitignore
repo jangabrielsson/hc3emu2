@@ -14,4 +14,5 @@ setup.html
 test/
 tmp/
 emu/
+.vscode/settings.json
 .DS_Store
