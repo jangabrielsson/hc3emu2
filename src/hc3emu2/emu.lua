@@ -308,12 +308,10 @@ do
   function headerKeys.pin(v,h) h.pin = v end
   --@D interfaces=<list expr> - Set interfaces, ex. --%%interfaces={"energy","battery"}
   function headerKeys.interfaces(v,h,k)
-    -- local ifs = {} --self.baseFlags.interfaces
-    --if ifs then ifs = ifs:split(",") self.baseFlags.interfaces= nil end
-    h.interfaces = validate(v,k,'table')
-    -- for _,i in ipairs(ifs or {}) do
-    --   if not table.member(i,flags.interfaces) then table.insert(flags.interfaces,i) end
-    -- end
+    local ifs = validate(v,k,'table')
+    for _,i in pairs(ifs) do 
+      if not table.member(i,h.interfaces) then table.insert(h.interfaces,i) end
+    end
   end
   --@D u=<table> - Add UI element to the QuickApp, ex. --%%u={button="btn1",text="Click me",onReleased="myFunction"}
   function headerKeys.u(v,h) h._UI[#h._UI+1] = v end
@@ -364,7 +362,9 @@ do
 end
 
 function Emulator:getHeaders(src,extraHeaders)
+  extraHeaders = extraHeaders or {}
   local headers = { debug = {}, files = {}, _UI={}, vars = {} }
+  headers.interfaces = extraHeaders.interfaces or {} 
   local code = src
   local eod = src:find("%-%-ENDOFHEADERS") -- Embedded headers
   if eod then code = src:sub(1,eod-1) end
@@ -403,7 +403,8 @@ end
 
 function Emulator:loadState()
   local state = json.decode(self.lib.readFile("./.state.db",true) or "{}")
-  if state.tag ~= self.stateTag then return end
+  if state.tag ~= self.stateTag then return end -- clear if new tag
+  if state.name and state.name ~= mainFile then return end -- clear if run with other file
   local d = 0
   for k,_ in pairs(self.devices) do self.devices[k] = nil end
   for _,devArgs in pairs(state.devices) do d=d+1 self.devices[devArgs.id] = Device(devArgs) end
@@ -417,6 +418,7 @@ function Emulator:saveState()
   for _,dev in pairs(self.devices) do devices[#devices+1] = dev:toArgs() end
   local state = { 
     tag = self.stateTag,
+    name = mainFile,
     devices = devices,
   }
   f:write(json.encode(state))
@@ -484,6 +486,9 @@ function Emulator:installDevice(d,files,headers) -- Move to device?
   device.parentId = d.parentId or 0
   device.properties = d.initialProperties or device.properties
   device.interfaces = d.initialInterfaces or device.interfaces
+  for _,i in ipairs(headers.interfaces or {}) do
+    if not table.member(i,device.interfaces) then table.insert(device.interfaces,i) end
+  end
   device.properties.uiCallbacks,device.properties.viewLayout,device.properties.uiView 
   = self:createUI(headers.UI or {})
   device.properties.quickAppVariables = headers.vars or {}
