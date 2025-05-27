@@ -1,7 +1,7 @@
 package = "hc3emu2"
 version = "2.0.0-1" -- updated version to match the new version number
 source = {
-   url = "git://github.com/jangabrielsson/hc3emu",
+   url = "git://github.com/jangabrielsson/hc3emu2",
    tag = "v2.0.0", -- updated tag to match version
 }
 description = {
@@ -13,7 +13,7 @@ description = {
       onAction and uiEvents back to the QA running in the emulator, thus
       allowing the QA's UI to be tested.
    ]],
-   homepage = "https://github.com/jangabrielsson/hc3emu",
+   homepage = "https://github.com/jangabrielsson/hc3emu2",
    license = "MIT/X11" 
 }
 dependencies = {

@@ -17,7 +17,7 @@ function QuickApp:onInit()
   local home = api.get("/home")
   print("Home:", home.currency)
 
-  api.put("/home",{currency = "USD"})
+  api.put("/home",{currency = "USD"}) -- Only offline...
   home = api.get("/home")
   print("Home:", home.currency)
 end

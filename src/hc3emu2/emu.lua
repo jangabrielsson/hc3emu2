@@ -516,7 +516,7 @@ function Emulator:installQuickAppCode(fname,code,headers,optionalHeaders)
     name = headers.name or "MyQA",
     type = headers.type or "com.fibaro.binarySwitch",
   }
-  device = self:installDevice(device,{{fname = fname, name='main', content = code}},headers)
+  device = self:installDevice(device,{{fname = fname, isMain=true, name='main', content = code}},headers)
   self:saveState()
   return device,self.devices[device.id]
 end

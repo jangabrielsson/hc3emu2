@@ -1,5 +1,6 @@
 --%%name=Startup
---%%offline=true
+--%% offline=true
+--%%save=test.fqa
 
 print("Sunset",fibaro.getValue(1,"sunsetHour"))
 
