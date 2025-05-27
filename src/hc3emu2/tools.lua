@@ -5,6 +5,19 @@ local function createTempName(suffix)
   return os.date("hc3emu%M%M")..fileNum..suffix
 end
 
+local function printBuff()
+  local self,buff = {},{}
+  function self:printf(...) buff[#buff+1] = string.format(...) end
+  function self:print(str) buff[#buff+1] = str end
+  function self:tostring() return table.concat(buff,"\n") end
+  return self
+end
+
+local function remove(t,e)
+  for i,v in ipairs(t) do if v == e then table.remove(t,i) break end end
+  return t
+end
+
 local function findFirstLine(src)
   local n,first,init = 0,nil,nil
   for line in string.gmatch(src,"([^\r\n]*\r?\n?)") do
@@ -113,9 +126,10 @@ end
 
 
 local function unpackFQAAux(id,fqa,path) -- Unpack fqa and save it to disk
+  local sep = Emu.config.fileSeparator
   assert(type(path) == "string", "path must be a string")
   local fname = ""
-  fqa = fqa or E.api.hc3.get("/quickApp/export/"..id) 
+  fqa = fqa or Emu.api.hc3.get("/quickApp/export/"..id) 
   assert(fqa, "Failed to download fqa")
   local name = fqa.name
   local typ = fqa.type
@@ -161,7 +175,7 @@ local function unpackFQAAux(id,fqa,path) -- Unpack fqa and save it to disk
   
   for _,f in ipairs(files) do
     local fn = path..fname.."_"..f.name..".lua"
-    saveFile(fn,f.content)
+    Emu.lib.writeFile(fn,f.content)
     pr:printf("--%%%%file=%s:%s",fn,f.name)
   end
   
@@ -178,7 +192,7 @@ local function unpackFQAAux(id,fqa,path) -- Unpack fqa and save it to disk
   pr:print("")
   pr:print(mainContent)
   local mainFilePath = path..fname..".lua"
-  saveFile(mainFilePath,pr:tostring())
+  Emu.lib.writeFile(mainFilePath,pr:tostring())
   return mainFilePath
 end
 

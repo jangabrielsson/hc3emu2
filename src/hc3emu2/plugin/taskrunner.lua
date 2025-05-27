@@ -61,11 +61,19 @@ function task.updateFile(fname)
 end
 
 function task.downloadUnpack(id,path)
-  if path=="." or path=="" then path="./" end
-  printf("Downloading QA: %s to %s",tostring(id),tostring(path)) -- id
-  local deviceId = tonumber(id)
-  __assert_type(id, "number")
-  emu.downloadFQA(id,path)
+  local stat,res = pcall(function()
+    if path=="." or path=="" then path="./" end
+    if not path:match("/$") then path = path.."/" end
+    printf("Downloading QA: %s to %s",tostring(id),tostring(path)) -- id
+    local deviceId = tonumber(id)
+    __assert_type(deviceId, "number")
+    emu.downloadFQA(deviceId,path)
+  end)
+  if not stat then
+    ERROR("Failed to download QuickApp: %s", res)
+  else
+    print("QuickApp downloaded successfully:", id)
+  end
 end
 
 __TAG = "TASKRUNNER"

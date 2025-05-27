@@ -1,5 +1,5 @@
 local VERSION = "1.1.2"
-local mode, mainFile, develop, taskArgs = ...
+local mode, mainFile, runflags, taskArgs = ...
 
 local fmt = string.format
 
@@ -144,7 +144,7 @@ class 'Emulator'
 function Emulator:__init()
   self.config = { hc3 = {}, dbg = {}, emu = {} }
   self.stats = { ports = {}, timers = {}, qas = {} }
-  self.lib = { userTime = os.time, readFile= config.readFile, readRsrcsFile = config.readRsrcsFile, filePath = config.filePath }
+  self.lib = { userTime = os.time, readFile= config.readFile, writeFile = config.writeFile, readRsrcsFile = config.readRsrcsFile, filePath = config.filePath }
   self.devices = {} -- []{ device = {}, files = {}, env = {}, vars = {}, ui = {} }
   self.EVENT = {}
   self.stateTag = nil
