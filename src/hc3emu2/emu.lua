@@ -374,6 +374,8 @@ do
         assert(path,"File library not found: "..lib)
       end
       assert(lfs.attributes(path),"File not found: "..path)
+      assert(#m >= 3 and #m <= 20,"HC3 file name must be 3-20 characters long, got: "..m)
+      assert(m:gsub("[^%w_]","") == m,"HC3 file name must contain only alphanumeric characters and underscores, got: "..m)
       h.files[m] = path
     end
     addFile(v)

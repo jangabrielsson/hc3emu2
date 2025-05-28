@@ -1,6 +1,7 @@
 --%%name=Terminal
 --%%type=com.fibaro.binarySwitch
 --%%plugin=$hc3emu2.plugin.terminal
+--%%nodebug=true
 
 local sys = fibaro.hc3emu.lua.require("system")
 local io = fibaro.hc3emu.lua.io

@@ -3,7 +3,8 @@
 --%%debug=system:true
 --%%save=encrypt.fqa
 --%%interfaces={"battery"}
---%%file=$hc3emu2.lib.aeslua53:aes
+--%% file=$hc3emu2.lib.aeslua53:aes
+--%%file=src/hc3emu2/lib/aeslua53.lua:a e
 
 function QuickApp:onInit()
   self:debug(self.name,self.id)
