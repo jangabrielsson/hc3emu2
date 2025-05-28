@@ -86,7 +86,7 @@ local function getFQA(id) -- Creates FQA structure from installed QA
   local initProps = {}
   local savedProps = {
     "uiCallbacks","quickAppVariables","uiView","viewLayout","apiVersion","useEmbededView",
-    "manufacturer","useUiView","model","buildNumber","supportedDeviceRoles",
+    "manufacturer","useUiView","model","buildNumber","supportedDeviceRoles", 
     "userDescription","typeTemplateInitialized","quickAppUuid","deviceRole"
   }
   for _,k in ipairs(savedProps) do initProps[k]=struct.properties[k] end
