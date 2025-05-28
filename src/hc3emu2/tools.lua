@@ -58,7 +58,12 @@ local function uploadFQA(fqa)
   assert(fqa.name, "fqa must have a name")
   assert(fqa.type, "fqa must have a type")
   assert(fqa.files, "fqa must have files")
-  assert(fqa.files[1], "fqa must have a main file")
+  assert(fqa.files[1], "fqa must have file(s)")
+  local haveMain = false
+  for _,f in ipairs(fqa.files) do
+    if f.isMain then haveMain = true break end
+  end
+  assert(haveMain, "fqa must have a main file")
   arrayifyFqa(fqa)
   local res,code = Emu.api.hc3.post("/quickApp/",fqa)
   if not code or code > 201 then

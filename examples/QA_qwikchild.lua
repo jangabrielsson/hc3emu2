@@ -8,7 +8,7 @@
 --%%offline=true
 --%%state=10
 --%%webui=true
---%%file=$hc3emu2.lib.qwikchild:QC
+--%%file=$hc3emu2.lib.qwikchild:QwikAppChild
 
 local function printf(...) print(string.format(...)) end
 
@@ -56,6 +56,6 @@ local children = {
 }
 function QuickApp:onInit()
   self:initChildren(children)
-  -- fibaro.call(self.children.bar3.id,"childFun",5,7)
+  fibaro.call(self.children.bar3.id,"childFun",5,7)
 end
 

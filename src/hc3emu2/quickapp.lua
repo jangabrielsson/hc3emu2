@@ -232,6 +232,8 @@ class 'QuickAppChild'(QuickAppBase)
 function QuickAppChild:__init(dev)
   QuickAppBase.__init(self, dev)
   self.parentId = dev.parentId
+  local dev = _emu.devices[self.id]
+  dev.env = _G
   if self.onInit then self:onInit() end
 end
 
