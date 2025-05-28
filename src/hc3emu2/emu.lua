@@ -365,8 +365,8 @@ do
   --@D file=<path,method> - Add file to the QuickApp, ex. --%%file=./myfile.lua,init
   function headerKeys.file(v,h)
     local function addFile(val) 
-      local path,m = val:match("(.-),(.-);?%s*$")
-      if not path then path,m = val:match("(.-):(.+);?%s*$") end
+      local path,m = val:match("(.-),%s*(.-);?%s*$")
+      if not path then path,m = val:match("(.-):%s*(.+);?%s*$") end
       assert(path and m,"Bad file directive: "..val)
       if path:match("%$") then 
         local lib = path:sub(2)
@@ -418,7 +418,7 @@ function Emulator:getHeaders(src,extraHeaders)
     str = str:match("^(.*)%s* %-%- (.*)$") or str
     if headerKeys[key] then
       headerKeys[key](str,headers,key)
-    else print(fmt("Unknown header key: '%s' - ignoring",key)) end
+    else print(fmt("Unknown header key: '%s' - ignoring",key)) end 
   end)
   for key,value in pairs(extraHeaders or {}) do
     if headerKeys[key] then

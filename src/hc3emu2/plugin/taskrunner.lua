@@ -18,12 +18,12 @@ end
 function task.uploadQA(name)
   print("Uploading QuickApp:", name)
   local stat,err = pcall(function()
-    local device = emu.loadQA(name,nil, true)
+    local device = emu.loadQA(name,{proxy="false"}, true)
     assert(device, "Emulator installation error")
     local fqa = emu.getFQA(device.id)
     assert(fqa, "FQA creation error")
     res,code = emu.uploadFQA(fqa)
-    assert(code < 206, "Failed to upload QuickApp: " .. (res or "unknown error"))
+    assert(code < 206, "Failed to upload QuickApp: " .. (tostring(code) or "unknown error"))
   end)
   if not stat then
     ERROR("Failed to upload QuickApp: %s (%s)", name, err)
@@ -41,11 +41,15 @@ function task.updateFile(fname)
   p = json.decode(p)
   for qn,fn in pairs(p.files or {}) do
     if fname==fn then 
+      local qa = api.hc3.get("/devices/"..p.id)
+      if not qa then
+        ERROR("QuickApp on HC3 with ID %s not found", p.id)
+      end
       local content = emu.readFile(fn)
       local f = {name=qn, isMain=qn=='main', isOpen=false, type='lua', content=content}
-      local r,err = api.put("/quickApp/"..p.id.."/files/"..qn,f)
+      local r,err = api.hc3.put("/quickApp/"..p.id.."/files/"..qn,f)
       if not r then 
-        local r,err = api.post("/quickApp/"..p.id.."/files",f)
+        local r,err = api.hc3.post("/quickApp/"..p.id.."/files",f)
         if err then
           ERROR("creating QA:%s, file:%s, QAfile%s",p.id,fn,qn)
         else

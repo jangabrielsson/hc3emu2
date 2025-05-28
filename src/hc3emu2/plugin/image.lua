@@ -1,21 +1,8 @@
-local E = Emulator.emulator
+Emu = Emu
 local fmt = string.format
-local json = require("hc3emu.json")
-
---[[ Emulator events
-{type='emulator_started'}             -- when emulator is initialized
-{type='quickApp_registered',id=qaId}  -- when a quickApp is registered in emulator but not started
-{type='quickApp_loaded',id=qaId}      -- when a quickApp files are loaded
-{type='quickApp_initialized',id=qaId} -- before :onInit, QuickApp instance created
-{type='quickApp_started',id=qaId}     -- after :onInit
-{type='quickApp_finished',id=qaId}    -- no timers left
-{type='scene_registered',id=sceneId}
-{type='time_changed'}
-{type='midnight'}
---]]
 
 --@D image=path,name - add image file to QA, ex. --%%image=examples/myImage.png,myImage
-function E._directive.image(d,val,flags) -- Register a new directive
+function Emu._directive.image(d,val,flags) -- Register a new directive
   flags.images = flags.images or {}
   local path,name = val:match("([^,]+),([^,]+)")
   assert(path and name,"Bad image directive: "..d)
@@ -23,7 +10,10 @@ function E._directive.image(d,val,flags) -- Register a new directive
 end
 
 --@D iconImage=path,name - add image file to QA, ex. --%%iconImage=examples/myImage.png,myImage
-function E._directive.iconImage(d,val,flags) -- Register a new directive
+function Emu
+  
+  
+  directive.iconImage(d,val,flags) -- Register a new directive
   flags.iconImages = flags.iconImages or {}
   local path,name = val:match("([^,]+),([^,]+)")
   assert(path and name,"Bad image directive: "..d)

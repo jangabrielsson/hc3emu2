@@ -185,7 +185,7 @@ function Device:startQA()
   env.setTimeout(start,0)
   finished:get()
   if self.headers.save then Emu.lib.saveQA(struct.id) end
-  if self.headers.project then Emu.lib.saveProject(struct.id,self) end
+  if self.headers.project then Emu.lib.saveProject(self.headers.project,self) end
 end
 
 return {}
