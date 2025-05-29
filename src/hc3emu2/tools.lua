@@ -129,7 +129,7 @@ local function loadQA(path,optionalHeaders,noRun)   -- Load QA from file and may
   return struct
 end
 
-
+local saveProject
 local function unpackFQAAux(id,fqa,path) -- Unpack fqa and save it to disk
   local sep = Emu.config.fileSeparator
   assert(type(path) == "string", "path must be a string")
@@ -171,17 +171,19 @@ local function unpackFQAAux(id,fqa,path) -- Unpack fqa and save it to disk
   for _,v in ipairs(qvars) do
     pr:printf('--%%%%var=%s:%s',v.name,type(v.value)=='string' and '"'..v.value..'"' or v.value)
   end
-  
+  pr:printf('--%%%%project=%s',id)
   if props.quickAppUuid then pr:printf('--%%%%uid=%s',props.quickAppUuid) end
   if props.model then pr:printf('--%%%%model=%s',props.model) end
   if props.manufacturer then pr:printf('--%%%%manufacturer=%s',props.manufacturer) end
   if props.deviceRole then pr:printf('--%%%%role=%s',props.deviceRole) end
   if props.userDescription then pr:printf('--%%%%description=%s',props.userDescription) end
   
+  local savedFiles = {}
   for _,f in ipairs(files) do
     local fn = path..fname.."_"..f.name..".lua"
     Emu.lib.writeFile(fn,f.content)
     pr:printf("--%%%%file=%s:%s",fn,f.name)
+    savedFiles[#savedFiles+1] = {name=f.name, fname=fn}
   end
   
   local UI = ""
@@ -198,6 +200,8 @@ local function unpackFQAAux(id,fqa,path) -- Unpack fqa and save it to disk
   pr:print(mainContent)
   local mainFilePath = path..fname..".lua"
   Emu.lib.writeFile(mainFilePath,pr:tostring())
+  savedFiles[#savedFiles+1] = {name='main', fname=mainFilePath}
+  saveProject(id,{files=savedFiles},path) -- Save project file
   return mainFilePath
 end
 
@@ -208,13 +212,14 @@ local function downloadFQA(id,path) -- Download QA from HC3,unpack and save it t
   return unpackFQAAux(id,nil,path)
 end
 
-local function saveProject(id,dev)  -- Save project to .project file
+function saveProject(id,dev,path)  -- Save project to .project file
+  path = path or ""
   local r = {}
   for _,f in ipairs(dev.files) do
     r[f.name] = f.fname
   end
-  local f = io.open(".project","w")
-  assert(f,"Can't open file "..".project")
+  local f = io.open(path..".project","w")
+  assert(f,"Can't open file "..path..".project")
   f:write(json.encodeFormated({files=r,id=id}))
   f:close()
 end

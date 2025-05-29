@@ -32,36 +32,51 @@ function task.uploadQA(name)
   end
 end
 
-function task.updateFile(fname)
-  print("Updating QA file:",tostring(fname)) -- fname
-  local f = io.open(".project","r")
-  assert(f,"No .project file found")
-  local p = f:read("*a")
-  f:close()
-  p = json.decode(p)
-  for qn,fn in pairs(p.files or {}) do
-    if fname==fn then 
-      local qa = api.hc3.get("/devices/"..p.id)
-      if not qa then
-        ERROR("QuickApp on HC3 with ID %s not found", p.id)
+local function findIdAndName(fname)
+  local function find(path)
+    local f = io.open(path,"r")
+    if not f then return false,nil end
+    local p = f:read("*a")
+    f:close()
+    local _,data = pcall(json.decode,p)
+    for qn,fn in pairs(data.files or {}) do
+      if fn==fname then
+        return true,data.id, qn
       end
-      local content = emu.readFile(fn)
-      local f = {name=qn, isMain=qn=='main', isOpen=false, type='lua', content=content}
-      local r,err = api.hc3.put("/quickApp/"..p.id.."/files/"..qn,f)
-      if not r then 
-        local r,err = api.hc3.post("/quickApp/"..p.id.."/files",f)
-        if err then
-          ERROR("creating QA:%s, file:%s, QAfile%s",p.id,fn,qn)
-        else
-          printf("Created QA:%s, file:%s, QAfile%s",p.id,fn,qn)
-        end
-      else 
-        printf("Updated QA:%s, file%s, QAfile:%s ",p.id,fn,qn)
-      end
-      os.exit(0)
     end
   end
-  ERROR("%s not found in current project",fname)
+  local path,file = fname:match("^(.-)([^/\\]+)$")
+  if not path then path = "" end
+  local p1 = path..".project"
+  local p2 = ".project"
+  local _,id,name = find(p1)
+  if id then return true,id,name end
+  return find(p2)
+end
+
+function task.updateFile(fname)
+  print("Updating QA file:",tostring(fname)) -- fname
+  local exist,id,qn = findIdAndName(fname)
+  assert(exist,"No .project file found for " .. fname)
+  assert(id,"No entry for "..fname.." in .project file")
+  local qa = api.hc3.get("/devices/"..id)
+  if not qa then
+    ERROR("QuickApp on HC3 with ID %s not found", id)
+  end
+  local content = emu.readFile(fname)
+  local f = {name=qn, isMain=qn=='main', isOpen=false, type='lua', content=content}
+  local r,err = api.hc3.put("/quickApp/"..id.."/files/"..qn,f)
+  if not r then 
+    local r,err = api.hc3.post("/quickApp/"..id.."/files",f)
+    if err then
+      ERROR("creating QA:%s, file:%s, QAfile%s",id,fname,qn)
+    else
+      printf("Created QA:%s, file:%s, QAfile%s",id,fname,qn)
+    end
+  else 
+    printf("Updated QA:%s, file%s, QAfile:%s ",id,fname,qn)
+  end
+  os.exit(0)
 end
 
 function task.downloadUnpack(id,path)

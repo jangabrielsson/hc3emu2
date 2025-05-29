@@ -138,7 +138,7 @@ local function startUp()
       Emu.__printHook(table.concat(b,' ')) 
     else orgPrint(...) end
   end
-
+  
   Emu:start()
 end
 
@@ -350,7 +350,7 @@ do
       end
     end
   end
-
+  
   --@D plugin=<path | modul> -- load library to fibaro.hc3emu.plugin
   function headerKeys.plugin(v,h)
     local path = v
@@ -395,6 +395,7 @@ do
 end
 
 function Emulator:getHeaders(src,extraHeaders)
+  self.headerKeys = headerKeys
   extraHeaders = extraHeaders or {}
   local headers = { debug = {}, files = {}, _UI={}, vars = {} }
   headers.interfaces = extraHeaders.interfaces or {} 
@@ -551,6 +552,7 @@ function Emulator:installDevice(d,files,headers) -- Move to device?
   }
   self:saveState()
   self.devices[device.id] = dev
+  self:post({type='device_created',id=device.id})
   self:refreshEvent('DeviceCreatedEvent',{id=device.id})
   if not headers.norun then dev:startQA() end
   Emu:DEBUGF('device',"Installing device done %s",dev.id)
@@ -588,13 +590,13 @@ function Emulator:debugOutput(tag, msg, typ, time)
   self.lib.debugOutput(tag, msg, typ, time or self.lib.userTime())
 end
 
-function Emulator:post(event) 
-  return self:setTimeout(function() self:handleEvent(event) end, 0) 
-end
-function Emulator:handleEvent(event)
-  for _,f in ipairs(self.EVENT[event.type] or {}) do
-    f(event,self)
-  end
+function Emulator:post(event)
+  local typ = event.type
+  local styp = "_"..typ
+  for _,f in ipairs(self.EVENT[styp] or {}) do f(event,self) end
+  return self:setTimeout(function() 
+    for _,f in ipairs(self.EVENT[typ] or {}) do f(event,self) end
+  end, 0) 
 end
 
 function Emulator:getPI(co)
