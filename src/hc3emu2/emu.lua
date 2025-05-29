@@ -450,6 +450,7 @@ function Emulator:loadState()
 end
 
 function Emulator:saveState()
+  if not self.stateTag then return end -- No state tag, no save
   local f = io.open("./.state.db", "w")
   if not f then return end
   local devices = {}

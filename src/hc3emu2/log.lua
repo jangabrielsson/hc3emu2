@@ -5,7 +5,7 @@ local function init(colors)
   colors = colors or {}
   local ANSICOLORMAP = {
     -- These work both on Zerobrane Studio console and VSCode terminal
-    black="\027[30m",brown="\027[31m",green="\027[32m",orange="\027[33m",navy="\027[34m", -- Seems to work in both VSCode and Zerobrane console...
+    black="\027[30m",brown="\027[31m",green="\027[32m",orange="\027[33m",navy="\027[34m",
     purple="\027[35m",teal="\027[36m",grey="\027[37m", gray="\027[37m",red="\027[31;1m",
     tomato="\027[31;1m",neon="\027[32;1m",yellow="\027[33;1m",blue="\027[34;1m",magenta="\027[35;1m",
     cyan="\027[36;1m",white="\027[37;1m",darkgrey="\027[30;1m",
