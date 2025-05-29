@@ -2,7 +2,6 @@ local VERSION = "1.1.2"
 local mode, mainFile, runflags, taskArgs = ...
 
 local fmt = string.format
-
 local copas = require("copas")
 local mobdebug = require("mobdebug")
 local socket = require("socket")
@@ -37,11 +36,11 @@ local function mergeLib(lib1,lib2) for k,v in pairs(lib2 or {}) do lib1[k] = v e
 
 local function startUp()
   Emu = Emulator() -- Global
-  Emu.config.rsrcsDir = config.rsrcsDir
-  Emu.config.tempDir = config.tempDir
-  Emu.config.EMU_DIR = config.EMU_DIR
-  Emu.config.EMUSUB_DIR = config.EMUSUB_DIR
-  Emu.config.fileSeparator = config.fileSeparator
+  for _,p in ipairs({
+    'rsrcsDir','tempDir','EMU_DIR','EMUSUB_DIR','fileSeparator','isZerobrane',
+  }) do
+    Emu.config[p]=config[p]
+  end
   Emu.taskArgs = taskArgs
   Emu.plugin = {}
   
@@ -67,6 +66,7 @@ local function startUp()
   Emu.config.hip = headers.hip or "127.0.0.1"  -- help ip
   Emu.stateTag = headers.state
   Emu.nodir = headers.nodir
+  Emu.config.nocolor = headers.nocolor or false
   local globalHeaders = {
     "latitude","longitude","startTime","speedTime","condensedLog",
   }
@@ -86,6 +86,7 @@ local function startUp()
   Emu.refreshState = require("hc3emu2.refreshstate")(Emu)
   Emu.web = require("hc3emu2.webserver")
   
+  Emu.LOGGER = Emu.lib.LOGGER
   Emu.lib.setDark(true)
   if Emu.stateTag then Emu:loadState() end
   
@@ -97,6 +98,7 @@ local function startUp()
   if not Emu.nodebug then
     if config.debuggerType == "actboy168" then
       -- functions?
+    elseif config.debuggerType == "local-lua" then
     elseif config.debuggerType == "mobdebug" or true then
       Emu.mobdebug = require("mobdebug") or Emu.mobdebug
       Emu.mobdebug.start('localhost',Emu.config.dport or 8172) 
@@ -163,11 +165,11 @@ function Emulator:__init()
   setmetatable(self.EVENT, { __newindex = function(t,k,v) rawset(t,k, t[k] or {}) table.insert(t[k],v) end })
   self.PI = {}
   function self.PI.debugHandler(flag,...) 
-    if flag==true or self.config.dbg[flag] then self:debugOutput("EMU",fmt(self.lib.formatArgs(...)),"DEBUG") end
+    if flag==true or self.config.dbg[flag] then self.LOGGER.DEBUG("EMU",fmt(self.lib.formatArgs(...))) end
   end
-  function self.PI.errorHandler(err,tb) self:debugOutput("EMU",err,"ERROR") if tb then print(tb) end end
+  function self.PI.errorHandler(err,tb) self.LOGGER.ERROR("EMU",err) if tb then print(tb) end end
   function self.PI.warningHandler(flag,...) 
-    if flag==true or self.config.dbg[flag] then self:debugOutput("EMU",fmt(self.lib.formatArgs(...)),"WARNING") end
+    if flag==true or self.config.dbg[flag] then self.LOGGER.WARNING("EMU",fmt(self.lib.formatArgs(...))) end
   end
   function self.PI.name() return "Hc3Emu" end
 end
@@ -287,6 +289,8 @@ do
   function headerKeys.nodebug(v,h,k) h.nodebug = validate(v,k,"boolean") end
   --@D norun=<true|false> - Load but do not run the QuickApp, ex. --%%norun=true
   function headerKeys.norun(v,h,k) h.norun = validate(v,k,"boolean") end
+  --@D nocolor=<true|false> - Do not print debug messages in color, ex. --%%nocolor=true
+    function headerKeys.nocolor(v,h,k) h.nocolor = validate(v,k,"boolean") end
   --@D silent=<true|false> - Do not print debug messages, ex. --%%silent=true
   function headerKeys.silent(v,h,k) h.silent = validate(v,k,"boolean") end
   --@D breakOnLoad=<true|false> - Break on first line when loading the QuickApp, ex. --%%breakOnLoad=true

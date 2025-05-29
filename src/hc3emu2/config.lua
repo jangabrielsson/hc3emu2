@@ -11,6 +11,7 @@ local cmdLine = arg[-3] or ""
 local debuggerType = "unknown"
 if cmdLine:match("actboy168") then debuggerType="actboy168" end
 if cmdLine:match("mobdebug") then debuggerType="mobdebug" end
+if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then debuggerType="local-lua" end
 local cfgFileName = ".hc3emu.lua"   -- Config file in current directory
 local homeCfgFileName = ".hc3emu.lua"  -- Config file in home directory
 

@@ -1,103 +1,150 @@
 local log
-
 local fmt = string.format
 
-local ANSICOLORMAP = {
-  black="\027[30m",brown="\027[31m",green="\027[32m",orange="\027[33m",navy="\027[34m", -- Seems to work in both VSCode and Zerobrane console...
-  purple="\027[35m",teal="\027[36m",grey="\027[37m", gray="\027[37m",red="\027[31;1m",
-  tomato="\027[31;1m",neon="\027[32;1m",yellow="\027[33;1m",blue="\027[34;1m",magenta="\027[35;1m",
-  cyan="\027[36;1m",white="\027[37;1m",darkgrey="\027[30;1m",
-}
-
-local SYSCOLORS = { debug='green', trace='blue', warning='orange', ['error']='red', text='black', sys='navy' }
-
-local extraColors = {}
-
-local function setDark(dark)
-  if dark then
-    SYSCOLORS.text='gray' SYSCOLORS.trace='cyan' SYSCOLORS.sys='yellow'
-  else
-    SYSCOLORS.text='black' SYSCOLORS.trace='blue' SYSCOLORS.sys='navy'
+local function init(colors)
+  colors = colors or {}
+  local ANSICOLORMAP = {
+    -- These work both on Zerobrane Studio console and VSCode terminal
+    black="\027[30m",brown="\027[31m",green="\027[32m",orange="\027[33m",navy="\027[34m", -- Seems to work in both VSCode and Zerobrane console...
+    purple="\027[35m",teal="\027[36m",grey="\027[37m", gray="\027[37m",red="\027[31;1m",
+    tomato="\027[31;1m",neon="\027[32;1m",yellow="\027[33;1m",blue="\027[34;1m",magenta="\027[35;1m",
+    cyan="\027[36;1m",white="\027[37;1m",darkgrey="\027[30;1m",
+    reset = "\027[0m", -- Reset color
+  }
+  
+  local COLORMAP = ANSICOLORMAP
+  
+  if not Emu.isZerobrane then 
+    ANSICOLORMAP.orange=nil 
+    ANSICOLORMAP = setmetatable(ANSICOLORMAP, {__index=colors}) 
+  end -- Set metatable to allow adding extra colors
+  
+  local function html2ansiColor(str, dfltColor) -- Allows for nested font tags and resets color to dfltColor
+    dfltColor = COLORMAP[dfltColor]
+    local st, p = { dfltColor }, 1
+    return dfltColor..str:gsub("(</?font.->)", function(s)
+      if s == "</font>" then
+        p = p - 1; return st[p]
+      else
+        local color = s:match("color=\"?([#%w]+)\"?") or s:match("color='([#%w]+)'")
+        if color then color = color:lower() end
+        color = COLORMAP[color] or dfltColor
+        p = p + 1; st[p] = color
+        return color
+      end
+    end)..ANSICOLORMAP.reset
   end
-end
-
-local COLORMAP = ANSICOLORMAP
-local colorEnd = '\027[0m'
-
-local function html2ansiColor(str, dfltColor) -- Allows for nested font tags and resets color to dfltColor
-  local EXTRA = extraColors or {}
-  dfltColor = COLORMAP[dfltColor] or EXTRA[dfltColor]
-  local st, p = { dfltColor }, 1
-  return dfltColor..str:gsub("(</?font.->)", function(s)
-    if s == "</font>" then
-      p = p - 1; return st[p]
-    else
-      local color = s:match("color=\"?([#%w]+)\"?") or s:match("color='([#%w]+)'")
-      if color then color = color:lower() end
-      color = COLORMAP[color] or EXTRA[color] or dfltColor
-      p = p + 1; st[p] = color
-      return color
-    end
-  end)..colorEnd
-end
-
-local transformTable
-local function debugOutput(tag, str, typ, time)
-  str = tostring(str)
-  time = time or Emu.lib.userTime and Emu.lib.userTime() or os.time()
-  for _,p in ipairs(log.logFilter) do if str:find(p) then return end end
-  str = str:gsub("<table (.-)>(.-)</table>",transformTable) -- Remove table tags
-  str = str:gsub("(&nbsp;)", " ")  -- transform html space
-  str = str:gsub("</br>", "\n")    -- transform break line
-  str = str:gsub("<br>", "\n")     -- transform break line
-  local dateStr = "[%d.%m.%Y][%H:%M:%S]"
-  local tagStr = tag:upper()
-  if Emu.config.condensedLog then
-    dateStr = "[%d.%m][%H:%M:%S]"
-    tagStr = tagStr:sub(-7)
-  end
-  if not log.logInColor then
-    str = str:gsub("(</?font.->)", "") -- Remove color tags
-    print(fmt("%s[%s][%s]: %s", os.date(dateStr,time), typ:upper(), tagStr, str))
-  else
-    local fstr = "<font color='%s'>%s[<font color='%s'>%-6s</font>][%-7s]: %s</font>"
-    local txtColor = SYSCOLORS.text
-    local typColor = SYSCOLORS[typ:lower()] or txtColor
-    local outstr = fmt(fstr,txtColor,os.date(dateStr,time),typColor,typ:upper(),tagStr,str)
-    print(html2ansiColor(outstr,SYSCOLORS.text))
-  end
-end
-
-local function colorStr(color,str) 
-  if log.logInColor then
-    return fmt("%s%s%s",COLORMAP[color] or extraColors [color],str,colorEnd) 
-  else return str end
-end
-
-function transformTable(pref,str)
-  local buff = {}
-  local function out(b,str) table.insert(b,str) end
-  str:gsub("<tr.->(.-)</tr>",function(row)
-    local rowbuff = {}
-    row:gsub("<td.->(.-)</td>",function(cell) 
-      out(rowbuff,cell)
+  
+  local function color(str)
+    return str:gsub("(%%%b{})", function(s)
+      return COLORMAP[s:sub(3,-2):match("(%w+)")] or ""
     end)
-    out(buff,table.concat(rowbuff,"  "))
-  end)
-  return table.concat(buff,"\n")
+  end
+  
+  local logConfigDark = {
+    timestampPattern = "[%d.%m.%Y][%H:%M:%S]",
+    defaultColor = 'gray', -- Default color for log messages
+    logPatterns = {
+      DEBUG =   color("%{gray}%date[%{green }DEBUG  %{gray}][%tag]: %message%{reset}"),
+      TRACE =   color("%{gray}%date[%{cyan  }TRACE  %{gray}][%tag]: %message%{reset}"),
+      WARNING = color("%{gray}%date[%{orange}WARNING%{gray}][%tag]: %message%{reset}"),
+      ERROR =   color("%{gray}%date[%{red   }ERROR  %{gray}][%tag]: %message%{reset}"),
+      EMU =     color("%{gray}%date[%{yellow}EMU    %{gray}][%tag]: %message%{reset}"),
+    }
+  }
+  
+  local logConfigLight = {
+    timestampPattern = "[%d.%m.%Y][%H:%M:%S]",
+    defaultColor = 'black', -- Default color for log messages
+    logPatterns = {
+      DEBUG =   color("%{black}%date[%{green }DEBUG  %{black}][%tag]: %message%{reset}"),
+      TRACE =   color("%{black}%date[%{blue  }TRACE  %{black}][%tag]: %message%{reset}"),
+      WARNING = color("%{black}%date[%{orange}WARNING%{black}][%tag]: %message%{reset}"),
+      ERROR =   color("%{black}%date[%{red   }ERROR  %{black}][%tag]: %message%{reset}"),
+      EMU =     color("%{black}%date[%{navy  }EMU    %{black}][%tag]: %message%{reset}"),
+    }
+  }
+  
+  logConfig = logConfigDark -- Default log config
+  local function setDark(dark)
+    if dark then logConfig = logConfigDark
+    else logConfig = logConfigLight end
+  end
+  
+  local transformTable
+  local function convertHtml(str, dfltColor)
+    str = str:gsub("<table (.-)>(.-)</table>",transformTable) -- Remove table tags
+    str = str:gsub("(&nbsp;)", " ")  -- transform html space
+    str = str:gsub("</?br>", "\n")    -- transform break line
+    str = html2ansiColor(str, dfltColor) -- Convert html colors to ansi colors
+    return str
+  end
+  
+  local logFilter = {}
+  
+  local function LOG(typ, tag, str, time)
+    if Emu.config.condensedLog then
+      logConfig.timestampPattern = "[%d.%m][%H:%M:%S]"
+      tag = #tag > 8 and tag:sub(-7) or tag
+    end
+    str = tostring(str)
+    time = time or Emu.lib.userTime and Emu.lib.userTime() or os.time()
+    local timeStr = os.date(logConfig.timestampPattern, time)
+    tag = tag:upper()
+    local pattern = logConfig.logPatterns[typ:upper()] or logConfig.logPatterns.DEBUG
+    str = convertHtml(str,logConfig.defaultColor or "black")
+    local outstr = pattern:gsub("%%date", timeStr):gsub("%%tag", tag)
+    local i,j = outstr:find("%%message") -- str can contain % characters, so we need to find %%message
+    if i then outstr = outstr:sub(1,i-1)..str..outstr:sub(j+1) end
+    if Emu.config.nocolor then outstr = outstr:gsub("\027%[.-m","") end -- and remove colors if not wanted
+    if next(logFilter) then -- Filter log messages
+      for str,bol in pairs(logFilter) do if outstr:find(str) then return end end
+    end
+    print(outstr)
+  end
+  
+  local LOGGER = {
+    DEBUG = function(tag, str, time) LOG("DEBUG", tag, str, time) end,
+    TRACE = function(tag, str, time) LOG("TRACE", tag, str, time) end,
+    WARNING = function(tag, str, time) LOG("WARNING", tag, str, time) end,
+    ERROR = function(tag, str, time) LOG("ERROR", tag, str, time) end,
+    EMU = function(tag, str, time) LOG("EMU", tag, str, time) end
+  }
+  
+  local function debugOutput(tag, str, typ, time) LOGGER[typ:upper()](tag, str, time) end
+  
+  local function colorStr(color,str) 
+    if log.logInColor then
+      return fmt("%s%s%s",COLORMAP[color],str,ANSICOLORMAP.reset) 
+    else return str end
+  end
+  
+  function transformTable(pref,str)
+    local buff = {}
+    local function out(b,str) table.insert(b,str) end
+    str:gsub("<tr.->(.-)</tr>",function(row)
+      local rowbuff = {}
+      row:gsub("<td.->(.-)</td>",function(cell) 
+        out(rowbuff,cell)
+      end)
+      out(buff,table.concat(rowbuff,"  "))
+    end)
+    return table.concat(buff,"\n")
+  end
+  
+  log = {
+    colors = { COLORMAP = COLORMAP },
+    setDark = setDark,
+    LOGGER = LOGGER,
+    debugOutput = debugOutput,
+    colorStr = colorStr,
+    html2ansiColor = html2ansiColor,
+    logInColor = true,
+    logFilter = logFilter
+  }
 end
 
-log = {
-  colors = { ANSICOLORMAP = ANSICOLORMAP, SYSCOLORS = SYSCOLORS, extraColors = extraColors },
-  setDark = setDark,
-  debugOutput = debugOutput,
-  colorStr = colorStr,
-  html2ansiColor = html2ansiColor,
-  logInColor = true,
-  logFilter = {}
-}
-
-extraColors = {
+local extraColors = {
   aqua = "\027[38;5;14m",
   aquamarine1 = "\027[38;5;122m",
   aquamarine3 = "\027[38;5;79m",
@@ -323,4 +370,5 @@ extraColors.lightred = extraColors.red
 extraColors.salmon = extraColors.lightpink1
 extraColors.buttermilk = extraColors.yellow
 
+init(extraColors)
 return log
