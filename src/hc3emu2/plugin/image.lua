@@ -1,23 +1,23 @@
 Emu = Emu
 local fmt = string.format
+local lfs = require("lfs")
 
 --@D image=path,name - add image file to QA, ex. --%%image=examples/myImage.png,myImage
-function Emu._directive.image(d,val,flags) -- Register a new directive
-  flags.images = flags.images or {}
-  local path,name = val:match("([^,]+),([^,]+)")
-  assert(path and name,"Bad image directive: "..d)
-  flags.images[path] = name
+function Emu.headerKeys.image(v,h,k) -- Register a new directive
+  h.images = h.images or {}
+  local path,name = v:match("([^,]+),([^,]+)")
+  assert(path and name,"Bad image directive: "..k)
+  assert(lfs.attributes(path),"Image not found: "..path)
+  h.images[path] = name
 end
 
 --@D iconImage=path,name - add image file to QA, ex. --%%iconImage=examples/myImage.png,myImage
-function Emu
-  
-  
-  directive.iconImage(d,val,flags) -- Register a new directive
-  flags.iconImages = flags.iconImages or {}
-  local path,name = val:match("([^,]+),([^,]+)")
-  assert(path and name,"Bad image directive: "..d)
-  flags.iconImages[path] = name
+function Emu.headerKeys.iconImage(v,h,k) -- Register a new directive
+  h.iconImages = h.iconImages or {}
+  local path,name = v:match("([^,]+),s%*([^,]+)")
+  assert(path and name,"Bad iconImage directive: "..k)
+  assert(lfs.attributes(path),"Icon image not found: "..path)
+  h.iconImages[path] = name
 end
 
 local function base64encode(data)
@@ -59,7 +59,7 @@ local charMap = {
   ['\n']=""
 }
 
-local function addImages(images,files,env)
+local function addImages(images,files)
   local imcont = { "_IMAGES=_IMAGES or {};\n" }
   for fname,name in pairs(images) do
     local file = io.open(fname, "rb")
@@ -81,10 +81,9 @@ local function addImages(images,files,env)
     file:close()
   end
   local content = table.concat(imcont, "\n")
-  local qa2, res = load(content, "images", "t", env)() -- Load QA
   table.insert(files, 1, {
-    qa = qa2,
     name = "IMAGES",
+    fname = "<images>",
     content = content,
     type = 'lua',
     isMain = false,
@@ -92,7 +91,7 @@ local function addImages(images,files,env)
   })
 end
 
-local function addIconImages(images,files,env)
+local function addIconImages(images,files)
   local imcont = { "_ICONS=_ICONS or {};\n" }
   for fname,name in pairs(images) do
     local file = io.open(fname, "rb")
@@ -109,10 +108,9 @@ _ICONS['%s']='%s'
 ]], name, iconData)
   end
   local content = table.concat(imcont, "\n")
-  local qa2, res = load(content, "icons", "t", env)() -- Load QA
   table.insert(files, 1, {
-    qa = qa2,
     name = "ICONS",
+    fname = "<icons>",
     content = content,
     type = 'lua',
     isMain = false,
@@ -120,11 +118,11 @@ _ICONS['%s']='%s'
   })
 end
 
-function E.EVENT._quickApp_registered(event) -- Add image file to QA when loaded
-  local qa = E:getQA(event.id)
-  if not qa then return end
-  local images = qa.directives.images
-  if images then addImages(images, qa.files, qa.env) end
-  local iconImages = qa.directives.iconImages
-  if iconImages then addIconImages(iconImages, qa.files, qa.env) end
+function Emu.EVENT._device_created(event) -- Add image file to QA when loaded
+  local dev = Emu.devices[event.id]
+  if not dev then return end
+  local images = dev.headers.images
+  if images then addImages(images, dev.files) end
+  local iconImages = dev.headers.iconImages
+  if iconImages then addIconImages(iconImages, dev.files) end
 end
