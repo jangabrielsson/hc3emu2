@@ -5,7 +5,7 @@ if require and not QuickApp then require('hc3emu') end
 
 function QuickApp:onInit()
   self:debug(self.name,self.id)
-  -- error("FOO")
+  error("FOO")
   setInterval(function() 
       print("PING")
       error("BAR")
