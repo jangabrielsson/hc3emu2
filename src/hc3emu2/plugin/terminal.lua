@@ -47,7 +47,8 @@ local function keyPoller()
       while true do
         local key, keytype = sys.readansi(0.01)
         if keytype == 'char' and key:byte() == exitKey then
-          print("Exit key pressed, exiting")
+          io.write("Exit key pressed, exiting")
+          io.flush()
           shutdownTerm()
           os.exit(0)
         end
@@ -61,13 +62,13 @@ end
 local VERSION = "v0.5"
 
 local function terminal()
-  print("Hc3Emu Terminal",VERSION)
+  print("Hc3Emu Terminal",VERSION,"(Esc to quit)")
   exports.setExitKey(27) -- default to ESC key
   local prompt = "hc3emu>"
   local inputLine = prompt -- initialize input line with prompt
   local function ioprint(str) io.write(str) io.flush() end
   local function ioprintln(str) io.write(str.."\n") io.flush() end
-  function _emu.__printHook(str) 
+  function Emu.__printHook(str) 
     ioprintln("\r"..str) -- print the string with a newline
     ioprint(inputLine)
   end

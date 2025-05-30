@@ -1,4 +1,5 @@
 --%%name=TaskRunner
+--%%plugin=$hc3emu2.plugin.terminal
 
 local emu = fibaro.hc3emu
 local lfs = emu.lua.require("lfs")
@@ -97,10 +98,13 @@ function task.downloadUnpack(id,path)
 end
 
 function task.terminal(path) -- file to run in terminal, if any
-  Emu.lib.terminal()
+  fibaro.hc3emu.plugin.terminal()
   if path and lfs.attributes(path) then
-    Emu.lib.loadQA(path)
+    local flags = args.flags
+    local extra = {}
+    emu.loadQA(path,extra)
   end
+  return "run"
 end
 
 __TAG = "TASKRUNNER"
