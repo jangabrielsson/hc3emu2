@@ -1,18 +1,7 @@
 Emu = Emu
+local exports = {}
 local fmt = string.format
 local copas = require("copas")
-
---[[ Emulator events
-{type='emulator_started'}             -- when emulator is initialized
-{type='quickApp_registered',id=qaId}  -- when a quickApp is registered in emulator but not started
-{type='quickApp_loaded',id=qaId}      -- when a quickApp files are loaded
-{type='quickApp_initialized',id=qaId} -- before :onInit, QuickApp instance created
-{type='quickApp_started',id=qaId}     -- after :onInit
-{type='quickApp_finished',id=qaId}    -- no timers left
-{type='scene_registered',id=sceneId}
-{type='time_changed'}
-{type='midnight'}
---]]
 
 local sys = require("system")
 
@@ -69,8 +58,66 @@ local function keyPoller()
   }
 end
 
-local exports = {}
+local VERSION = "v0.5"
+
+local function terminal()
+  print("Hc3Emu Terminal",VERSION)
+  exports.setExitKey(27) -- default to ESC key
+  local prompt = "hc3emu>"
+  local inputLine = prompt -- initialize input line with prompt
+  local function ioprint(str) io.write(str) io.flush() end
+  local function ioprintln(str) io.write(str.."\n") io.flush() end
+  function _emu.__printHook(str) 
+    ioprintln("\r"..str) -- print the string with a newline
+    ioprint(inputLine)
+  end
+  io.write(prompt) -- write prompt to terminal
+  io.flush() -- flush output to terminal
+  exports.setKeyHandler(function(key, keytype)
+    if keytype == "char" then
+      -- just a key
+      local b = key:byte()
+      if b < 32 then
+        key = tostring(b) -- replace control characters with a simple "." to not mess up the screen
+      end
+
+      if b == 10 then
+        io.write('\n')
+        local cmd = "return "..inputLine:sub(#prompt + 1) -- wrap input in a return to evaluate it
+        local func, err = load(cmd, "input", "t", _G)
+        if not func then
+          ioprintln(err)
+        else
+          local ok, result,code = pcall(func)
+          ioprintln(type(result)=='table' and json.encodeFormated(result) or tostring(result))
+        end
+        inputLine = prompt -- reset input line
+      elseif b == 8 or b == 127 then
+        -- backspace or delete
+        if #inputLine > #prompt then
+          inputLine = inputLine:sub(1, -2) -- remove last character
+          io.write('\b ') -- move back, write space, move back again
+        end
+      else
+        inputLine = inputLine .. key
+      end
+      io.write('\r')
+      io.write(inputLine) -- write to terminal
+      io.flush() -- flush output to terminal
+
+    elseif keytype == "ansi" then
+      -- we got an ANSI sequence
+      local seq = { key:byte(1, #key) }
+      print("ANSI sequence received: " .. key:sub(2,-1), "(bytes: " .. table.concat(seq, ", ")..")")
+      
+    else
+      print("unknown key type received: " .. tostring(keytype))
+    end
+  end)
+end
+
 exports.setExitKey = function(b) setupTerm() exitKey = b end
 exports.setKeyHandler = function(f) setupTerm() keyPoller() keyHandler = f end
 exports.clear = function() print("\027[2J") end
+exports.terminal = terminal
 return exports

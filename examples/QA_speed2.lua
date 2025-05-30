@@ -8,7 +8,7 @@
 
 function QuickApp:interval()
   setInterval(function() -- Ping every day
-    self:debug("Hello from hc3emu",fibaro.getValue(1,"sunriseHour"))
+    self:debug("Hello from hc3emu, sunrise",fibaro.getValue(1,"sunriseHour"))
   end,24*3600*1000)
 end
 
@@ -16,7 +16,7 @@ function QuickApp:onInit()
   self:debug("onInit",self.name,self.id)
   setTimeout(function() 
     print("PING")
-    fibaro.hc3emu.lib.speedFor(7*24,function(speed) -- Don't work with header speed!
+    fibaro.hc3emu.speedFor(7*24,function(speed) -- Don't work with header speed!
       if speed then return end
       setTimeout(function() print("Ping after ~3s") end,3000)
     end)
@@ -32,7 +32,7 @@ function QuickApp:onInit2()
     n = n + 1
     if n % 5 == 0 then
       speed = not speed
-      fibaro.hc3emu.lib.speedFor(speed and 24*7 or 0)
+      fibaro.hc3emu.speedFor(speed and 24*7 or 0)
     end
     self:debug("Interval executed")
   end, 2000)
