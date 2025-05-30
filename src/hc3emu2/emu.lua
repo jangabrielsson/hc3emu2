@@ -12,6 +12,7 @@ require("copas.http")
 
 -- Figure out where we are and what we run...
 local config = require("hc3emu2.config")
+local startFlags = taskArgs.flags or {}
 
 local copiMap = setmetatable({}, { __mode = "k" }) -- Weak table for coroutine to process info mapping
 
@@ -54,7 +55,8 @@ local function startUp()
   
   local src = Emu.lib.readFile(mainFile)
   local headers,eval = Emu:getHeaders(src),Emu.lib.eval
-  Emu.offline = headers.offline==true
+  Emu.offline = headers.offline==true or startFlags.offline==true
+  Emu.nodebug = headers.nodebug==true or startFlags.nodebug==true
   Emu.config.hc3.url = headers.url or os.getenv("HC3URL") or config.userConfig.url
   Emu.config.hc3.user = headers.user or os.getenv("HC3USER") or config.userConfig.user
   Emu.config.hc3.pwd = headers.pwd or os.getenv("HC3PASSWORD") or config.userConfig.password
@@ -101,6 +103,7 @@ local function startUp()
     elseif config.debuggerType == "local-lua" then
     elseif config.debuggerType == "mobdebug" or true then
       Emu.mobdebug = require("mobdebug") or Emu.mobdebug
+      print("Starting mobdebug on port",Emu.config.dport)
       Emu.mobdebug.start('localhost',Emu.config.dport or 8172) 
     end
   end

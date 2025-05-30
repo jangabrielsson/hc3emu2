@@ -8,12 +8,16 @@ for i=0,4 do
 end
 
 args = args or {}
+local nargs = {}
 local flags = {}
-for i,f in ipairs(args) do if f:sub(1,1)=='-' then flags[f:sub(2)]=true table.remove(args,i) end end
-mainFile = args[1]
+for i,f in ipairs(args) do 
+  if f:sub(1,1)=='-' then flags[f:sub(2)]=true
+  else nargs[#nargs+1]=f end
+end
+mainFile = nargs[1]
 
 assert(mode,"Missing mode command line argument")
-assert(mainFile,"Missing file command line argument")
+assert(not flags.terminal or mainFile,"Missing file command line argument")
 
 do
   local f = io.open(".env")
@@ -46,7 +50,7 @@ end
 local taskArgs = {}
 if mode ~= "run" then
   local taskrunner = package.searchpath("hc3emu2.plugin.taskrunner",package.path)
-  taskArgs = {cmd=mode,args=args,flags=flags}
+  taskArgs = {cmd=mode,args=nargs,flags=flags}
   mainFile = taskrunner
 end
 
