@@ -54,7 +54,7 @@ local function startUp()
   
   local src = Emu.lib.readFile(mainFile)
   local headers,eval = Emu:getHeaders(src),Emu.lib.eval
-  Emu.offline = headers.offline
+  Emu.offline = headers.offline==true
   Emu.config.hc3.url = headers.url or os.getenv("HC3URL") or config.userConfig.url
   Emu.config.hc3.user = headers.user or os.getenv("HC3USER") or config.userConfig.user
   Emu.config.hc3.pwd = headers.pwd or os.getenv("HC3PASSWORD") or config.userConfig.password

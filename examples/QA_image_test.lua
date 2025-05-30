@@ -2,7 +2,7 @@
 --%%type=com.fibaro.binarySwitch
 --%%plugin=$hc3emu2.plugin.image
 --%%image=examples/bikeChargerOff.png,bike
---%%save=test/imateTest.fqa
+--%%save=test/imageTest.fqa
 --%%webui=true
 
 --%%u={label='image',text=''}

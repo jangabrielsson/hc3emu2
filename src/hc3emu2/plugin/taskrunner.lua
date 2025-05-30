@@ -1,6 +1,7 @@
 --%%name=TaskRunner
 
 local emu = fibaro.hc3emu
+local lfs = emu.lua.require("lfs")
 local io = emu.lua.io
 local args = fibaro.hc3emu.taskargs
 local task = {}
@@ -95,8 +96,16 @@ function task.downloadUnpack(id,path)
   end
 end
 
+function task.terminal(path) -- file to run in terminal, if any
+  Emu.lib.terminal()
+  if path and lfs.attributes(path) then
+    Emu.lib.loadQA(path)
+  end
+end
+
 __TAG = "TASKRUNNER"
 if type(args) ~= "table" then ERROR("No task command specified") end
 __TAG = args.cmd or __TAG 
-task[args.cmd or "error"](table.unpack(args.args))
-os.exit(0)
+if task[args.cmd or "error"](table.unpack(args.args)) ~= "run" then
+  os.exit(0)
+end

@@ -20,6 +20,7 @@ function _PI.cancelTimer(ref,op)
   _emu:DEBUGF('timer',"Timer %s %s",tostring(ref),op)
   if next(_PI.timers) == nil then
     _emu:DEBUGF('timer',"No timers left")
+    if fibaro.noTimersLeft then fibaro.noTimersLeft() end
   end
   return ref 
 end

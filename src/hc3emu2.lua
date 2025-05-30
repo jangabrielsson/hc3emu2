@@ -1,6 +1,6 @@
 local mode, mainFile, args
 local startupMode = { 
-  run=true, test=true,
+  run=true, test=true, terminal=true,
   uploadQA=true, downloadUnpack=true, updateFile=true
 }
 for i=0,4 do

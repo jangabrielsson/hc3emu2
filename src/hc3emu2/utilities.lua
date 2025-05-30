@@ -1,4 +1,5 @@
 local fmt = string.format
+Emulator = Emulator
 
 function urlencode(str) -- very useful
   if str then
