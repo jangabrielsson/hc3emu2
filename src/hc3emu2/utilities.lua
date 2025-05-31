@@ -1,5 +1,6 @@
 local fmt = string.format
 Emulator = Emulator
+Emu = Emu
 
 function urlencode(str) -- very useful
   if str then
