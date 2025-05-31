@@ -81,20 +81,24 @@ local function startUp()
   Emu.LOGGER = Emu.lib.LOGGER
 
   Emu.api = require("hc3emu2.api")(Emu)
-  if not Emu.offline then 
+  if not Emu.offline then
+    if not Emu.config.hc3.url or not Emu.config.hc3.user or not Emu.config.hc3.pwd then
+      print("HC3 URL, user or password is not set, please set them in .hc3emu.lua file")
+      os.exit(-1)
+    end
     Emu.HC3TIMEOUT = 3000 -- 3 seconds timeout for HC3 API calls 
     local res,err = Emu.api.hc3.get("/settings/info")
     Emu.HC3TIMEOUT = nil-- default
     if res==nil or err == "Host is down" or err == "Host not found" then
-      print("HC3 is not reachable, please check your HC3 URL and network connection")
-      print("Switching to offline mode")
+      print("-HC3 is not reachable, please check your HC3 URL and network connection")
+      print("-Switching to offline mode")
       Emu.offline = true
     end
   end
   local modeStr = {}
   if _DEVELOP then modeStr[#modeStr+1] = "developer" end
-  if Emu.offline then modeStr[#modeStr+1] = "offline" end
-  if next(modeStr) then print("Running in "..table.concat(modeStr," and ").." mode") end
+  if Emu.offline then modeStr[#modeStr+1] = "offline" or "online" end
+  print("-Running in "..table.concat(modeStr," and ").." mode")
 
   if Emu.offline then require("hc3emu2.offline")(Emu) 
   else Emu.helper = require("hc3emu2.helper") end

@@ -13,4 +13,6 @@ function QuickApp:onInit()
 
   api.post("/globalVariables",{name="testVar",value="testValue"})
   fibaro.setGlobalVariable("testVar","testValue2")
+  fibaro.setGlobalVariable("testVar","testValue2")
+  fibaro.setGlobalVariable("testVar","testValue3")
 end

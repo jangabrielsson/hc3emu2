@@ -108,10 +108,12 @@ local function setup(Emu)
       value = data.value,
     })
   end
-  function REFRESH_EVENTS.GlobalVariableChangedEvent(data,name) 
+  function REFRESH_EVENTS.GlobalVariableChangedEvent(data,name,oldData)
+    if data.value == oldData.value then return end
     Emu:refreshEvent('GlobalVariableChangedEvent', {
       variableName = name,
       newValue = data.value,
+      oldValue = oldData.value,
     })
   end
   function REFRESH_EVENTS.GlobalVariableRemovedEvent(data,name) 
@@ -152,8 +154,9 @@ local function setup(Emu)
   end)
   add("PUT/globalVariables/<name>", function(ctx)
     local name  = ctx.vars.name
+    local oldData = gvs[name][1]
     gvs[name] = {'PUT',ctx.data}
-    return REFRESH({ctx.data,HTTP.OK},'GlobalVariableChangedEvent',name)
+    return REFRESH({ctx.data,HTTP.OK},'GlobalVariableChangedEvent',name,oldData)
   end)
   add("DELETE/globalVariables/<name>", function(ctx)
     gvs[ctx.vars.name] = {'DELETE'}
