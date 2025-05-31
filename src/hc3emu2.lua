@@ -37,7 +37,6 @@ do
 end
 
 if flags.develop or _DEVELOP then -- Running in developer mode
-  print("Developer mode")
   _DEVELOP = "./"
   local root = os.getenv("HC3EMUROOT")
   if root then

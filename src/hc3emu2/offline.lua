@@ -101,6 +101,33 @@ local function setup(Emu)
   
   require("hc3emu2.offline_data")(store,Emu)
   
+  local REFRESH_EVENTS = {}
+  function REFRESH_EVENTS.GlobalVariableAddedEvent(data) 
+    Emu:refreshEvent('GlobalVariableAddedEvent', {
+      variableName = data.name,
+      value = data.value,
+    })
+  end
+  function REFRESH_EVENTS.GlobalVariableChangedEvent(data,name) 
+    Emu:refreshEvent('GlobalVariableChangedEvent', {
+      variableName = name,
+      newValue = data.value,
+    })
+  end
+  function REFRESH_EVENTS.GlobalVariableRemovedEvent(data,name) 
+    Emu:refreshEvent('GlobalVariableRemovedEvent', {
+      variableName = name,
+    })
+  end
+
+  local function REFRESH(data,typ,...)
+    local code = data[2]
+    if code < 206 and REFRESH_EVENTS[typ] then
+      REFRESH_EVENTS[typ](data[1],...)
+    end
+    return data
+  end
+
   local function add(path,method)
     local function fun(...)
       local args = {...}
@@ -111,22 +138,26 @@ local function setup(Emu)
     api:add(path,fun,true)
   end
   
+  local gvs = store.globalVariables
   add("GET/globalVariables", function(ctx)
-    return {strip(store.globalVariables),HTTP.OK}
+    return {strip(gvs),HTTP.OK}
   end)
   add("GET/globalVariables/<name>", function(ctx)
-    return store.globalVariables[ctx.vars.name]
+    return gvs[ctx.vars.name]
   end)
   add("POST/globalVariables", function(ctx)
     local data = dflts('globalVariables',ctx.data)
-    store.globalVariables[ctx.data.name or ".."] = {'POST',data}
-    return {data,HTTP.CREATED}
+    gvs[ctx.data.name or ".."] = {'POST',data}
+    return REFRESH({data,HTTP.CREATED},'GlobalVariableAddedEvent')
   end)
   add("PUT/globalVariables/<name>", function(ctx)
-    store.globalVariables[ctx.vars.name] = {'PUT',ctx.data}
+    local name  = ctx.vars.name
+    gvs[name] = {'PUT',ctx.data}
+    return REFRESH({ctx.data,HTTP.OK},'GlobalVariableChangedEvent',name)
   end)
   add("DELETE/globalVariables/<name>", function(ctx)
-    store.globalVariables[ctx.vars.name] = {'DELETE'}
+    gvs[ctx.vars.name] = {'DELETE'}
+    return REFRESH({nil,HTTP.OK},'GlobalVariableRemovedEvent',ctx.vars.name)
   end)
   
   add("GET/rooms", function(ctx)
