@@ -14,7 +14,7 @@ local function refreshStatePoller(queue)
          return
       end
     end
-    assert(data, "No data received")
+    data = type(data)=='table' and data or {}
     ---@diagnostic disable-next-line: undefined-field
     last = math.floor(data.last) or last
     ---@diagnostic disable-next-line: undefined-field
