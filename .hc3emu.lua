@@ -1,5 +1,10 @@
 return {
-  keyProj = "kkk",
-  key = "proj",
-  dbg = { kkk = 'fopp'}
-}
+  user = "admin",
+  url = "http://192.168.1.57/",
+  password = "Admin1477!",
+  Hue_user = "AqlHjZVly4IRgcDmzr5YfJhDWs-lig0zitdckmn9",  
+  Hue_ip = "192.168.1.153",  
+  HASS_url = "192.168.1.248:8123",  
+  HASS_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzMjFkMzE1Y2EyYTQ0NWY2OGIwYWUyMWMzNmIyZGI0OCIsImlhdCI6MTczNjQzNjIyNCwiZXhwIjoyMDUxNzk2MjI0fQ.1oq6wG1jeivul9w8H_QwZ1Uxyg9Tg0GbLjLjGowfthA",
+  DIRIGERA_token = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjAxNTRmZDM0MTA1MzMxYmMxNjM5MDAxZTQ3OTJjMDUxZWZiNjc0YjI1YmQ1YTRhZGYzMTI1MTFkYzI4YzFkMDgifQ.eyJpc3MiOiJkN2ZiNDNjZi1lOTgxLTQxNzUtOTliMi1iYTdhYjM3ZTY5NmQiLCJ0eXBlIjoiYWNjZXNzIiwiYXVkIjoiaG9tZXNtYXJ0LmxvY2FsIiwic3ViIjoiZjA4MzI3NmQtYjYzMy00N2FhLWExNTgtMmViNjYyMGU0ODNlIiwiaWF0IjoxNzI5NDk2NjI5LCJleHAiOjIwNDUwNzI2Mjl9.SL3uYAaM1gH5SFAa6dU4f-eaqY6jgCkyxKy7Wvqb2S-Nc_t2EXWdRA-71XUhy4Vh_6D3qqL3i_HefRcA-MbsXw",
+} 
