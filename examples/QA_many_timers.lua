@@ -1,5 +1,3 @@
-if require and not QuickApp then require("hc3emu") end
-
 --%%name=Timers
 --%%type=com.fibaro.multilevelSwitch
 --%%time=10:45

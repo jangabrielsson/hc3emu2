@@ -63,7 +63,7 @@ local function parseUrl(url)
   return path,params
 end
 
-local embed = require("hc3emu.embedui")
+local embed = require("hc3emu2.embedui")
 
 local function handleGET(url,headers,io)
   local path,params = parseUrl(url)
