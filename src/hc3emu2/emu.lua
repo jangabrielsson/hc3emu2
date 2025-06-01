@@ -1,4 +1,4 @@
-local VERSION = "1.1.2"
+local VERSION = "2.0.6"
 local mode, mainFile, runflags, taskArgs = ...
 
 local fmt = string.format
@@ -86,7 +86,7 @@ local function startUp()
       print("HC3 URL, user or password is not set, please set them in .hc3emu.lua file")
       os.exit(-1)
     end
-    Emu.HC3TIMEOUT = 3000 -- 3 seconds timeout for HC3 API calls 
+    Emu.TIMEOUT = 3000 -- 3 seconds timeout for HC3 API calls 
     local res,err = Emu.api.hc3.get("/settings/info")
     Emu.HC3TIMEOUT = nil-- default
     if res==nil or err == "Host is down" or err == "Host not found" then
@@ -99,7 +99,7 @@ local function startUp()
   if _DEVELOP then modeStr[#modeStr+1] = "developer" end
   if Emu.offline then modeStr[#modeStr+1] = "offline" or "online" end
   print("-Running in "..table.concat(modeStr," and ").." mode")
-
+  print(Emu.lib.colorStr('orange',"HC3Emu - Tiny QuickApp emulator for the Fibaro Home Center 3, v"..VERSION))
   if Emu.offline then require("hc3emu2.offline")(Emu) 
   else Emu.helper = require("hc3emu2.helper") end
   
@@ -135,7 +135,7 @@ local function startUp()
   Emu.templates = json.decode(Emu.lib.readRsrcsFile("devices.json"))
   Emu:process{
     pi = Emu.PI,
-    fun = function() 
+    fun = function()
       if Emu.config.startTime then Emu.lib.setTime(Emu.config.startTime) end
       if Emu.config.speedTime then Emu.lib.speedFor(Emu.config.speedTime) end
       Emu.sunriseHour,Emu.sunsetHour = Emu.lib.sunCalc()

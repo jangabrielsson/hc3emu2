@@ -1,20 +1,26 @@
-local mode, mainFile, args
+local cmdLine, mode, mainFile, args
 local startupMode = { 
   run=true, test=true, terminal=true,
   uploadQA=true, downloadUnpack=true, updateFile=true
 }
-for i=0,4 do
-  if startupMode[arg[i]] then mode,args = arg[i],{table.unpack(arg,i+1)} break end
+for i=-1,5 do
+  local a = arg[i] or ""
+  if a:match("hc3emu2%.lua") or a:match("require%(.hc3emu2.%)") then
+    cmdLine = {table.unpack(arg,i+1)}
+    break
+  end
+end
+assert(cmdLine,"hc3emu2 not found in command line arguments")
+args = {}
+local flags = {}
+for i,f in ipairs(cmdLine) do 
+  if f:sub(1,1)=='-' then flags[f:sub(2)]=true
+  else args[#args+1]=f end
 end
 
-args = args or {}
-local nargs = {}
-local flags = {}
-for i,f in ipairs(args) do 
-  if f:sub(1,1)=='-' then flags[f:sub(2)]=true
-  else nargs[#nargs+1]=f end
-end
-mainFile = nargs[1]
+mode = args[1]
+table.remove(args,1) -- remove mode from args
+mainFile = args[1]
 
 assert(mode,"Missing mode command line argument")
 assert(not flags.terminal or mainFile,"Missing file command line argument")
@@ -49,7 +55,7 @@ end
 local taskArgs = {}
 if mode ~= "run" then
   local taskrunner = package.searchpath("hc3emu2.plugin.taskrunner",package.path)
-  taskArgs = {cmd=mode,args=nargs,flags=flags}
+  taskArgs = {cmd=mode,args=args,flags=flags}
   mainFile = taskrunner
 end
 
