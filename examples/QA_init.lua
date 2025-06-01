@@ -4,8 +4,9 @@
 --%%state=true
 --%%conceal=token:"<put you HASS api token here>"
 
+local color = _emu.lib.colorStr
 function QuickApp:onInit()
-
+  print(color("orange","Hello"))
   self:debug("QuickApp Initialized", self.name, self.id)
   self:debug("Sunset", fibaro.getValue(1, "sunsetHour"))
 
