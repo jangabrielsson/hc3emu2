@@ -5,8 +5,8 @@ local startupMode = {
 }
 for i=-1,5 do
   local a = arg[i] or ""
-  if a:match("hc3emu2%.lua") or a:match("require%(.hc3emu2.%)") then
-    cmdLine = {table.unpack(arg,i+1)}
+  if startupMode[a] then
+    cmdLine = {table.unpack(arg,i)}
     break
   end
 end
