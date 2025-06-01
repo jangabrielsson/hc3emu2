@@ -285,10 +285,6 @@ The emulator provides various debug flags that can be enabled:
 
 ## Best Practices
 
-1. Always include the emulator header:
-```lua
-if require and not QuickApp then require("hc3emu") end
-```
 
 2. Use state persistence for development:
 ```lua
