@@ -77,7 +77,6 @@ local function startUp()
   for _,k in ipairs({"refresh","rawrefresh","system","http","notrace"}) do Emu.config.dbg[k] = headers.debug[k] end
   Emu.config = table.merge(config.userConfig,Emu.config) -- merge in user config  from .hc3emu.lua
   
-  if Emu.config.hc3.url:sub(-1) ~= "/" then Emu.config.hc3.url = Emu.config.hc3.url.."/" end
   Emu.LOGGER = Emu.lib.LOGGER
 
   Emu.api = require("hc3emu2.api")(Emu)
@@ -86,9 +85,10 @@ local function startUp()
       print("HC3 URL, user or password is not set, please set them in .hc3emu.lua file")
       os.exit(-1)
     end
+    if Emu.config.hc3.url:sub(-1) ~= "/" then Emu.config.hc3.url = Emu.config.hc3.url.."/" end
     Emu.TIMEOUT = 3000 -- 3 seconds timeout for HC3 API calls 
     local res,err = Emu.api.hc3.get("/settings/info")
-    Emu.HC3TIMEOUT = nil-- default
+    Emu.TIMEOUT = nil-- default
     if res==nil or err == "Host is down" or err == "Host not found" then
       print("-HC3 is not reachable, please check your HC3 URL and network connection")
       print("-Switching to offline mode")
