@@ -9,8 +9,10 @@ local function refreshStatePoller(queue)
   while pollerRunning do
     local data, status = queue.emu:HC3Call("GET", (last and path..("?last="..last) or path) .. suffix, nil, true)
     if status ~= 200 then
-      queue.emu:ERRORF("Failed to get refresh state: %s",status)
-      return
+      if status ~= 'timeout' then
+         queue.emu:ERRORF("Failed to get refresh state (exiting): "..tostring(status))
+         return
+      end
     end
     assert(data, "No data received")
     ---@diagnostic disable-next-line: undefined-field
