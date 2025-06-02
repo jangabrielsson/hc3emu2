@@ -9,6 +9,13 @@ API.HTTP = {
   INTERNAL_SERVER_ERROR=500, NOT_IMPLEMENTED=501
 }
 
+API.HTTP = {
+  OK=200, CREATED=201, ACCEPTED=202, NO_CONTENT=204,MOVED_PERMANENTLY=301, FOUND=302, NOT_MODIFIED=304,
+  BAD_REQUEST=400, UNAUTHORIZED=401, FORBIDDEN=403, NOT_FOUND=404,METHOD_NOT_ALLOWED=405, NOT_ACCEPTABLE=406,
+  PROXY_AUTHENTICATION_REQUIRED=407, REQUEST_TIMEOUT=408, CONFLICT=409, GONE=410, LENGTH_REQUIRED=411,
+  INTERNAL_SERVER_ERROR=500, NOT_IMPLEMENTED=501
+}
+
 function API:__init(emu)
   self.emu = emu
   self.DIR = { GET={}, POST={}, PUT={}, DELETE={} }
@@ -22,7 +29,11 @@ local converts = {
 function API:add(...)
   local args = {...}
   local method,path,handler,force = args[1],args[2],args[3],args[4]
+function API:add(...)
+  local args = {...}
+  local method,path,handler,force = args[1],args[2],args[3],args[4]
   if type(path) == 'function' then -- shift args
+    method,handler,force = args[1],args[2],args[3] 
     method,handler,force = args[1],args[2],args[3] 
     method,path = method:match("(.-)(/.+)") -- split method and path
   end
@@ -36,6 +47,7 @@ function API:add(...)
     if p == '_match' then d._fun = converts[p0] d._var = p0:sub(2,-2) end
     d = d[p]
   end
+  assert(force==true or d._handler == nil,fmt("Duplicate path: %s/%s",method,path))
   assert(force==true or d._handler == nil,fmt("Duplicate path: %s/%s",method,path))
   d._handler = handler
 end
@@ -129,7 +141,14 @@ function EMUAPI:call(method, path, data, silent)
     res,code,headers = handler({method=method, path=path, data=data, vars=vars, query=query})
   elseif not self.emu.offline then
     res,code,headers = self.emu:HC3Call(method, path, data)
+  local res,code,headers = nil,self.HTTP.NOT_IMPLEMENTED,nil
+  if handler then
+    res,code,headers = handler({method=method, path=path, data=data, vars=vars, query=query})
+  elseif not self.emu.offline then
+    res,code,headers = self.emu:HC3Call(method, path, data)
   end
+  if not tonumber(code) or code > self.HTTP.NO_CONTENT and not silent then logError(method,path,code) end
+  return res,code,headers
   if not tonumber(code) or code > self.HTTP.NO_CONTENT and not silent then logError(method,path,code) end
   return res,code,headers
 end
@@ -139,6 +158,8 @@ end
 function EMUAPI:setupRoutes()
   local hc3 = self.hc3
   local emu = self.emu
+  local devices = self.emu.devices
+  local HTTP = self.HTTP
   local devices = self.emu.devices
   local HTTP = self.HTTP
 
@@ -181,13 +202,20 @@ function EMUAPI:setupRoutes()
     local res = indexMap(devs,'id')
     for id,dev in pairs(devices) do
       res[id] = res[id] or dev.device
+    local res = indexMap(devs,'id')
+    for id,dev in pairs(devices) do
+      res[id] = res[id] or dev.device
     end
+    return filter(ctx.query, res),HTTP.OK
     return filter(ctx.query, res),HTTP.OK
   end)
   self:add("GET/devices/<id>",function(ctx)
     if devices[ctx.vars.id] then
       return devices[ctx.vars.id].device,HTTP.OK
+    if devices[ctx.vars.id] then
+      return devices[ctx.vars.id].device,HTTP.OK
     elseif emu.offline then
+      return nil,HTTP.NOT_FOUND
       return nil,HTTP.NOT_FOUND
     else
       return hc3.get(ctx.path)
@@ -201,24 +229,56 @@ function EMUAPI:setupRoutes()
     local dev = devices[id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
     return {value=dev.device.properties[name],modified=0},HTTP.OK
+    local id,name = ctx.vars.id,ctx.vars.name
+    if id == 1 and (name == "sunriseHour" or name == "sunsetHour") then
+      return {value=emu[name],modified=0},HTTP.OK
+    end
+    local dev = devices[id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
+    return {value=dev.device.properties[name],modified=0},HTTP.OK
   end)
 
   self:add("POST/devices/<id>/action/<name>",function(ctx)
     local id = ctx.vars.id
     local dev = devices[id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.post(ctx.path,ctx.data) end
+    local dev = devices[id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.post(ctx.path,ctx.data) end
     else
       emu:process{
         pi=dev.env._PI,
+        pi=dev.env._PI,
         fun=function()
+          dev.env.onAction(id,{ deviceId = id, actionName = ctx.vars.name, args = ctx.data.args })
           dev.env.onAction(id,{ deviceId = id, actionName = ctx.vars.name, args = ctx.data.args })
         end
       }
       emu:sleep(0.01)
       return nil,HTTP.OK
+      emu:sleep(0.01)
+      return nil,HTTP.OK
     end
   end)
 
+ self:add("GET/devices/<id>/action/<name>",function(ctx)
+   local id = ctx.vars.id
+    local dev = devices[id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path,ctx.data) end
+    else
+      local action = ctx.vars.name
+      local data,args = {},{}
+      for k,v in pairs(ctx.query) do data[#data+1] = {k,v} end
+      table.sort(data,function(a,b) return a[1] < b[1] end)
+      for _,d in ipairs(data) do args[#args+1] = d[2] end
+      emu:process{
+        pi=dev.env._PI,
+        fun=function()
+          dev.env.onAction(id,{ deviceId = id, actionName = action, args =args})
+        end
+      }
+      emu:sleep(0.01)
+      return nil,HTTP.OK
+    end
  self:add("GET/devices/<id>/action/<name>",function(ctx)
    local id = ctx.vars.id
     local dev = devices[id]
@@ -253,8 +313,18 @@ function EMUAPI:setupRoutes()
       for cid,_ in pairs(devices) do
         if devices[cid].device.parentId == id then
           devices[cid] = nil              -- Kill child entry
+    local dev = devices[id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.delete(ctx.path) end 
+    elseif not dev.device.isChild then
+      dev.env._PI:cancelTimers()
+      devices[id] = nil                   -- Kill QA entry
+      for cid,_ in pairs(devices) do
+        if devices[cid].device.parentId == id then
+          devices[cid] = nil              -- Kill child entry
         end
       end
+      return nil,HTTP.OK
+    else return nil,HTTP.NOT_IMPLEMENTED end
       return nil,HTTP.OK
     else return nil,HTTP.NOT_IMPLEMENTED end
   end)
@@ -263,11 +333,26 @@ function EMUAPI:setupRoutes()
     local id = ctx.data.deviceId
     local dev = devices[id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.post(ctx.path,ctx.data) end
+    local dev = devices[id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.post(ctx.path,ctx.data) end
     else
       local prop = ctx.data.propertyName
       local value = ctx.data.value
       if dev.device.properties[prop] ~= value then
+      if dev.device.properties[prop] ~= value then
         -- Generate refreshState event
+        if not dev.device.isProxy then
+          emu:refreshEvent('DevicePropertyUpdatedEvent',{
+            deviceId = id,
+            propertyName = prop,
+            newValue = value,
+          })
+      end
+        dev:watching(prop,value)
+      end
+      dev.device.properties[prop] = value
+      if dev.device.isProxy then return hc3.post("/plugins/updateProperty",ctx.data) end
+      return nil,HTTP.OK
         if not dev.device.isProxy then
           emu:refreshEvent('DevicePropertyUpdatedEvent',{
             deviceId = id,
@@ -290,6 +375,12 @@ function EMUAPI:setupRoutes()
     dev:updateView(data.componentName,ctx.data.propertyName,ctx.data.newValue)
     if dev.device.isProxy then return hc3.post(ctx.path,ctx.data)
     else return nil,HTTP.OK end
+    local dev = devices[ctx.data.deviceId]
+    if not dev then return hc3.post(ctx.path,ctx.data) end
+    local data = ctx.data
+    dev:updateView(data.componentName,ctx.data.propertyName,ctx.data.newValue)
+    if dev.device.isProxy then return hc3.post(ctx.path,ctx.data)
+    else return nil,HTTP.OK end
   end)
 
   self:add("POST/plugins/interfaces",function(ctx)
@@ -297,6 +388,13 @@ function EMUAPI:setupRoutes()
 
   self:add("POST/plugins/restart",function(ctx)
     local id = tonumber(ctx.data.deviceId)
+    local dev = devices[id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.post(ctx.path,ctx.data) end
+    elseif not dev.device.isChild then
+      dev.env._PI:cancelTimers()
+      dev:startQA()
+      return nil,HTTP.OK
+    else return nil,HTTP.NOT_IMPLEMENTED end
     local dev = devices[id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.post(ctx.path,ctx.data) end
     elseif not dev.device.isChild then
@@ -312,11 +410,21 @@ function EMUAPI:setupRoutes()
     local dev = devices[parent]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.post(ctx.path,data) end end
     if dev.device.isProxy then
+    local dev = devices[parent]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.post(ctx.path,data) end end
+    if dev.device.isProxy then
       local res = hc3.post(ctx.path,ctx.data) -- create child on HC3
       res.isProxy = true
       data = res
     end
     data.isChild = true
+    headers = { webUI = dev.headers.webUI }
+    if data.initialProperties and data.initialProperties.uiView then
+      local uiView = data.initialProperties.uiView
+      local callbacks = data.initialProperties.uiCallbacks or {}
+      headers.UI = Emu.lib.ui.uiView2UI(uiView,callbacks)
+    end
+    return emu:installDevice(data,{},headers),HTTP.OK
     headers = { webUI = dev.headers.webUI }
     if data.initialProperties and data.initialProperties.uiView then
       local uiView = data.initialProperties.uiView
@@ -334,6 +442,12 @@ function EMUAPI:setupRoutes()
       devices[id] = nil
       return nil,HTTP.OK
     else return nil,HTTP.NOT_IMPLEMENTED end
+    local dev = devices[id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.delete(ctx.path) end
+    elseif dev.device.isChild then
+      devices[id] = nil
+      return nil,HTTP.OK
+    else return nil,HTTP.NOT_IMPLEMENTED end
   end)
   
   local function findFile(name,files)
@@ -344,10 +458,14 @@ function EMUAPI:setupRoutes()
     local dev = devices[ctx.vars.id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
     local files = table.copy(dev.files)
+    local dev = devices[ctx.vars.id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
+    local files = table.copy(dev.files)
     for _,f in ipairs(files) do
       f.fname,f.isOpen,f.type = nil,false,"lua"
       if f.isMain == nil then f.isMain = f.name == 'main' end
     end
+    return files,HTTP.OK
     return files,HTTP.OK
   end)
 
@@ -356,8 +474,13 @@ function EMUAPI:setupRoutes()
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
     local files = dev.files
     if findFile(ctx.data.name,files) then return nil,HTTP.CONFLICT end
+    local dev = devices[ctx.vars.id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
+    local files = dev.files
+    if findFile(ctx.data.name,files) then return nil,HTTP.CONFLICT end
     files[#files+1] = ctx.data
     self.post("/plugins/restart", { deviceId = ctx.vars.id })
+    return nil,HTTP.CREATED
     return nil,HTTP.CREATED
   end)
 
@@ -365,7 +488,11 @@ function EMUAPI:setupRoutes()
     local dev = devices[ctx.vars.id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
     local files = dev.files
+    local dev = devices[ctx.vars.id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
+    local files = dev.files
     local f =  findFile(ctx.data.name,files)
+    if f then return f,HTTP.OK else return nil,HTTP.NOT_FOUND end
     if f then return f,HTTP.OK else return nil,HTTP.NOT_FOUND end
   end)
 
@@ -373,11 +500,16 @@ function EMUAPI:setupRoutes()
     local dev = devices[ctx.vars.id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
     local files = dev.files
+    local dev = devices[ctx.vars.id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
+    local files = dev.files
     local f = findFile(ctx.data.name,files)
+    if not f then return nil,HTTP.NOT_FOUND
     if not f then return nil,HTTP.NOT_FOUND
     else
       f.content = ctx.data.content
       self.post("/plugins/restart", { deviceId = ctx.vars.id })
+      return nil,HTTP.OK
       return nil,HTTP.OK
     end
   end)
@@ -386,13 +518,19 @@ function EMUAPI:setupRoutes()
     local dev = devices[ctx.vars.id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
     local files = table.copy(dev.files)
+    local dev = devices[ctx.vars.id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
+    local files = table.copy(dev.files)
     for _,f in ipairs(ctx.data) do
       local f0 = findFile(f.name,files)
+      if not f0 then return nil,HTTP.NOT_FOUND end
       if not f0 then return nil,HTTP.NOT_FOUND end
       f0.content = f.content
     end
     devices[ctx.vars.id].files = files
+    devices[ctx.vars.id].files = files
     self.post("/plugins/restart", { deviceId = ctx.vars.id })
+    return nil,HTTP.OK
     return nil,HTTP.OK
   end)
 
@@ -400,17 +538,25 @@ function EMUAPI:setupRoutes()
     local dev = devices[ctx.vars.id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
     local files = dev.files
+    local dev = devices[ctx.vars.id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
+    local files = dev.files
     local f,i =  findFile(ctx.data.name,files)
+    if not f then return nil,HTTP.NOT_FOUND
+    elseif f.name == 'main' then return nil,HTTP.FORBIDDEN
     if not f then return nil,HTTP.NOT_FOUND
     elseif f.name == 'main' then return nil,HTTP.FORBIDDEN
     else 
       table.remove(files,i)
       self.post("/plugins/restart", { deviceId = ctx.vars.id })
       return nil,HTTP.OK
+      return nil,HTTP.OK
     end
   end)
 
   self:add("GET/quickApp/export/<id>",function(ctx)
+    local dev = devices[ctx.vars.id]
+    if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
     local dev = devices[ctx.vars.id]
     if not dev then if emu.offline then return nil,HTTP.NOT_FOUND else return hc3.get(ctx.path) end end
     local initProps = {}
@@ -420,26 +566,35 @@ function EMUAPI:setupRoutes()
       "userDescription","typeTemplateInitialized","quickAppUuid","deviceRole"
     }
     for _,k in ipairs(savedProps) do initProps[k]=dev.device.properties[k] end
+    for _,k in ipairs(savedProps) do initProps[k]=dev.device.properties[k] end
     local files = self.get("/quickApp/"..ctx.vars.id.."/files")
     local fqa = {
       apiVersion = "1.3",
       name = dev.device.name,
       type = dev.device.type,
+      name = dev.device.name,
+      type = dev.device.type,
       initialProperties = initProps,
+      initialInterfaces = dev.device.interfaces,
       initialInterfaces = dev.device.interfaces,
       files = files,
     }
+    return fqa,HTTP.OK
     return fqa,HTTP.OK
   end)
 
   self:add("POST/quickApp/",function(ctx) 
     local dev = emu:installFQA(ctx.data)
     if dev then return dev,HTTP.CREATED else return nil,HTTP.UNAUTHORIZED end
+    if dev then return dev,HTTP.CREATED else return nil,HTTP.UNAUTHORIZED end
   end)
+
 
   local function isLocal(id)
     local dev = devices[id]
+    local dev = devices[id]
     if not dev then return false end
+    return not dev.device.isProxy
     return not dev.device.isProxy
   end
   
@@ -448,13 +603,18 @@ function EMUAPI:setupRoutes()
   self:add("GET/plugins/<id>/variables",function(ctx) 
     if isLocal(ctx.vars.id) then
       local vars,res = devices[ctx.vars.id].vars or {},{}
+      local vars,res = devices[ctx.vars.id].vars or {},{}
       for k,v in pairs(vars) do res[#res+1] = { name=k, value=v } end
+      return res,HTTP.OK
       return res,HTTP.OK
     end
     return hc3.restricted.get(ctx.path)
   end)
   self:add("GET/plugins/<id>/variables/<name>",function(ctx) 
     if isLocal(ctx.vars.id) then
+      local value = (devices[ctx.vars.id].vars or {})[ctx.vars.name]
+      if value~=nil then return { name=ctx.vars.name, value=value },HTTP.OK
+      else return nil,HTTP.NOT_FOUND end
       local value = (devices[ctx.vars.id].vars or {})[ctx.vars.name]
       if value~=nil then return { name=ctx.vars.name, value=value },HTTP.OK
       else return nil,HTTP.NOT_FOUND end
@@ -467,11 +627,18 @@ function EMUAPI:setupRoutes()
       local var = devices[ctx.vars.id].vars[ctx.vars.name]
       if var then return nil,HTTP.CONFLICT
       else devices[ctx.vars.id].vars[ctx.data.name] = ctx.data.value emu:saveState() return nil,HTTP.CREATED end
+      devices[ctx.vars.id].vars = devices[ctx.vars.id].vars or {}
+      local var = devices[ctx.vars.id].vars[ctx.vars.name]
+      if var then return nil,HTTP.CONFLICT
+      else devices[ctx.vars.id].vars[ctx.data.name] = ctx.data.value emu:saveState() return nil,HTTP.CREATED end
     end
     return hc3.restricted.post(ctx.path,ctx.data)
   end)
   self:add("PUT/plugins/<id>/variables/<name>",function(ctx) 
     if isLocal(ctx.vars.id) then
+      local value = (devices[ctx.vars.id].vars or {})[ctx.vars.name]
+      if value~=nil then devices[ctx.vars.id].vars[ctx.vars.name] = ctx.data.value emu:saveState() return nil,HTTP.OK
+      else return nil,HTTP.NOT_FOUND end
       local value = (devices[ctx.vars.id].vars or {})[ctx.vars.name]
       if value~=nil then devices[ctx.vars.id].vars[ctx.vars.name] = ctx.data.value emu:saveState() return nil,HTTP.OK
       else return nil,HTTP.NOT_FOUND end
@@ -483,13 +650,18 @@ function EMUAPI:setupRoutes()
       local var = (devices[ctx.vars.id].vars or {})[ctx.vars.name]
       if var~=nil then devices[ctx.vars.id].vars[ctx.vars.name] = nil emu:saveState() return nil,HTTP.OK
       else return nil,HTTP.NOT_FOUND end
+      local var = (devices[ctx.vars.id].vars or {})[ctx.vars.name]
+      if var~=nil then devices[ctx.vars.id].vars[ctx.vars.name] = nil emu:saveState() return nil,HTTP.OK
+      else return nil,HTTP.NOT_FOUND end
     end
     return hc3.restricted.delete(ctx.path,ctx.data)
   end)
   self:add("DELETE/plugins/<id>/variables",function(ctx) 
     if isLocal(ctx.vars.id) then
       devices[ctx.vars.id].vars = {}
+      devices[ctx.vars.id].vars = {}
       emu:saveState()
+      return nil,HTTP.OK
       return nil,HTTP.OK
     end
     return hc3.restricted.delete(ctx.path,ctx.data)

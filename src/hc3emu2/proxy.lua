@@ -1,13 +1,21 @@
 local fmt = string.format
 Emu = Emu
 Device = Device
+Emu = Emu
+Device = Device
 local start
 
 -- Deploys a proxy QuickApp to the HC3 system 
 -- @param name - The name for the proxy device
 -- @param devTempl - The device template to use for creating the proxy
 -- @return - The created device object from HC3
+-- Deploys a proxy QuickApp to the HC3 system 
+-- @param name - The name for the proxy device
+-- @param devTempl - The device template to use for creating the proxy
+-- @return - The created device object from HC3
 local function deployProxy(name,devTempl)
+  -- The Lua code that will be installed on the HC3 proxy device
+  -- This code creates a QuickApp that can communicate with the emulator
   -- The Lua code that will be installed on the HC3 proxy device
   -- This code creates a QuickApp that can communicate with the emulator
   local code = [[
@@ -24,8 +32,11 @@ function QuickApp:onInit()
   local send
   
   -- Actions that are handled directly by the proxy rather than forwarded to the emulator
+  -- Actions that are handled directly by the proxy rather than forwarded to the emulator
   local IGNORE={ MEMORYWATCH=true,APIFUN=true,CONNECT=true }
   
+  -- Establishes connection settings for the proxy to communicate with the emulator
+  -- @param con - Table containing connection parameters (ip, port)
   -- Establishes connection settings for the proxy to communicate with the emulator
   -- @param con - Table containing connection parameters (ip, port)
   function quickApp:CONNECT(con)
@@ -39,6 +50,9 @@ function QuickApp:onInit()
   -- Handles actions called on the proxy device
   -- Either handles them locally (for special actions) or forwards them to the emulator
   -- @param action - Action data with actionName and args
+  -- Handles actions called on the proxy device
+  -- Either handles them locally (for special actions) or forwards them to the emulator
+  -- @param action - Action data with actionName and args
   function quickApp:actionHandler(action)
     if IGNORE[action.actionName] then
       print(action.actionName)
@@ -48,8 +62,14 @@ function QuickApp:onInit()
   end
   
   -- Forwards UI events from HC3 to the emulator
+  -- Forwards UI events from HC3 to the emulator
   function quickApp:UIHandler(ev) send({type='ui',deviceId=self.id,value=ev}) end
   
+  -- Executes API calls on the HC3 and sends back the results to the emulator
+  -- @param id - Request ID for response correlation
+  -- @param method - HTTP method (get, post, put, delete)
+  -- @param path - API path to call
+  -- @param data - Data payload for the API call
   -- Executes API calls on the HC3 and sends back the results to the emulator
   -- @param id - Request ID for response correlation
   -- @param method - HTTP method (get, post, put, delete)
@@ -61,6 +81,7 @@ function QuickApp:onInit()
   end
   
   -- Override the initChildDevices function to prevent default behavior
+  -- Override the initChildDevices function to prevent default behavior
   function quickApp:initChildDevices(_) end
   
   local queue = {}
@@ -69,6 +90,7 @@ function QuickApp:onInit()
   local sock = nil
   local runSender
   
+  -- Handles connection failures by resetting the connection and scheduling a retry
   -- Handles connection failures by resetting the connection and scheduling a retry
   local function retry()
     if sock then sock:close() end
@@ -133,6 +155,9 @@ end
 -- Creates a proxy device on the HC3 system
 -- @param devTempl - The device template containing name, type and other properties
 -- @return - The created proxy device or nil if creation failed
+-- Creates a proxy device on the HC3 system
+-- @param devTempl - The device template containing name, type and other properties
+-- @return - The created proxy device or nil if creation failed
 local function createProxy(devTempl) 
   local device = deployProxy(devTempl.name,devTempl)
   if not device then return Emu:ERRORF("Can't create proxy on HC3") end
@@ -145,6 +170,11 @@ local function createProxy(devTempl)
   return device
 end
 
+-- Finds and handles existing proxy devices on the HC3 system
+-- If multiple proxies with the same name exist, it keeps only the newest one
+-- @param d - The device object containing the name to search for
+-- @param headers - Headers containing device type information
+-- @return - The existing proxy device if found and valid, nil otherwise
 -- Finds and handles existing proxy devices on the HC3 system
 -- If multiple proxies with the same name exist, it keeps only the newest one
 -- @param d - The device object containing the name to search for
@@ -170,9 +200,20 @@ local function existingProxy(d,headers)
       device.properties.uiCallbacks or {}
     )
     local dev = Device{ id=device.id, device=device, UI=ui, headers=headers }
+    local ui = Emu.lib.ui.viewLayout2UI(
+      device.properties.viewLayout,
+      device.properties.uiCallbacks or {}
+    )
+    local dev = Device{ id=device.id, device=device, UI=ui, headers=headers }
     local children = Emu.api.hc3.get("/devices?parentId="..device.id) or {}
     for _,child in ipairs(children) do
       child.isProxy,child.isChild = true, true
+      local ui = Emu.lib.ui.viewLayout2UI(
+        child.properties.viewLayout,
+        child.properties.uiCallbacks or {}
+      )
+      local cdev = Device{ id=child.id, device=child, UI=ui, headers=headers }
+      Emu.devices[child.id] = cdev
       local ui = Emu.lib.ui.viewLayout2UI(
         child.properties.viewLayout,
         child.properties.uiCallbacks or {}
@@ -186,6 +227,7 @@ local function existingProxy(d,headers)
     start()
     Emu.api.hc3.post("/devices/"..device.id.."/action/CONNECT",{args={{ip=Emu.config.pip,port=Emu.config.pport}}})
     return dev
+    return dev
   end
 end
 
@@ -198,7 +240,14 @@ class 'ProxyServer'(SocketServer)
 -- Constructor initializes the TCP server with the specified IP and port
 -- @param ip - IP address to bind to
 -- @param port - Port number to listen on
+
+-- Constructor initializes the TCP server with the specified IP and port
+-- @param ip - IP address to bind to
+-- @param port - Port number to listen on
 function ProxyServer:__init(ip,port) SocketServer.__init(self,ip,port,Emu.PI,"server") end
+
+-- Handles incoming connections and messages
+-- @param io - I/O socket object for reading/writing data
 
 -- Handles incoming connections and messages
 -- @param io - I/O socket object for reading/writing data
@@ -211,6 +260,7 @@ function ProxyServer:handler(io)
     if stat then
       local deviceId = msg.deviceId
       local QA = Emu.devices[deviceId].env
+      local QA = Emu.devices[deviceId].env
       if QA and msg.type == 'action' then QA.onAction(msg.value.deviceId,msg.value)
       elseif QA and msg.type == 'ui' then QA.onUIEvent(msg.value.deviceId,msg.value) end
     end
@@ -218,6 +268,8 @@ function ProxyServer:handler(io)
 end
 
 local _proxyServer = nil
+-- Starts the proxy server if it's not already running
+-- Uses the host and port configuration from the Emu config
 -- Starts the proxy server if it's not already running
 -- Uses the host and port configuration from the Emu config
 function start() 
