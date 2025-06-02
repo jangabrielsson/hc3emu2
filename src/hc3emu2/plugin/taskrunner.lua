@@ -25,7 +25,7 @@ function task.uploadQA(name)
     assert(device, "Emulator installation error")
     local fqa = emu.getFQA(device.id)
     assert(fqa, "FQA creation error")
-    local dev = emu.devices[device.id]
+    local dev = _emu.devices[device.id]
     if dev and dev.headers and dev.headers.minify then
       emu.minifyCode(fqa.files)
     end
