@@ -1,4 +1,4 @@
-local VERSION = "2.0.14"
+local VERSION = "2.0.15"
 local mode, mainFile, runflags, taskArgs = ...
 
 local fmt = string.format
@@ -97,7 +97,7 @@ local function startUp()
   end
   local modeStr = {}
   if _DEVELOP then modeStr[#modeStr+1] = "developer" end
-  if Emu.offline then modeStr[#modeStr+1] = "offline" or "online" end
+  modeStr[#modeStr+1] =  Emu.offline and "offline" or "online"
   print("-Running in "..table.concat(modeStr," and ").." mode")
   print(Emu.lib.colorStr('orange',"HC3Emu - Tiny QuickApp emulator for the Fibaro Home Center 3, v"..VERSION))
   if Emu.offline then require("hc3emu2.offline")(Emu) 
@@ -174,7 +174,32 @@ local extraLua =  {
 
 require("hc3emu2.class")
 
-Emulator = Emulator
+---@class Emulator
+---@field config table - Emulator configuration
+---@field stats table - Emulator statistics
+---@field lib table - Library functions for the emulator
+---@field devices table - List of devices in the emulator
+---@field EVENT table - Event handlers for the emulator
+---@field stateTag string - Tag for the state file
+---@field lua table - Extra Lua functions for the emulator
+---@field PI table - Process info for the emulator
+---@field LOGGER table - Logger for the emulator
+---@field mobdebug table - Debugger for the emulator
+---@field offline boolean - Is the emulator running in offline mode
+---@field nodebug boolean - Is the emulator running without debugging
+---@field taskArgs table - Task arguments for the emulator
+---@field plugin table - Plugin information for the emulator
+---@field templates table - Templates for devices in the emulator
+---@field helper table - Helper functions for the emulator
+---@field web table - Web server for the emulator
+---@field sunriseHour number - Sunrise hour for the emulator
+---@field sunsetHour number - Sunset hour for the emulator
+---@field __printHook function - Custom print hook for the emulator
+---@field refreshState table - User data for the emulator
+---@field TIMEOUT number - Tag for the emulator
+---@field PIN string - User PIN for the emulator
+---@
+Emulator = {}
 class 'Emulator'
 function Emulator:__init()
   self.config = { hc3 = {}, dbg = {}, emu = {} }
@@ -254,7 +279,7 @@ function Emulator:HC3Call(method,path,data,silent)
   data,self.TIMEOUT or 35000,creds.user,creds.pwd,silent)
   if stat == 401 then self:ERRORF("HC3 authentication failed, Emu access cancelled") BLOCKED = true end
   if stat == 'closed' then self:ERRORF("HC3 connection closed "..path) end
-  if stat == 500 then self:ERRORF("HC3 error 500 %s",path) end
+  if stat == 500 then self:ERRORF("HC3 error 500 "..path) end
   if not tonumber(stat) then return res,stat end
   if stat and stat >= 400 then return nil,stat end
   local jf,data = pcall(json.decode,res)
@@ -623,9 +648,11 @@ function Emulator:post(event)
   local typ = event.type
   local styp = "_"..typ
   for _,f in ipairs(self.EVENT[styp] or {}) do f(event,self) end
-  return self:setTimeout(function() 
+  return self:process({
+    fun=function() 
     for _,f in ipairs(self.EVENT[typ] or {}) do f(event,self) end
-  end, 0) 
+  end
+  })
 end
 
 function Emulator:getPI(co)
