@@ -12,40 +12,6 @@ API.HTTP = {
 function API:__init(emu)
   self.emu = emu
   self.DIR = { GET={}, POST={}, PUT={}, DELETE={} }
-  function self.get(path,silent) return self:call("GET",path,nil,silent) end
-  function self.post(path,data,silent) return self:call("POST",path,data,silent) end
-  function self.put(path,data,silent) return self:call("PUT",path,data,silent) end
-  function self.delete(path,data,silent) return self:call("DELETE",path,data,silent) end
-
-  self.hc3 = {}
-  local hc3 = self.hc3
-  function hc3.get(path,silent) return emu:HC3Call("GET",path,nil,silent) end
-  function hc3.post(path,data,silent) return emu:HC3Call("POST",path,data,silent) end
-  function hc3.put(path,data,silent) return emu:HC3Call("PUT",path,data,silent) end
-  function hc3.delete(path,data,silent) return emu:HC3Call("DELETE",path,data,silent) end
-
-  local seqID = 0
-  local function syncCall(method,path,data)
-    if not emu.helper then return nil,501 end
-    local req = json.encode({method=method,path=path,data=data or {},seqID=seqID}).."\n"
-    seqID = seqID + 1
-    local resp = emu.helper.connection:send(req)
-    if resp then
-      local data = json.decode(resp)
-      local res,code = table.unpack(data)
-      if res == json.null then res = nil end
-      Emu:DEBUGF('http',"HTTP %s %s %s",method,path,code)
-      return res,code
-    end
-    return nil,self.HTTP.BAD_REQUEST
-  end
-  hc3.restricted = {}
-  function hc3.restricted.get(path) return syncCall("GET",path) end
-  function hc3.restricted.post(path,data) return syncCall("POST",path,data) end
-  function hc3.restricted.put(path,data) return syncCall("PUT",path,data) end
-  function hc3.restricted.delete(path) return syncCall("DELETE",path) end
-
-  self:setupRoutes()
 end
 
 local converts = {
@@ -109,12 +75,54 @@ function API:getRoute(method,path)
   return d._handler,vars,query
 end
 
+
+EMUAPI = EMUAPI
+class 'EMUAPI'(API)
+
+function EMUAPI:__init(emu)
+  API.__init(self,emu)
+  function self.get(path,silent) return self:call("GET",path,nil,silent) end
+  function self.post(path,data,silent) return self:call("POST",path,data,silent) end
+  function self.put(path,data,silent) return self:call("PUT",path,data,silent) end
+  function self.delete(path,data,silent) return self:call("DELETE",path,data,silent) end
+
+  self.hc3 = {}
+  local hc3 = self.hc3
+  function hc3.get(path,silent) return emu:HC3Call("GET",path,nil,silent) end
+  function hc3.post(path,data,silent) return emu:HC3Call("POST",path,data,silent) end
+  function hc3.put(path,data,silent) return emu:HC3Call("PUT",path,data,silent) end
+  function hc3.delete(path,data,silent) return emu:HC3Call("DELETE",path,data,silent) end
+
+  local seqID = 0
+  local function syncCall(method,path,data)
+    if not emu.helper then return nil,501 end
+    local req = json.encode({method=method,path=path,data=data or {},seqID=seqID}).."\n"
+    seqID = seqID + 1
+    local resp = emu.helper.connection:send(req)
+    if resp then
+      local data = json.decode(resp)
+      local res,code = table.unpack(data)
+      if res == json.null then res = nil end
+      Emu:DEBUGF('http',"HTTP %s %s %s",method,path,code)
+      return res,code
+    end
+    return nil,self.HTTP.BAD_REQUEST
+  end
+  hc3.restricted = {}
+  function hc3.restricted.get(path) return syncCall("GET",path) end
+  function hc3.restricted.post(path,data) return syncCall("POST",path,data) end
+  function hc3.restricted.put(path,data) return syncCall("PUT",path,data) end
+  function hc3.restricted.delete(path) return syncCall("DELETE",path) end
+
+  self:setupRoutes()
+end
+
 local function logError(method, path, code)
   local err = string.format("api Error %s %s: %s",method,path,code)
   Emu:WARNINGF('api',err)
 end
 
-function API:call(method, path, data, silent) 
+function EMUAPI:call(method, path, data, silent) 
   local handler, vars, query = self:getRoute(method, path)
   local res,code,headers = nil,self.HTTP.NOT_IMPLEMENTED,nil
   if handler then
@@ -128,7 +136,7 @@ end
 
 ------------------- Routes --------------------- 
 
-function API:setupRoutes()
+function EMUAPI:setupRoutes()
   local hc3 = self.hc3
   local emu = self.emu
   local devices = self.emu.devices
@@ -489,4 +497,4 @@ function API:setupRoutes()
 
 end
 
-return API
+return EMUAPI

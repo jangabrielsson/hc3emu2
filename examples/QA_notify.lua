@@ -1,6 +1,9 @@
 --%%name=Notifier
 --%%type=com.fibaro.binarySwitch
---%%proxy=true
+--%% proxy=true
+--%%offline=true
+--%%minify=true
+--%%save=mini.fqa
 
 do
   local refs = {}

@@ -287,6 +287,8 @@ do
   function headerKeys.speed(v,h,k) h.speedTime = validate(v,k,"number") end
   --@D offline=<true|false> - Run in offline mode, ex. --%%offline=true
   function headerKeys.offline(v,h,k) h.offline = validate(v,k,"boolean") end
+  --@D minify=<true|false> - Minify code before saving, ex. --%%minify=true
+  function headerKeys.minify(v,h,k) h.minify = validate(v,k,"boolean") end
   --@D logui=<true|false> - Log proxy's current UI at startup, ex. --%%logui=true
   function headerKeys.logui(v,h,k) h.logUI = validate(v,k,"boolean") end
   --@D webui=<true|false> - Enable emulated web UI for the QA, ex. --%%webui=true

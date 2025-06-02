@@ -191,6 +191,7 @@ end
 
 -- ProxyServer class for managing TCP socket communications between HC3 and the emulator
 -- Extends the SocketServer class to handle incoming requests
+SocketServer = SocketServer
 ProxyServer = ProxyServer
 class 'ProxyServer'(SocketServer)
 

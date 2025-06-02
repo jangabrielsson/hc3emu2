@@ -27,6 +27,7 @@ dependencies = {
    "luafilesystem >= 1.8.0-1",
    "luasystem >=  0.6.2-1",
    "argparse >= 0.7.1-1",
+   "dumbluaparser >= 2.3.0-1",
    "datafile >= 0.10-1",
    "mobdebug >= 0.80-1",
 }

@@ -53,7 +53,19 @@ local function arrayifyFqa(fqa)
   markArray(fqa.initialProperties.supportedDeviceRoles)
 end
 
-local function uploadFQA(fqa)
+local function minifyCode(files)
+  local parser = require("dumbParser")
+  for _,f in ipairs(files) do
+    local tokens = parser.tokenize(f.content,false)
+    local ast    = parser.parse(tokens)
+    parser.minify(ast)
+    local lua = parser.toLua(ast)
+    print(lua)
+    f.content = lua
+  end
+end
+
+local function uploadFQA(fqa,minify)
   assert(type(fqa) == "table", "fqa must be a table")
   assert(fqa.name, "fqa must have a name")
   assert(fqa.type, "fqa must have a type")
@@ -65,6 +77,7 @@ local function uploadFQA(fqa)
   end
   assert(haveMain, "fqa must have a main file")
   arrayifyFqa(fqa)
+  if minify then minifyCode(fqa.files) end
   local res,code = Emu.api.hc3.post("/quickApp/",fqa)
   if not code or code > 201 then
     Emu:ERRORF("Failed to upload FQA: %s", res)
@@ -114,6 +127,9 @@ local function saveQA(id,fileName) -- Save installed QA to disk as .fqa  //Move 
     if conceal[v.name] then 
       v.value = conceal[v.name]
     end
+  end
+  if dev.headers.minify then
+    minifyCode(fqa.files)
   end
   local f = io.open(fileName,"w")
   assert(f,"Can't open file "..fileName)
@@ -229,6 +245,7 @@ return {
   findFirstLine = findFirstLine,
   loadQAString = loadQAString,
   uploadFQA = uploadFQA,
+  minifyCode = minifyCode,
   getFQA = getFQA,
   saveQA = saveQA,
   loadQA = loadQA,

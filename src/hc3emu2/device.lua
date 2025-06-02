@@ -114,7 +114,7 @@ SocketServer = SocketServer
 local hc3emuFuns = nil
 local function hc3emuExports(emu) 
   return { 
-  lua = emu.lua, loadQA = emu.lib.loadQA, loadQAString = emu.lib.loadQAString, uploadFQA = emu.lib.uploadFQA, 
+  lua = emu.lua, loadQA = emu.lib.loadQA, loadQAString = emu.lib.loadQAString, uploadFQA = emu.lib.uploadFQA, minifyCode = emu.lib.minifyCode,
   downloadFQA = emu.lib.downloadFQA,
   getFQA = emu.lib.getFQA, getDevice = function(id) return Emu.devices[id] end,
   getDevices = function() return Emu.devices end,
