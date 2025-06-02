@@ -16,7 +16,7 @@ local function refreshStatePoller(queue)
     end
     data = type(data)=='table' and data or {}
     ---@diagnostic disable-next-line: undefined-field
-    last = math.floor(data.last) or last
+    last = data.last and math.floor(data.last) or last
     ---@diagnostic disable-next-line: undefined-field
     events = data.events
     if events ~= nil then
