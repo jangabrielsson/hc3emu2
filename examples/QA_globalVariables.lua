@@ -1,5 +1,5 @@
 --%%name=GlobalVars
---%%offline=true
+--%% offline=true
 
 --%%file=$hc3emu2.lib.eventmgr,events
 

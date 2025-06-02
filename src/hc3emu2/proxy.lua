@@ -151,6 +151,7 @@ end
 -- @param headers - Headers containing device type information
 -- @return - The existing proxy device if found and valid, nil otherwise
 local function existingProxy(d,headers)
+---@diagnostic disable-next-line: undefined-global
   local proxies = Emu.api.hc3.get("/devices?name="..urlencode(d.name.."_Proxy")) or {}
   if #proxies == 0 then return end
   table.sort(proxies,function(a,b) return a.id >= b.id end)
@@ -191,8 +192,10 @@ end
 
 -- ProxyServer class for managing TCP socket communications between HC3 and the emulator
 -- Extends the SocketServer class to handle incoming requests
+---@class SocketServer
+---@class ProxyServer : SocketServer
 SocketServer = SocketServer
-ProxyServer = ProxyServer
+ProxyServer = {}
 class 'ProxyServer'(SocketServer)
 
 -- Constructor initializes the TCP server with the specified IP and port

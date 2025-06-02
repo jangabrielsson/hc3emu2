@@ -24,7 +24,8 @@ local function installHelper()
   return helper
 end
 
-RequestServer = RequestServer
+---@class RequestServer : SocketServer
+RequestServer = {}
 class 'RequestServer'(SocketServer)
 function RequestServer:__init(ip,port,pi) 
   SocketServer.__init(self,ip,port,pi) 

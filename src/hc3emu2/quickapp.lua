@@ -2,8 +2,14 @@ _emu = _emu
 _print = print
 
 local fmt = string.format
+
+-- Overrides the global print function to use fibaro.debug for logging
+-- @param ... - Arguments to be logged
 function print(...) fibaro.debug(__TAG,...) end
 
+-- Creates a class constructor function that supports inheritance
+-- @param name - The name of the class to create
+-- @return A function that can be used to set up inheritance
 function class(name)
   local cls = setmetatable({__USERDATA=true}, {
     __call = function(t,...)
@@ -21,14 +27,40 @@ function class(name)
 end
 
 plugin = plugin or {}
+-- Retrieves a device by its ID
+-- @param deviceId - The ID of the device to retrieve
+-- @return Device object from the HC3 API
 function plugin.getDevice(deviceId) return api.get("/devices/"..deviceId) end
+
+-- Deletes a device by its ID
+-- @param deviceId - The ID of the device to delete
+-- @return Result of the delete operation
 function plugin.deleteDevice(deviceId) return api.delete("/devices/"..deviceId) end
+
+-- Gets a specific property of a device
+-- @param deviceId - The ID of the device
+-- @param propertyName - The name of the property to retrieve
+-- @return The property value
 function plugin.getProperty(deviceId, propertyName) return api.get("/devices/"..deviceId).properties[propertyName] end
+
+-- Gets all child devices of a parent device
+-- @param deviceId - The ID of the parent device
+-- @return Array of child device objects
 function plugin.getChildDevices(deviceId) return api.get("/devices?parentId="..deviceId) end
+
+-- Creates a new child device
+-- @param opts - Options for creating the child device
+-- @return The created child device object
 function plugin.createChildDevice(opts) return api.post("/plugins/createChildDevice", opts) end
+
+-- Restarts a QuickApp plugin
+-- @param id - The device ID to restart (optional, defaults to mainDeviceId)
+-- @return Result of the restart operation
 function plugin.restart(id) return api.post("/plugins/restart",{deviceId=id or plugin.mainDeviceId}) end
 
 class 'QuickAppBase'
+-- Constructor for QuickAppBase class
+-- @param dev - Device object containing device properties and metadata
 function QuickAppBase:__init(dev)
   self.id = dev.id
   self.type = dev.type
@@ -42,17 +74,34 @@ function QuickAppBase:__init(dev)
   self.uiCallbacks = {}
 end
 
+-- Logs a debug message with the device tag
+-- @param ... - Arguments to be logged
 function QuickAppBase:debug(...) fibaro.debug(__TAG,...) end
+
+-- Logs a trace message with the device tag
+-- @param ... - Arguments to be logged
 function QuickAppBase:trace(...) fibaro.trace(__TAG,...) end
+
+-- Logs a warning message with the device tag
+-- @param ... - Arguments to be logged
 function QuickAppBase:warning(...) fibaro.warning(__TAG,...) end
+
+-- Logs an error message with the device tag
+-- @param ... - Arguments to be logged
 function QuickAppBase:error(...) fibaro.error(__TAG,...) end
 
+-- Registers a UI callback function for a specific element and event type
+-- @param elm - The UI element name
+-- @param typ - The event type (e.g., "onReleased", "onChanged")
+-- @param fun - The callback function to register
 function QuickAppBase:registerUICallback(elm, typ, fun)
   local uic = self.uiCallbacks
   uic[elm] = uic[elm] or {}
   uic[elm][typ] = fun
 end
 
+-- Sets up UI callbacks based on device properties
+-- Reads uiCallbacks from device properties and registers them
 function QuickAppBase:setupUICallbacks()
   local callbacks = (self.properties or {}).uiCallbacks or {}
   for _, elm in pairs(callbacks) do
@@ -62,12 +111,19 @@ end
 
 QuickAppBase.registerUICallbacks = QuickAppBase.setupUICallbacks
 
+-- Calls an action method on the QuickApp if it exists
+-- @param name - The name of the action/method to call
+-- @param ... - Arguments to pass to the action method
+-- @return Result of the action method or nil if method doesn't exist
 function QuickAppBase:callAction(name, ...)
   --if name == "" then return end
   if (type(self[name]) == 'function') then return self[name](self, ...)
   else print(fmt("[WARNING] Class does not have '%s' function defined - action ignored",tostring(name))) end
 end
 
+-- Updates a device property and sends the update to the HC3 system
+-- @param name - The name of the property to update
+-- @param value - The new value for the property
 function QuickAppBase:updateProperty(name,value)
   self.properties[name] = value
   api.post("/plugins/updateProperty",{
@@ -77,6 +133,10 @@ function QuickAppBase:updateProperty(name,value)
   })
 end
 
+-- Updates a UI view element property
+-- @param elm - The UI element name
+-- @param prop - The property name to update
+-- @param value - The new value for the property
 function QuickAppBase:updateView(elm,prop,value)
   api.post("/plugins/updateView", {
     deviceId = self.id,
@@ -86,9 +146,13 @@ function QuickAppBase:updateView(elm,prop,value)
   })
 end
 
-
+-- Checks if the device has a specific interface
+-- @param name - The interface name to check for
+-- @return True if the device has the interface, false otherwise
 function QuickAppBase:hasInterface(name) return table.member(name, self.interfaces) end
 
+-- Adds new interfaces to the device
+-- @param values - Table of interface names to add
 function QuickAppBase:addInterfaces(values)
   assert(type(values) == "table")
   self:updateInterfaces("add",values)
@@ -97,6 +161,8 @@ function QuickAppBase:addInterfaces(values)
   end
 end
 
+-- Removes interfaces from the device
+-- @param values - Table of interface names to remove
 function QuickAppBase:deleteInterfaces(values)
   assert(type(values) == "table")
   self:updateInterfaces("delete", values)
@@ -110,13 +176,28 @@ function QuickAppBase:deleteInterfaces(values)
   end
 end
 
+-- Updates device interfaces via API call
+-- @param action - The action to perform ("add" or "delete")
+-- @param interfaces - Table of interfaces to add or remove
 function QuickAppBase:updateInterfaces(action, interfaces)
   api.post("/plugins/interfaces", {action = action, deviceId = self.id, interfaces = interfaces})
 end
+
+-- Sets the device name
+-- @param name - The new name for the device
 function QuickAppBase:setName(name) api.put("/devices/"..self.id,{name=name}) end
+
+-- Sets the device enabled state
+-- @param enabled - Boolean indicating if device should be enabled
 function QuickAppBase:setEnabled(enabled) api.put("/devices/"..self.id,{enabled=enabled}) end
+
+-- Sets the device visibility
+-- @param visible - Boolean indicating if device should be visible
 function QuickAppBase:setVisible(visible) api.put("/devices/"..self.id,{visible=visible}) end
 
+-- Sets a QuickApp variable value
+-- @param name - The variable name
+-- @param value - The variable value
 function QuickAppBase:setVariable(name, value)
   local qvars,found = self.properties.quickAppVariables,false
   for _,v in ipairs(qvars) do
@@ -131,6 +212,9 @@ function QuickAppBase:setVariable(name, value)
   end
 end
 
+-- Gets a QuickApp variable value
+-- @param name - The variable name
+-- @return The variable value or empty string if not found
 function QuickAppBase:getVariable(name)
   local qvars = self.properties.quickAppVariables
   for _,v in ipairs(qvars) do
@@ -141,7 +225,11 @@ function QuickAppBase:getVariable(name)
   return ""
 end
 
-
+-- Sets a value in internal storage
+-- @param key - The storage key
+-- @param val - The value to store
+-- @param hidden - Boolean indicating if the variable should be hidden
+-- @return HTTP status code
 function QuickAppBase:internalStorageSet(key, val, hidden)
   __assert_type(key, 'string')
   local data = { name = key, value = val, isHidden = hidden }
@@ -154,6 +242,9 @@ function QuickAppBase:internalStorageSet(key, val, hidden)
   end
 end
 
+-- Gets a value from internal storage
+-- @param key - The storage key (optional, if nil returns all variables)
+-- @return The stored value or nil if not found
 function QuickAppBase:internalStorageGet(key)
   __assert_type(key, 'string')
   if key then
@@ -169,11 +260,18 @@ function QuickAppBase:internalStorageGet(key)
   end
 end
 
+-- Removes a variable from internal storage
+-- @param key - The storage key to remove
+-- @return Result of the delete operation
 function QuickAppBase:internalStorageRemove(key) return api.delete("/plugins/" .. self.id .. "/variables/" .. key) end
 
+-- Clears all variables from internal storage
+-- @return Result of the delete operation
 function QuickAppBase:internalStorageClear() return api.delete("/plugins/" .. self.id .. "/variables") end
 
 class 'QuickApp'(QuickAppBase)
+-- Constructor for QuickApp class (main QuickApp instance)
+-- @param dev - Device object containing device properties and metadata
 function QuickApp:__init(dev)
   __TAG = dev.name..dev.id
   plugin.mainQA = self
@@ -185,6 +283,8 @@ function QuickApp:__init(dev)
   if not self.childsInitialized then self:initChildDevices() end
 end
 
+-- Initializes child devices for this QuickApp
+-- @param map - Optional mapping table of device types to constructor functions
 ---@diagnostic disable-next-line: duplicate-set-field
 function QuickApp:initChildDevices(map)
   map = map or {}
@@ -203,6 +303,10 @@ function QuickApp:initChildDevices(map)
   self.childsInitialized = true
 end
 
+-- Creates a new child device for this QuickApp
+-- @param options - Options table containing device configuration
+-- @param classRepresentation - Optional class constructor for the child device
+-- @return The created child device instance
 function QuickApp:createChildDevice(options, classRepresentation)    
     __assert_type(options, "table")
     __assert_type(options.name, "string")
@@ -229,6 +333,8 @@ function QuickApp:createChildDevice(options, classRepresentation)
 end
 
 class 'QuickAppChild'(QuickAppBase)
+-- Constructor for QuickAppChild class (child device of a QuickApp)
+-- @param dev - Device object containing device properties and metadata
 function QuickAppChild:__init(dev)
   QuickAppBase.__init(self, dev)
   self.parentId = dev.parentId
@@ -237,6 +343,10 @@ function QuickAppChild:__init(dev)
   if self.onInit then self:onInit() end
 end
 
+-- Global handler for device actions
+-- Routes actions to the appropriate QuickApp or child device
+-- @param id - Device ID where the action was called
+-- @param event - Event object containing action details
 function onAction(id,event) -- { deviceID = 1234, actionName = "test", args = {1,2,3} }
   --if Emu:DBGFLAG('onAction') then print("onAction: ", json.encode(event)) end
   local self = plugin.mainQA
@@ -250,6 +360,10 @@ function onAction(id,event) -- { deviceID = 1234, actionName = "test", args = {1
   self:error(fmt("Child with id:%s not found",id))
 end
 
+-- Global handler for UI events
+-- Routes UI events to the appropriate QuickApp callbacks
+-- @param id - Device ID where the UI event occurred
+-- @param event - Event object containing UI event details
 function onUIEvent(id, event)
   local quickApp = plugin.mainQA
   --if Emu:DBGFLAG('onUIEvent') then print("UIEvent: ", json.encode(event)) end
@@ -262,6 +376,10 @@ function onUIEvent(id, event)
   end
 end
 
+-- Programmatically triggers a UI action for testing purposes
+-- @param eventType - The type of UI event to trigger
+-- @param elementName - The name of the UI element
+-- @param arg - Optional argument value for the event
 function QuickAppBase:UIAction(eventType, elementName, arg)
   local event = {
     deviceId = self.id, 
@@ -272,8 +390,16 @@ function QuickAppBase:UIAction(eventType, elementName, arg)
   onUIEvent(self.id, event)
 end
 
+---@class RefreshStateSubscriber
+---@field time number - Time to skip events before this timestamp
+---@field subscribers table - Table of subscribers with their filters and handlers
+---@field last number - Last processed event timestamp
+---@field subject table - Subject for handling refresh state events
+RefreshStateSubscriber = {}
 class 'RefreshStateSubscriber'
 
+-- Constructor for RefreshStateSubscriber class
+-- Initializes the subscriber for refresh state events
 function RefreshStateSubscriber:__init()
  self.time = os.time() -- Skip events before this time
   self.subscribers = {}
@@ -286,6 +412,10 @@ function RefreshStateSubscriber:__init()
   end
 end
 
+-- Subscribes to refresh state events with a filter and handler
+-- @param filter - Function to filter events (return true to handle)
+-- @param handler - Function to handle matching events
+-- @return Subscription object
 function RefreshStateSubscriber:subscribe(filter, handler)
   return self.subject:filter(function(event) return filter(event) end):subscribe(function(event) handler(event) end)
 end
@@ -293,17 +423,26 @@ end
 local MTsub = { __tostring = function(self) return "Subscription" end }
 
 local SUBTYPE = '%SUBSCRIPTION%'
+-- Subscribes to refresh state events with a filter and handler (alternative implementation)
+-- @param filter - Function to filter events (return true to handle)
+-- @param handler - Function to handle matching events
+-- @return Subscription object
 function RefreshStateSubscriber:subscribe(filter, handler)
   local sub = setmetatable({ type=SUBTYPE, filter = filter, handler = handler },MTsub)
   self.subscribers[sub]=true
   return sub
 end
 
+-- Unsubscribes from refresh state events
+-- @param subscription - The subscription object to remove
 function RefreshStateSubscriber:unsubscribe(subscription)
   if type(subscription)=='table' and subscription.type==SUBTYPE then 
     self.subscribers[subscription]=nil
   end
 end
 
+-- Starts the refresh state subscriber
 function RefreshStateSubscriber:run() fibaro.hc3emu.refreshState:addListener(self.handle) end
+
+-- Stops the refresh state subscriber
 function RefreshStateSubscriber:stop() fibaro.hc3emu.refreshState:removeListener(self.handle) end

@@ -3,7 +3,8 @@ local fmt = string.format
 local copas = require("copas")
 local embed = require("hc3emu2.embedui")
 
-Device = Device
+---@class Device
+Device = {}
 class 'Device'
 function Device:__init(args)
   self.id = args.id
@@ -17,6 +18,7 @@ function Device:__init(args)
   self.watches = args.watches or {}
   self.headers = args.headers or {}
   self.pageName = args.pageName
+  self.uiPage = nil
   
   local embedElements = embed.embedUIs[self.device.type] -- Add embed/stock UI elements for device type
   for i,r in ipairs(embedElements or {}) do table.insert(self.UI,i,r) end

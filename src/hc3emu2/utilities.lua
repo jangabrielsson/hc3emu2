@@ -343,7 +343,14 @@ local copas = require("copas")
 local socket = require("socket")
 local fmt = string.format
 
-SocketServer = SocketServer
+---@class SocketServer
+---@field name string
+---@field btag string
+---@field ip string
+---@field port number
+---@field started boolean
+---@field handler fun(self:SocketServer, io:table)
+SocketServer = {}
 class'SocketServer'
 function SocketServer:__init(ip,port,pi,name,debug)
   self.name = name or "socket server"

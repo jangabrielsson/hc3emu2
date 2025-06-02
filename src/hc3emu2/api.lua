@@ -1,6 +1,7 @@
 local fmt = string.format
 
-API = API
+---@class API
+API = {}
 class 'API'
 API.HTTP = {
   OK=200, CREATED=201, ACCEPTED=202, NO_CONTENT=204,MOVED_PERMANENTLY=301, FOUND=302, NOT_MODIFIED=304,
@@ -75,8 +76,8 @@ function API:getRoute(method,path)
   return d._handler,vars,query
 end
 
-
-EMUAPI = EMUAPI
+---@class EMUAPI : API
+EMUAPI = {}
 class 'EMUAPI'(API)
 
 function EMUAPI:__init(emu)
