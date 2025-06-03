@@ -127,14 +127,42 @@ local function handleOPTIONS(path,headers,io)
   return true
 end
 
-WebServer = WebServer
-class 'WebServer'(SocketServer) 
-function WebServer:__init(ip,port) 
-  SocketServer.__init(self,ip,port,Emu.IP)
-  self.api = API(Emu)
+---@class WEBAPI : API
+WEBAPI = {}
+class 'WEBAPI'(API)
+
+function WEBAPI:__init(emu)
+  API.__init(self,emu)
+  self:setupRoutes()
 end
 
-function WebServer:handler(io)
+function WEBAPI:call(ctx, method, path, data) 
+  local handler, vars, query = self:getRoute(method, path)
+  local res,code,headers = nil,self.HTTP.NOT_IMPLEMENTED,nil
+  if handler then
+    res,code,headers = handler({io=io, method=method, path=path, data=data, vars=vars, query=query})
+  end
+  if not tonumber(code) or code > self.HTTP.NO_CONTENT then end
+  return res,code,headers
+end
+
+function WEBAPI:setupRoutes()
+
+  self:add("OPTIONS","/deviceStructure",function(ctx,path,data)
+    local date = os.date("!%a, %d %b %Y %H:%M:%S GMT")
+    ctx.io.write("HTTP/1.1 200 OK\r\nDate: " .. date .. "\r\nServer: Apache/2.0.61 (Unix)\r\nAccess-Control-Allow-Origin:*\r\nAccess-Control-Allow-Methods: POST, GET, OPTIONS\r\nAccess-Control-Allow-Headers:X-PINGOTHER, Content-Type\r\n\r\n")
+  end)
+
+end
+
+WebServer2 = WebServer2
+class 'WebServer2'(SocketServer) 
+function WebServer2:__init(ip,port) 
+  SocketServer.__init(self,ip,port,Emu.IP)
+  self.api = WEBAPI(Emu)
+end
+
+function WebServer2:handler(io)
   local request = io.read()
   local headers = {}
   while true do
@@ -142,18 +170,21 @@ function WebServer:handler(io)
     headers[#headers+1] = header
     if header == "" then
       local method,path = request:match("([^%s]+) ([^%s]+)")
-
-      if method == 'GET' and handleGET(path,headers,io) then
-        self.api:call(method,path)
+      if self.api:call({io=io,headers=headers},method,path) == true then
+        -- If the true, return 200 OK, if false the handler has already written the response
+        io.write("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nAccess-Control-Allow-Origin: *\r\n\r\n")
         break
       end
-      if method == "OPTIONS" then 
-        handleOPTIONS(path,headers,io) break 
-      end
-      if method == "POST" then 
-        handlePOST(path,headers,io) break
-      end
-      io.write("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nAccess-Control-Allow-Origin: *\r\n\r\n")
+      -- if method == 'GET' and handleGET(path,headers,io) then
+      --   self.api:call(method,path)
+      --   break
+      -- end
+      -- if method == "OPTIONS" then 
+      --   handleOPTIONS(path,headers,io) break 
+      -- end
+      -- if method == "POST" then 
+      --   handlePOST(path,headers,io) break
+      -- end
       break
     end
   end

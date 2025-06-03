@@ -187,7 +187,7 @@ require("hc3emu2.class")
 ---@field mobdebug table - Debugger for the emulator
 ---@field offline boolean - Is the emulator running in offline mode
 ---@field nodebug boolean - Is the emulator running without debugging
----@field taskArgs table - Task arguments for the emulator
+---@field taskArgs table - Task arguments for the emulator (plugin/taskRunner)
 ---@field plugin table - Plugin information for the emulator
 ---@field templates table - Templates for devices in the emulator
 ---@field helper table - Helper functions for the emulator
@@ -195,9 +195,8 @@ require("hc3emu2.class")
 ---@field sunriseHour number - Sunrise hour for the emulator
 ---@field sunsetHour number - Sunset hour for the emulator
 ---@field __printHook function - Custom print hook for the emulator
----@field refreshState table - User data for the emulator
+---@field refreshState table - refreshState mgr for the emulator
 ---@field TIMEOUT number - Tag for the emulator
----@field PIN string - User PIN for the emulator
 ---@
 Emulator = {}
 class 'Emulator'
@@ -210,7 +209,7 @@ function Emulator:__init()
   self.stateTag = nil
   self.lua = extraLua
   setmetatable(self.EVENT, { __newindex = function(t,k,v) rawset(t,k, t[k] or {}) table.insert(t[k],v) end })
-  self.PI = {}
+  self.PI = {} -- Process info for the emulator, associated with coroutine & environment running, providing debug and error handling
   function self.PI.debugHandler(flag,...) 
     if flag==true or self.config.dbg[flag] then self.LOGGER.DEBUG("EMU",fmt(self.lib.formatArgs(...))) end
   end
@@ -274,7 +273,7 @@ function Emulator:HC3Call(method,path,data,silent)
   local res,stat,headers = self:httpRequest(method,creds.url.."api"..path,{
     ["Accept"] = '*/*',
     ["X-Fibaro-Version"] = 2,
-    ["Fibaro-User-PIN"] = self.PIN,
+    ["Fibaro-User-PIN"] = self.config.hc3.pin,
   },
   data,self.TIMEOUT or 35000,creds.user,creds.pwd,silent)
   if stat == 401 then self:ERRORF("HC3 authentication failed, Emu access cancelled") BLOCKED = true end
@@ -598,14 +597,14 @@ function Emulator:installDevice(d,files,headers) -- Move to device?
   elseif d.id then device.id = d.id
   else device.id = ID; ID = ID + 1 end
   local dev = Device{
-    id=device.id,
-    device=device,
+    id = device.id,
+    device = device,
     files = files,
-    headers=headers or {},
-    UI=headers.UI
+    headers = headers or {},
+    UI = headers.UI
   }
-  self:saveState()
   self.devices[device.id] = dev
+  self:saveState()
   self:post({type='device_created',id=device.id})
   self:refreshEvent('DeviceCreatedEvent',{id=device.id})
   if not headers.norun then dev:startQA() end
