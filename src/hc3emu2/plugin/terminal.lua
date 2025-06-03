@@ -60,6 +60,7 @@ local function keyPoller()
 end
 
 local VERSION = "v0.5"
+local commands = {}
 
 local function terminal()
   print("Hc3Emu Terminal",VERSION,"(Esc to quit)")
@@ -84,13 +85,24 @@ local function terminal()
 
       if b == 10 or b == 13 then
         io.write('\n')
-        local cmd = "return "..inputLine:sub(#prompt + 1) -- wrap input in a return to evaluate it
-        local func, err = load(cmd, "input", "t", _G)
-        if not func then
-          ioprintln(err)
+        local cmd = inputLine:sub(#prompt + 1) -- get command after prompt
+        if cmd:sub(1, 1) == "!" then -- execute lua statement
+          local luaCmd = cmd:sub(2) -- remove leading '!'
+          local func, err = load( "return "..luaCmd, "input", "t", _G)
+          if not func then
+            ioprintln(err)
+          else
+            local ok, result,code = pcall(func)
+            ioprintln(type(result)=='table' and json.encodeFormated(result) or tostring(result))
+          end
         else
-          local ok, result,code = pcall(func)
-          ioprintln(type(result)=='table' and json.encodeFormated(result) or tostring(result))
+          local cmdFun = cmd:match("^[%w_]+") -- get command name
+          if commands[cmdFun] then 
+            ok, result = pcall(commands[cmdFun],cmd)
+            ioprintln(type(result)=='table' and json.encodeFormated(result) or tostring(result))
+          else
+            ioprintln("Unknown command: " .. cmd)
+          end
         end
         inputLine = prompt -- reset input line
       elseif b == 8 or b == 127 then
@@ -121,4 +133,5 @@ exports.setExitKey = function(b) setupTerm() exitKey = b end
 exports.setKeyHandler = function(f) setupTerm() keyPoller() keyHandler = f end
 exports.clear = function() print("\027[2J") end
 exports.terminal = terminal
+exports.terinalCommand = commands
 return exports
