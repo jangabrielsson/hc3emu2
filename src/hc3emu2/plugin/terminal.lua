@@ -82,7 +82,7 @@ local function terminal()
         key = tostring(b) -- replace control characters with a simple "." to not mess up the screen
       end
 
-      if b == 10 then
+      if b == 10 or b == 13 then
         io.write('\n')
         local cmd = "return "..inputLine:sub(#prompt + 1) -- wrap input in a return to evaluate it
         local func, err = load(cmd, "input", "t", _G)
