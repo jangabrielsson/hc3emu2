@@ -6,13 +6,21 @@ local function refreshStatePoller(queue)
   local path = "/refreshStates"
   local last,events=1,nil
   local suffix = "&lang=en&rand=7784634785"
+  local errors = 0
   while pollerRunning do
     local data, status = queue.emu:HC3Call("GET", (last and path..("?last="..last) or path) .. suffix, nil, true)
     if status ~= 200 then
       if status ~= 'timeout' then
-         queue.emu:ERRORF("Failed to get refresh state (exiting): "..tostring(status))
-         return
+        errors = errors + 1
+        queue.emu:WARNINGF(true,"Failed to get refresh state: "..tostring(status))
+        if errors > 3 then 
+          queue.emu:ERRORF("Too many errors (%d) while polling refresh state, stopping poller", errors)
+          pollerRunning = false
+          return
+        end
       end
+    else 
+      errors = 0
     end
     data = type(data)=='table' and data or {}
     ---@diagnostic disable-next-line: undefined-field
