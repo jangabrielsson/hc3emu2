@@ -686,7 +686,7 @@ Emulator.wrapFun = wrapFun -- export
 function Emulator:createLock(timeout,reentrant) return copas.lock.new(timeout or math.huge,reentrant) end
 function Emulator:createErrorMsg(args)
   if type(args.msg) == 'table' then return args.msg end
-  return setmetatable({err=args.msg,trace=args.trace or self.lua.debug.traceback(2)},{
+  return setmetatable({err=args.msg,trace=args.trace or self.lua.debug.traceback(3)},{
     __tostring = function(_)
       local err = args.msg
       if not Emu.config.dbg.notrace then

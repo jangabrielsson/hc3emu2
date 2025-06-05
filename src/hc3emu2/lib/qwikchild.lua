@@ -145,7 +145,6 @@ do
   end
   
   local UID = nil
----@class QwikAppChild : QuickAppChild
   QwikAppChild = {}
   class 'QwikAppChild'(QuickAppChild)
   function QwikAppChild:__init(device)

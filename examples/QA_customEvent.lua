@@ -1,14 +1,9 @@
 --%%name=CEtest
 --%% offline=true
 --%%debug=refresh:true
---%% nocolor=true
 
 --%%file=$hc3emu2.lib.eventmgr:eventmgr
 
-fibaro.debug(__TAG,"TEST%YY")
-fibaro.trace(__TAG,"TEST")
-fibaro.warning(__TAG,"TEST")
-fibaro.error(__TAG,"TEST")
 function QuickApp:onInit()
   self:debug(self.name,self.id)
   

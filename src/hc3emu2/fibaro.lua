@@ -72,12 +72,35 @@ local lock = _emu.createLock()
 -- @param fun - The function to execute.
 -- @param ... - Arguments to pass to the function.
 -- @return The results of the function call, or throws an error if the call fails.
+local function trimTB(tb)
+  return tb:gsub("stack traceback:\n%s*[^\n]+fibaro%.lua.-\n", "")
+end
+
+-- Maybe create my own traceback function to show a more readable stack trace...
+local function myTraceback()
+  local index = 0
+  while true do
+    local info = _emu.lua.debug.getinfo(index)
+    if not info then break end
+    if info.what == "C" or info.what == "main" then
+      index = index + 1
+    else
+      local file = info.short_src:match("([^/\\]+)$") or info.short_src
+      local line = info.currentline > 0 and ":" .. info.currentline or ""
+      _emu:DEBUGF(true,"%s%s%s",file,line,info.name or "")
+      index = index + 1
+    end
+  end
+end
+
 local function gate(fun,...)
   lock:get()
   local function ef(err)
     if type(err) == "table" then return err end
     err = err:gsub("%[string \"","[file \"")
-    local trace = _emu.lua.debug.traceback()
+    local trace = trimTB(_emu.lua.debug.traceback())
+    --local trace = copas.gettraceback()
+    --myTraceback()
     return _emu:createErrorMsg{msg=err,trace=trace}
   end
   local res ={xpcall(fun,ef,...)}
