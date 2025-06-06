@@ -58,6 +58,7 @@ build = {
       ["hc3emu2.api"] = "src/hc3emu2/api.lua",
       ["hc3emu2.helper"] = "src/hc3emu2/helper.lua",
       ["hc3emu2.webserver"] = "src/hc3emu2/webserver.lua",
+      ["hc3emu2.webui"] = "src/hc3emu2/webui.lua",
       ["hc3emu2.simdevices"] = "src/hc3emu2/simdevices.lua",
       ["hc3emu2.unittest"] = "src/hc3emu2/unittest.lua",
 

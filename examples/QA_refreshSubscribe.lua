@@ -33,6 +33,7 @@ end
 class 'MyChild'(QuickAppChild)
 function MyChild:__init(dev)
   QuickAppChild.__init(self,dev)
+  self:updateProperty('value',true)
   self:debug("MyChild:onInit",self.name,self.id)
   setInterval(function()
     local value = fibaro.getValue(self.id,'value')

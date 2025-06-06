@@ -2,9 +2,9 @@
 
 --%%name=UItest
 --%%type=com.fibaro.multilevelSwitch
---%%proxy=true
+--%% proxy=true
 --%%webui=true
---%% debug=info:true,server:true,onAction:true,onUIEvent:true
+--%%debug=info:true,server:true,onAction:true,onUIEvent:true
 
 --%%u={label='lbl1',text="LABEL"}
 --%%u={button='btn1',text="Btn1", onReleased="myButton", onLongPressDown="myButton2"}
@@ -45,6 +45,7 @@ end
 
 function QuickApp:mySlider(event)
   self:debug("mySlider",event.values[1])
+  self:updateView('slider1','value',tostring(event.values[1]))
 end
 
 function QuickApp:mySwitch(event)

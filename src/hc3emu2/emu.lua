@@ -74,7 +74,7 @@ local function startUp()
   }
   for _,v in ipairs(globalHeaders) do Emu.config[v] = headers[v] end
   -- copy over some debugflags to be overall emulator debug flags
-  for _,k in ipairs({"refresh","rawrefresh","system","http","notrace"}) do Emu.config.dbg[k] = headers.debug[k] end
+  for _,k in ipairs({"refresh","rawrefresh","system","http","notrace","web","server"}) do Emu.config.dbg[k] = headers.debug[k] end
   Emu.config = table.merge(config.userConfig,Emu.config) -- merge in user config  from .hc3emu.lua
   
   Emu.LOGGER = Emu.lib.LOGGER
@@ -106,7 +106,7 @@ local function startUp()
   mergeLib(Emu.lib,require("hc3emu2.timers"))
   mergeLib(Emu.lib,require("hc3emu2.proxy"))
   Emu.refreshState = require("hc3emu2.refreshstate")(Emu)
-  Emu.web = require("hc3emu2.webserver")
+  Emu.web = require("hc3emu2.webui")
   
   Emu.lib.setDark(true)
   if Emu.stateTag then Emu:loadState() end
@@ -141,7 +141,7 @@ local function startUp()
       Emu.sunriseHour,Emu.sunsetHour = Emu.lib.sunCalc()
       Emu.lib.midnightLoop()
       Emu.lib.startScheduler()
-      Emu.web.startServer()
+      require("hc3emu2.webserver").startServer() -- Test
       Emu.web.generateEmuPage()
       Emu:installQuickAppCode(mainFile,src,headers) 
     end
