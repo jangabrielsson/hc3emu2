@@ -166,6 +166,7 @@ function Emu.EVENT.quickapp_started(ev)
   end
 end
 
+local oldInfo = ""
 local function updateEmuPage()
   if Emu.nodir then return end
   local p = {} 
@@ -173,19 +174,23 @@ local function updateEmuPage()
   table.sort(p,function(a,b) return a.name < b.name end)
   local po = {} 
   for p,_ in pairs(Emu.stats.ports) do po[#po+1] = tostring(p) end
+  table.sort(po)
   local emuInfo = {
     stats = {
       version = Emu.VERSION,
-      memory = fmt("%.2f KB", collectgarbage("count")),
-      numqas = json.util.InitArray(Emu.stats.qas),
-      timers = json.util.InitArray(Emu.stats.timers),
+      memory = 0, --fmt("%d KB", math.floor(0.5+collectgarbage("count"))),
+      numqas = table.sort(json.util.InitArray(Emu.stats.qas)),
+      timers = table.sort(json.util.InitArray(Emu.stats.timers)),
       ports =  table.concat(po,","),
     },
     quickApps = p,
     rsrcLink = ("/"..Emu.config.rsrcsDir.."/"):gsub("\\","/"),
   }
+  local newInfo = json.encodeFast(emuInfo)
+  if oldInfo == newInfo then return end
+  oldInfo = newInfo
   local f = io.open(Emu.config.EMUSUB_DIR.."/info.json","w")
-  if f then f:write((json.encode(emuInfo))) f:close() end
+  if f then f:write((newInfo)) f:close() end
 end
 
 local started = false

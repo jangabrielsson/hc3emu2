@@ -10,7 +10,7 @@ function sendSelectedOptions(checkbox) {
   const checkboxes = dropdown.querySelectorAll("input[type='checkbox']:checked");
   const selectedValues = Array.from(checkboxes).map(checkbox => checkbox.value);
 
-  const queryString = selectedValues.map(value => `selectedOptions=${encodeURIComponent(value)}`).join('&');
+  const queryString = selectedValues.map((value, index) => `selectedOptions${index + 1}=${encodeURIComponent(value)}`).join('&');
 
   fetch(`${SERVER_IP}/multi?qa=${DEVICE_ID}&id=${encodeURIComponent(dropdownId)}&${queryString}`)
     .then(response => response.json())
