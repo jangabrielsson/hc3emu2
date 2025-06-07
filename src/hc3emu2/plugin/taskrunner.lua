@@ -163,6 +163,12 @@ function task.updateQA(fname)
     local value = fqa.initialProperties[prop]
     if value ~= nil and value ~= "" and value ~= device.properties[prop] then 
       update(prop, value) 
+      if prop == "quickAppVariables" then
+        value = json.encode(value)
+        if #value > 40 then 
+          value = value:sub(1, 40) .. "..."
+        end
+      end
       printf("Updated property %s to '%s' for QuickApp %s", prop, value, id)
     end
   end
