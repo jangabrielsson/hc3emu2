@@ -328,13 +328,13 @@ do
     if date.isdst then utc = utc + 1 end
     local rise_time = os.date("*t", sunturnTime(date, true, lat, lon, zenith, utc))
     local set_time = os.date("*t", sunturnTime(date, false, lat, lon, zenith, utc))
-    local rise_time_t = os.date("*t", sunturnTime(date, true, lat, lon, zenith_twilight, utc))
-    local set_time_t = os.date("*t", sunturnTime(date, false, lat, lon, zenith_twilight, utc))
+    -- local rise_time_t = os.date("*t", sunturnTime(date, true, lat, lon, zenith_twilight, utc))
+    -- local set_time_t = os.date("*t", sunturnTime(date, false, lat, lon, zenith_twilight, utc))
     local sunrise = fmt("%.2d:%.2d", rise_time.hour, rise_time.min)
     local sunset = fmt("%.2d:%.2d", set_time.hour, set_time.min)
-    local sunrise_t = fmt("%.2d:%.2d", rise_time_t.hour, rise_time_t.min)
-    local sunset_t = fmt("%.2d:%.2d", set_time_t.hour, set_time_t.min)
-    return sunrise, sunset, sunrise_t, sunset_t
+    -- local sunrise_t = fmt("%.2d:%.2d", rise_time_t.hour, rise_time_t.min)
+    -- local sunset_t = fmt("%.2d:%.2d", set_time_t.hour, set_time_t.min)
+    return sunrise, sunset --, sunrise_t, sunset_t
   end
 end 
 
