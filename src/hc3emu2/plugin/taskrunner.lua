@@ -156,12 +156,12 @@ function task.updateQA(fname)
 
   -- Update other properties
   local updateProps = {
-    "quickAppVariables","uiView","manufacturer","model","buildNumber",
+    "quickAppVariables","manufacturer","model","buildNumber",
     "userDescription","quickAppUuid","deviceRole"
   }
   for _,prop in ipairs(updateProps) do 
     local value = fqa.initialProperties[prop]
-    if value ~= nil then 
+    if value ~= nil and value ~= "" and value ~= device.properties[prop] then 
       update(prop, value) 
       printf("Updated property %s to '%s' for QuickApp %s", prop, value, id)
     end
