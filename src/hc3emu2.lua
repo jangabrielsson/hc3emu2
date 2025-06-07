@@ -1,7 +1,7 @@
 local cmdLine, mode, mainFile, args
 local startupMode = { 
   run=true, test=true, terminal=true,
-  uploadQA=true, downloadUnpack=true, updateFile=true
+  uploadQA=true, downloadUnpack=true, updateFile=true, updateQA=true,
 }
 for i=-1,5 do
   local a = arg[i] or ""

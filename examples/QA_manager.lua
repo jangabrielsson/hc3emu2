@@ -41,4 +41,3 @@ function QuickApp:onInit()
     local qas = api.get("/devices?interface=quickApp")
     self.list:update(qas)
 end
-§
