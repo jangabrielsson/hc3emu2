@@ -6,46 +6,56 @@
 
   "version": "2.0.0",
   "tasks": [
-      {
-        "label": "QA, upload current file as QA to HC3",
-        "type": "shell",
-        "command": "lua", 
-        "args": [
-          "-e",
-          "\"require('hc3emu2')\"",
-          "uploadQA",
-          "${relativeFile}"
-        ]
-      },
-      {
-        "label": "QA, update file (part of .project)",
-        "type": "shell",
-        "command": "lua", 
-        "args": [
-          "-e",
-          "\"require('hc3emu2')\"",
-          "updateFile",
-          "${relativeFile}"
-        ]
-      },
-      {
-        "label": "QA, Download and unpack from HC3",
-        "type": "shell",
-        "command": "lua", 
-        "args": [
-          "-e",
-          "\"require('hc3emu2')\"",
-          "downloadQA",
-          "${input:QA_id}",
-          "${input:path_id}"
-        ]
-      },
-      {
-        "label": "Test picker",
-        "type": "shell",
-        "command": "echo",
-        "args": [ "${input:pickEnvFile}" ]
-      }
+    {
+      "label": "QA, upload current file as QA to HC3",
+      "type": "shell",
+      "command": "lua",
+      "args": [
+        "-e",
+        "\"require('hc3emu2')\"",
+        "uploadQA",
+        "${relativeFile}"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "QA, update single file (part of .project)",
+      "type": "shell",
+      "command": "lua",
+      "args": [
+        "-e",
+        "\"require('hc3emu2')\"",
+        "updateFile",
+        "${relativeFile}"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "QA, update QA (defined in .project)",
+      "type": "shell",
+      "command": "lua",
+      "args": [
+        "-e",
+        "\"require('hc3emu2')\"",
+        "updateQA",
+        "${relativeFile}",
+        "-develop"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "QA, Download and unpack from HC3",
+      "type": "shell",
+      "command": "lua",
+      "args": [
+        "-e",
+        "\"require('hc3emu2')\"",
+        "downloadQA",
+        "${input:QA_id}",
+        "${input:path_id}"
+      ],
+      "group": "build"
+    }
     ],
     "inputs": [
       {
