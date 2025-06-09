@@ -37,6 +37,7 @@ local debugFlags = {
 local function mergeLib(lib1,lib2) for k,v in pairs(lib2 or {}) do lib1[k] = v end end
 
 local function startUp()
+  if runflags.develop then require('mobdebug').on() end
   Emu = Emulator() -- Global
   for _,p in ipairs({
     'rsrcsDir','tempDir','EMU_DIR','EMUSUB_DIR','fileSeparator','isZerobrane',
@@ -481,9 +482,13 @@ function Emulator:getHeaders(src,extraHeaders)
   end
   local UI = (extraHeaders or {}).UI or {}
   for _,v in ipairs(headers._UI) do 
-    UI[#UI+1] = validate(v,"UI","table") 
-    local ok,err = Type.UIelement(UI[#UI])
-    assert(ok, fmt("Bad UI element: %s - %s",v,err))
+    local v0 = validate(v,"UI","table")
+    UI[#UI+1] = v0
+    v0 = v0[1] and v0 or { v0 }
+    for _,v1 in ipairs(v0) do
+      local ok,err = Type.UIelement(v1)
+      assert(ok, fmt("Bad UI element: %s - %s",v1,err))
+    end
   end
   local files = {}
   for name,path in pairs(headers.files) do files[#files+1] = { name=name, fname=path, isMain=false, isOpen=false, type="lua" } end
