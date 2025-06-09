@@ -1,4 +1,4 @@
-local VERSION = "2.0.20"
+local VERSION = "2.0.21"
 local mode, mainFile, runflags, taskArgs = ...
 
 local fmt = string.format
