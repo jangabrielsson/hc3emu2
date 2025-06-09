@@ -1,5 +1,5 @@
 --%%name=TaskRunner
---%% nodebug=true
+--%%nodebug=true
 --%%plugin=$hc3emu2.plugin.terminal
 
 local emu = fibaro.hc3emu

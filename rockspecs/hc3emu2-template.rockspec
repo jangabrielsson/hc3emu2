@@ -42,6 +42,7 @@ build = {
       ["hc3emu2.quickapp"] = "src/hc3emu2/quickapp.lua",
       ["hc3emu2.class"] = "src/hc3emu2/class.lua",
       ["hc3emu2.timers"] = "src/hc3emu2/timers.lua",
+      ["hc3emu2.type"] = "src/hc3emu2/type.lua",
       ["hc3emu2.config"] = "src/hc3emu2/config.lua",
       ["hc3emu2.net"] = "src/hc3emu2/net.lua",
       ["hc3emu2.ui"] = "src/hc3emu2/ui.lua",

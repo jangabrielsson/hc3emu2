@@ -8,6 +8,7 @@ local socket = require("socket")
 copas.https = require("ssl.https")
 local ltn12 = require("ltn12")
 local lfs = require("lfs")
+local Type = require("hc3emu2.type")
 require("copas.http")
 
 -- Figure out where we are and what we run...
@@ -479,7 +480,11 @@ function Emulator:getHeaders(src,extraHeaders)
     else print(fmt("Unknown extra header key: '%s' - ignoring",key)) end
   end
   local UI = (extraHeaders or {}).UI or {}
-  for _,v in ipairs(headers._UI) do UI[#UI+1] = validate(v,"UI","table") end
+  for _,v in ipairs(headers._UI) do 
+    UI[#UI+1] = validate(v,"UI","table") 
+    local ok,err = Type.UIelement(UI[#UI])
+    assert(ok, fmt("Bad UI element: %s - %s",v,err))
+  end
   local files = {}
   for name,path in pairs(headers.files) do files[#files+1] = { name=name, fname=path, isMain=false, isOpen=false, type="lua" } end
   headers.files = files

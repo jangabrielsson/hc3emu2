@@ -32,7 +32,37 @@ local function OR(ctx, ...)
   return false
 end
 
+local operator = {
+  ['=='] = function(a,b) return a == b end,
+  ['!='] = function(a,b) return a ~= b end,
+  ['<'] = function(a,b) return a < b end,
+  ['<='] = function(a,b) return a <= b end,
+  ['>'] = function(a,b) return a > b end,
+  ['>='] = function(a,b) return a >= b end,
+  ['anyValue'] = function(a,b) end,
+}
+
+local match = {
+  ['match'] = function(a,b) return a == b end,
+  ['match=='] = function(a,b) return a ~= b end,
+  ['match!='] = function(a,b) return a ~= b end,
+  ['match<'] = function(a,b) return a < b end,
+  ['match<='] = function(a,b) return a <= b end,
+  ['match>'] = function(a,b) return a > b end,
+  ['match>='] = function(a,b) return a >= b end,
+}
+
+local function isBool(v) return type(v) == 'boolean' end
+
 local node = {}
+-- {
+--   type = "device",
+--   id = 25,
+--   property = "value",
+--   operator = "==",
+--   value = true,
+--   isTrigger = true
+-- },
 function node.device(self,cond)
   local dev = Emu.devices[cond.deviceId]
   if not dev then 
@@ -49,17 +79,70 @@ function node.device(self,cond)
   return function(ctx) return dev.vars[prop] == value end, {dev}
 end
 
-function node.time(self,cond)
-  local time = cond.time
-  if type(time) == 'string' then time = Emu.tools.parseTime(time) end
-  return function(ctx) return Emu.orgTime() >= time end, {}
+-- {
+--   type = "date",
+--   property = "cron",
+--   operator = "match",
+--   value = {"30", "15", "*", "*", "*", "*"},
+--   isTrigger = true
+-- }
+local dateCond = {}
+function dateCond.cron(scene,cond)
+  assert(match[cond.operator or ""],'Unknown operator for cron condition: '..tostring(cond.operator))
+  assert(type(cond.value) == 'table' and #cond.value > 0,'Cron condition must have a table value with at least one element')
+  assert(isBool(cond.isTrigger),'isTrigger must be boolean')
+  if cond.isTrigger then
+    local cron = table.concat(cond.value, " ")
+    scene:addMinuteTest(cron)
+  else
+    scene:addCond({type = "cron", cron = cond.value})
+  end
+end
+function dateCond.cronInterval(scene,cond)
+end
+function dateCond.sunset(scene,cond)
+  assert(cond.operator == '==','Sunset condition must use == operator')
+  assert(tonumber(cond.value),'Sunset condition must have number value')
+  assert(isBool(cond.isTrigger),'isTrigger must be boolean')
+  if cond.isTrigger then
+    local offs = tostring(cond.value)
+    local t =  "sunset"..(cond.value >= 0 and "+" or "")..offs
+    scene:addTimer(t)
+  else 
+    scene:addCond({type = "sunset", time = cond.value})
+  end
+end
+function dateCond.sunrise(scene,cond)
+  assert(cond.operator == '==','Sunset condition must use == operator')
+  assert(tonumber(cond.value),'Sunset condition must have number value')
+  assert(isBool(cond.isTrigger),'isTrigger must be boolean')
+  if cond.isTrigger then
+    local offs = tostring(cond.value)
+    local t =  "sunrise"..(cond.value >= 0 and "+" or "")..offs
+    scene:addTimer(t)
+  else 
+    scene:addCond({type = "sunrise", time = cond.value})
+  end
+end
+function dateCond.bad(scene,cond)
+  error(fmt("Bad date condition in scene %s: %s", scene.id, cond))
 end
 
+function node.date(scene,cond) 
+  local prop = cond.time
+  if prop == 'cron' and operator == 'matchInterval' then prop = 'cronInterval' end
+  return dateCond[prop or "bad"](scene,cond)
+end
+
+function node.bad(scene,cond)
+  error(fmt("Bad condition in scene %s: %s", scene.id, cond))
+end
 
 function Scene:compile(cond)
   local op = cond.operator
-  if not op then return node[cond.typ](self,cond) end
+  if not op then return node[cond.typ or "bad"](self,cond) end
   local args = {}
+  assert(cond.conditions,"Scene condition must have 'conditions' field")
   for _,c in ipairs(cond.conditions) do
     local testFun, triggers = self:compile(c)
     args[#args+1] = testFun
