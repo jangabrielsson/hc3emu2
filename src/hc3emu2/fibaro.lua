@@ -1,5 +1,40 @@
+-- @module hc3emu2.fibaro
+---@description Fibaro API emulation module for HC3Emu2
+---@author Jan Gabrielsson
+---@license MIT
+---
+---This module provides the Fibaro API emulation for HC3Emu2.
+---It implements the core Fibaro API functions used by QuickApps and scenes.
+---
+---Key features:
+---- Device management (get, set, call)
+---- Scene control
+---- Global variables
+---- Alarm system
+---- Timer functions
+---- Logging functions
+---
+---@usage
+---```lua
+----- Get a device
+---local device = fibaro.get(123)
+---
+----- Call a device action
+---fibaro.call(123, "turnOn")
+---
+----- Set a global variable
+---fibaro.setGlobalVariable("myVar", "value")
+---```
+---
+---@dependencies
+---- hc3emu2.emu - Core emulator functionality
+---- hc3emu2.api - API handling
+---
+---@see hc3emu2.emu - Core emulator
+---@see hc3emu2.api - API handling
+
 fibaro = {}
-_emu = _emu
+_G._emu = _emu
 local fmt = string.format
 
 ------------- Process info for running environment ---------------- 

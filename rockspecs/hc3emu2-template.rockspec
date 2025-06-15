@@ -29,6 +29,7 @@ dependencies = {
    "argparse >= 0.7.1-1",
    "dumbluaparser >= 2.3.0-1",
    "datafile >= 0.10-1",
+   "luautf8 >= 0.1.6-1",
    "mobdebug >= 0.80-1",
 }
 

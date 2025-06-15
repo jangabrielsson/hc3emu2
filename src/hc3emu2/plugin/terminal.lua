@@ -98,7 +98,7 @@ local function terminal()
         else
           local cmdFun = cmd:match("^[%w_]+") -- get command name
           if commands[cmdFun] then 
-            ok, result = pcall(commands[cmdFun],cmd)
+            local ok, result = pcall(commands[cmdFun],cmd)
             ioprintln(type(result)=='table' and json.encodeFormated(result) or tostring(result))
           else
             ioprintln("Unknown command: " .. cmd)

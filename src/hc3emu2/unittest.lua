@@ -30,7 +30,7 @@ for k,v in pairs(testFuns) do
   testFuns[k] = checkWrap(v)
 end
 
-function runTest(test,fibaro)
+local function runTest(test,fibaro)
   testFuns._fibaro = fibaro
   test(testFuns)
 end

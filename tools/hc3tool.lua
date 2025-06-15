@@ -14,7 +14,7 @@ local path = lua.package.searchpath("argparse",lua.package.path)
 local argparse = lua.loadfile(path,"t",_G)()
 print = lua.print
 local output = lua.print
-
+local args 
 local function ERROR(fmt,...) output(string.format("Error: "..fmt,...)) os.exit(-1) end
 
 local parser = argparse("hc3tool", "Script to interact with HC3")

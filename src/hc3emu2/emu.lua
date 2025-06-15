@@ -1,3 +1,44 @@
+-- @module hc3emu2.emu
+---@description Core emulator module for HC3Emu2
+---@author Jan Gabrielsson
+---@license MIT
+---
+---This module provides the core emulation functionality for the HC3Emu2 project.
+---It handles device emulation, API proxying, and state management for Fibaro Home Center 3.
+---
+---Key features:
+---- Device emulation and state management
+---- API proxying to real HC3
+---- Debugging support
+---- Web UI generation
+---- Timer and event handling
+---- Offline mode support
+---
+---@usage
+---```lua
+---local emu = require("hc3emu2.emu")
+---emu.start({
+---  mode = "run",
+---  file = "myapp.fqa",
+---  flags = {
+---    develop = true,
+---    offline = false
+---  }
+---})
+---```
+---
+---@dependencies
+---- copas - Coroutine-based network library
+---- mobdebug - Remote debugger
+---- socket - Network library
+---- ssl.https - HTTPS support
+---- ltn12 - Network protocol support
+---- lfs - File system operations
+---
+---@see hc3emu2.fibaro - Fibaro API emulation
+---@see hc3emu2.api - API handling
+---@see hc3emu2.config - Configuration management
+
 local VERSION = "2.0.22"
 local mode, mainFile, runflags, taskArgs = ...
 
@@ -644,7 +685,7 @@ function Emulator:installFQA(fqa)
     name = fqa.name,
     type = fqa.type,
   }
-  struct,dev = self:installDevice(device,fqa.files or {},headers)
+  local struct,dev = self:installDevice(device,fqa.files or {},headers)
   self:saveState()
   return struct,dev
 end

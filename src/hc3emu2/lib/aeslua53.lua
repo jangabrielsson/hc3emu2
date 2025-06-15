@@ -25,7 +25,7 @@ Author
 Matthias Hilbig
 mhilbig@gmail.com
 --]]
-aeslua = {}
+_G.aeslua = {}
 
 do -- buffer
   local public = {};
@@ -386,16 +386,16 @@ do --aes
   -- affine transformation for calculating the S-Box of AES
   --
   function private.affinMap(byte)
-    mask = 0xf8;
-    result = 0;
+    local mask = 0xf8;
+    local result = 0;
     for i = 1,8 do
       result = result << 1;
       
-      parity = util.byteParity(byte & mask); 
+      local parity = util.byteParity(byte & mask); 
       result = result + parity
       
       -- simulate roll
-      lastbit = mask & 1;
+      local lastbit = mask & 1;
       mask = (mask >> 1) & 0xff;
       if (lastbit ~= 0) then
         mask = mask | 0x80;
@@ -413,6 +413,7 @@ do --aes
   --
   function private.calcSBox() 
     for i = 0, 255 do
+      local inverse, mapped
       if (i ~= 0) then
         inverse = gf.invert(i);
       else
@@ -431,7 +432,7 @@ do --aes
   --
   function private.calcRoundTables()
     for x = 0,255 do
-      byte = private.SBox[x];
+      local byte = private.SBox[x];
       private.table0[x] = util.putByte(gf.mul(0x03, byte), 0)
       + util.putByte(             byte , 1)
       + util.putByte(             byte , 2)
@@ -458,7 +459,7 @@ do --aes
   --
   function private.calcInvRoundTables()
     for x = 0,255 do
-      byte = private.iSBox[x];
+      local byte = private.iSBox[x];
       private.tableInv0[x] = util.putByte(gf.mul(0x0b, byte), 0)
       + util.putByte(gf.mul(0x0d, byte), 1)
       + util.putByte(gf.mul(0x09, byte), 2)
@@ -586,6 +587,7 @@ do --aes
     local t = (b3 ~ b2);
     local u = (b1 ~ b0);
     local v = (t ~ u);
+    local w
     v = (v ~ gf.mul(0x08,v));
     w = (v ~ gf.mul(0x04, (b2 ~ b0)));
     v = (v ~ gf.mul(0x04, (b3 ~ b1)));
@@ -1002,7 +1004,7 @@ end
 do
   local private = {};
   local public = {};
-  aeslua2 = public;
+  --aeslua2 = public;
   
   local ciphermode = aeslua.ciphermode
   local util = aeslua.util
@@ -1103,7 +1105,7 @@ do
       plain = ciphermode.decryptString(key, data, ciphermode.decryptCFB);
     end
     
-    result = util.unpadByteString(plain);
+    local result = util.unpadByteString(plain);
     
     if (result == nil) then
       return nil;

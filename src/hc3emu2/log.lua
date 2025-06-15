@@ -1,3 +1,25 @@
+-- @module hc3emu2.log
+---@description Logging system for HC3Emu2
+---@author Jan Gabrielsson
+---@license MIT
+---
+---This module provides logging functionality:
+---- Colored console output
+---- HTML to ANSI color conversion
+---- Log level filtering
+---- Timestamp formatting
+---- Table formatting
+---- Dark/light theme support
+---
+---@usage
+---```lua
+---local log = require("hc3emu2.log")
+---log.init() -- Initialize with default colors
+---log.LOGGER.DEBUG("TAG", "Debug message")
+---log.LOGGER.ERROR("TAG", "Error message")
+---log.setDark(true) -- Switch to dark theme
+---```
+
 local log
 local fmt = string.format
 
@@ -65,7 +87,7 @@ local function init(colors)
     }
   }
   
-  logConfig = logConfigDark -- Default log config
+  local logConfig = logConfigDark -- Default log config
   local function setDark(dark)
     if dark then logConfig = logConfigDark
     else logConfig = logConfigLight end

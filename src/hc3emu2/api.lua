@@ -1,3 +1,25 @@
+-- @module hc3emu.api
+---@description API routing and request handling for HC3Emu2
+---@author Jan Gabrielsson
+---@license MIT
+---
+---This module provides API routing and request handling functionality:
+---- HTTP method routing (GET, POST, PUT, DELETE)
+---- Path parameter handling
+---- Query string parsing
+---- Response formatting
+---- Error handling
+---- HC3 API proxying
+---
+---@usage
+---```lua
+---local api = API.new(emu)
+---api:add("GET/devices", function(ctx)
+---  return devices, 200
+---end)
+---local response, code = api:call("GET", "/devices")
+---```
+
 local fmt = string.format
 
 ---@class API
@@ -318,7 +340,7 @@ function EMUAPI:setupRoutes()
       data = res
     end
     data.isChild = true
-    headers = { webUI = dev.headers.webUI }
+    local headers = { webUI = dev.headers.webUI }
     if data.initialProperties and data.initialProperties.uiView then
       local uiView = data.initialProperties.uiView
       local callbacks = data.initialProperties.uiCallbacks or {}

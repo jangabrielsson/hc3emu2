@@ -29,7 +29,7 @@ function task.uploadQA(name)
     if dev and dev.headers and dev.headers.minify then
       emu.minifyCode(fqa.files)
     end
-    res,code = emu.uploadFQA(fqa)
+    local res,code = emu.uploadFQA(fqa)
     assert(code < 206, "Failed to upload QuickApp: " .. (tostring(code) or "unknown error"))
   end)
   if not stat then

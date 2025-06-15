@@ -424,3 +424,12 @@ See the [Contributing Guide](docs/CONTRIBUTING.md) for details on:
 ## License
 
 Released under MIT License. See [LICENSE](LICENSE) for details.
+
+## Documentation
+
+The following documentation is available in the `doc/` directory:
+
+- [API Documentation](doc/API.md) - Complete reference of the HC3Emu2 API
+- [Architecture Overview](doc/ARCHITECTURE.md) - System design and component interaction
+- [Installation Guide](doc/INSTALL.md) - How to install and configure HC3Emu2
+- [Development Guide](doc/DEVELOPMENT.md) - Guide for contributing to HC3Emu2

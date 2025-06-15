@@ -1,3 +1,21 @@
+-- @module hc3emu2.type
+---@description Type validation utilities for HC3Emu2
+---@author Jan Gabrielsson
+---@license MIT
+---
+---This module provides type validation and schema utilities:
+---- Type checkers for string, number, boolean, array, table, identifier
+---- Optional and either type combinators
+---- Table schema validation
+---- UI element schema definitions
+---
+---@usage
+---```lua
+---local Type = require("hc3emu2.type")
+---local validator = Type:table{ name = Type:string(), age = Type:number():optional() }
+---local ok, err = validator({ name = "John", age = 42 })
+---```
+
 local fmt = string.format
 
 local Type = {}

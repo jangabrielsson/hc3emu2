@@ -1,10 +1,30 @@
+-- @module hc3emu2.config
+---@description Configuration management for HC3Emu2
+---@author Jan Gabrielsson
+---@license MIT
+---
+---This module provides configuration management functionality:
+---- Loading and merging configuration files
+---- Resource directory management
+---- File system operations
+---- Environment detection
+---- Debugger configuration
+---- Web interface setup
+---
+---@usage
+---```lua
+---local config = require("hc3emu2.config")
+---local userConfig = config.load() -- Loads and merges home and project configs
+---local rsrcsPath = config.getRsrcsPath("devices.json")
+---```
+
 _DEVELOP=_DEVELOP
 
 local EMU_DIR = "emu"
 local EMUSUB_DIR = "emu/pages"
 
-lfs = require("lfs")
-socket = require("socket")
+local lfs = require("lfs")
+local socket = require("socket")
 local fmt = string.format
 
 local cmdLine = arg[-3] or ""

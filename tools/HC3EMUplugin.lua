@@ -452,7 +452,7 @@ local interpreter = {
     if projectPath then fibaroName = projectPath..fibaroName end
     local tmplua = wx.wxFileName()
     tmplua:AssignTempFileName(".")
-    tmpluafile = tmplua:GetFullPath()
+    local tmpluafile = tmplua:GetFullPath()
     local flua = io.open(tmpluafile, "w")
     if not flua then
       DisplayOutput("Can't open temporary file '"..tmpluafile.."' for writing\n")
@@ -537,12 +537,12 @@ local interpreter = {
 
       ide:AddInterpreter("HC3", interpreter)
 
-      menu = ide:FindTopMenu("&Help")
+      local menu = ide:FindTopMenu("&Help")
       menu:AppendSeparator()
 
       local function addLinkHelp(name,url)
         local id = ID("HC3."..name)
-        menu = ide:FindTopMenu("&Help")
+        local menu = ide:FindTopMenu("&Help")
         menu:Append(id, name..KSC(id))
         ide:GetMainFrame():Connect(id, wx.wxEVT_COMMAND_MENU_SELECTED, function() openURL(url) end)
       end

@@ -1,4 +1,21 @@
-_emu = _emu
+-- @module hc3emu2.quickapp
+---@description QuickApp core functionality for HC3Emu2
+---@author Jan Gabrielsson
+---@license MIT
+---
+---This module provides the QuickApp base class and related utilities:
+---- QuickApp lifecycle management
+---- Device and UI interaction
+---- Logging and event handling
+---
+---@usage
+---```lua
+---local QuickApp = require("hc3emu2.quickapp")
+---local MyQA = class('MyQA', QuickApp)
+---function MyQA:onInit() self:debug("Hello!") end
+---```
+
+_G._emu = _emu
 _print = print
 
 local fmt = string.format

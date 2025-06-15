@@ -1,3 +1,25 @@
+-- @module hc3emu2.device
+---@description Device management and QuickApp runtime environment for HC3Emu2
+---@author Jan Gabrielsson
+---@license MIT
+---
+---This module provides device management and QuickApp runtime functionality:
+---- Device lifecycle management
+---- QuickApp environment setup
+---- UI management and updates
+---- Device state persistence
+---- QuickApp file loading and execution
+---
+---@usage
+---```lua
+---local device = Device.new({
+---  id = 1,
+---  device = { name = "MyDevice", type = "com.fibaro.binarySwitch" },
+---  files = { { name = "main", content = "function QuickApp:onInit() end" } }
+---})
+---device:startQA()
+---```
+
 Emu = Emu
 local fmt = string.format
 local copas = require("copas")
