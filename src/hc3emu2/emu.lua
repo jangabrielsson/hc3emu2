@@ -54,7 +54,7 @@ require("copas.http")
 
 -- Figure out where we are and what we run...
 local config = require("hc3emu2.config")
-local startFlags = taskArgs.flags or {}
+local startFlags = runflags or {}
 
 local copiMap = setmetatable({}, { __mode = "k" }) -- Weak table for coroutine to process info mapping
 
@@ -110,7 +110,7 @@ local function startUp()
   Emu.config.dport = headers.dport or 8172  -- debugger port
   Emu.config.hip = headers.hip or "127.0.0.1"  -- help ip
   Emu.stateTag = headers.state
-  Emu.nodir = headers.nodir
+  Emu.nodir = headers.nodir==true or startFlags.nodir==true
   Emu.config.nocolor = headers.nocolor or false
   local globalHeaders = {
     "latitude","longitude","startTime","speedTime","condensedLog",
