@@ -100,6 +100,8 @@ local function startUp()
   local headers,eval = Emu:getHeaders(src),Emu.lib.eval
   Emu.offline = headers.offline==true or startFlags.offline==true
   Emu.nodebug = headers.nodebug==true or startFlags.nodebug==true
+  Emu.silent = headers.silent==true or startFlags.silent==true
+  Emu.quitWhenDone = headers.quitWhenDone==true or startFlags.quitWhenDone==true
   Emu.config.hc3.url = headers.url or os.getenv("HC3URL") or config.userConfig.url
   Emu.config.hc3.user = headers.user or os.getenv("HC3USER") or config.userConfig.user
   Emu.config.hc3.pwd = headers.pwd or os.getenv("HC3PASSWORD") or config.userConfig.password
@@ -141,8 +143,8 @@ local function startUp()
   local modeStr = {}
   if _DEVELOP then modeStr[#modeStr+1] = "developer" end
   modeStr[#modeStr+1] =  Emu.offline and "offline" or "online"
-  print("-Running in "..table.concat(modeStr," and ").." mode")
-  print(Emu.lib.colorStr('orange',"HC3Emu - Tiny QuickApp emulator for the Fibaro Home Center 3, v"..VERSION))
+  Emu:print("-Running in "..table.concat(modeStr," and ").." mode")
+  Emu:print(Emu.lib.colorStr('orange',"HC3Emu - Tiny QuickApp emulator for the Fibaro Home Center 3, v"..VERSION))
   if Emu.offline then require("hc3emu2.offline")(Emu) 
   else Emu.helper = require("hc3emu2.helper") end
   
@@ -271,6 +273,7 @@ function Emulator:WARNINGF(flag,...)
   local pi = copiMap[coroutine.running()] or self.PI pi.warningHandler(flag,...) 
 end
 function Emulator:ERRORF(...) local pi = copiMap[coroutine.running()] pi.errorHandler(...) end
+function Emulator:print(...) if not self.silent then print(...) end end
 
 function Emulator:httpRequest(method,url,headers,data,timeout,user,pwd,silent)
   local resp, req = {}, {}

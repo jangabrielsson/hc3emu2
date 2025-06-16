@@ -73,6 +73,12 @@ function _PI.cancelTimer(ref,op)
   return ref 
 end
 
+if _emu.quitWhenDone then
+  function fibaro.noTimersLeft()
+    _emu:DEBUGF(true,"No timers left, quitting emulator")
+    _emu.lua.os.exit(0)
+  end
+end
 -- Handles errors by logging them using fibaro.error and printing a traceback if available.
 -- @param err - The error message or object.
 -- @param traceback - An optional traceback string.
