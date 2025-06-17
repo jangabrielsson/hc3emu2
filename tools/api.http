@@ -14,7 +14,7 @@ Authorization: Basic {{token}}
 GET http://{{host}}/api/settings/info
 Authorization: Basic {{token}}
 
-### Settings/Home
+### Home
 GET http://{{host}}/api/home
 Authorization: Basic {{token}}
 

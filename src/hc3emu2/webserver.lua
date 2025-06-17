@@ -78,10 +78,17 @@ end
 
 function WEBAPI:call(io, headers, method, path, data) 
   if path:match("^/api/") then
+    local stat,res = pcall(function()
     local path = path:sub(5)
     local res,code = Emu.api[method:lower()](path,data)
     jsonData(io,code,json.encode(res))
-    return res,code,headers
+    return {res,code,headers}
+    end)
+    if not stat then
+      Emu:ERRORF("API call failed: %s", res)
+      renderPage(io, 500, "Internal Server Error", fmt("<h1>500 Internal Server Error</h1><p>API call failed: %s</p>", res))
+      return 500,nil
+    else return table.unpack(res) end
   end
   local handler, vars, query = self:getRoute(method, path)
   local res,code,headers = nil,self.HTTP.NOT_IMPLEMENTED,nil
