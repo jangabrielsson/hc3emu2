@@ -107,6 +107,38 @@ local function inittialOfflineResources(store,emu)
     }
   }
   
+  store['rooms'][219] = {
+    "POST", {
+      id = 219,
+      name = "Default Room",
+      sectionID = 219,
+      isDefault = true,
+      visible = true,
+      icon = "room_boy",
+      iconExtension = "png",
+      iconColor = "purple",
+      defaultSensors = {
+        temperature = 873,
+        humidity = 1875,
+        light = 1629
+      },
+      meters = {
+        energy = 0
+      },
+      defaultThermostat = 353,
+      sortOrder = 1,
+      category = "pantry"
+    }
+  }
+
+  store['sections'][219] = {
+    "POST", {
+      id = 219,
+      name = "Default Section",
+      sortOrder = 1
+    }
+  }
+
   store.weather.data = {
     "INIT",{
       Wind = 5.962133916683182,

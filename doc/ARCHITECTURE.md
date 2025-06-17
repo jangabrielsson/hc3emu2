@@ -69,7 +69,7 @@ Emulates the Fibaro Home Center 3 API by:
 [QuickApp Code] → [QuickApp Runtime] → [Fibaro API] → [Emulator Engine]
        ↑                ↓                    ↑              ↓
        └────────────────┴────────────────────┘              │
-                                                           ↓
+                                                            ↓
                                                     [State Storage]
 ```
 

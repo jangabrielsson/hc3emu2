@@ -1,0 +1,14 @@
+--%%name=MyQA
+--%%type=com.fibaro.energyMeter
+--%%description=My description
+--%%webui=true
+
+function QuickApp:onInit()
+    self:debug(self.name,self.id)
+end
+
+-- Energy meter type have no actions to handle
+-- To update energy consumption, update property "value" with appropriate floating point number
+-- Reported value must be in kWh
+-- Eg. 
+-- self:updateProperty("value", 226.137) 
