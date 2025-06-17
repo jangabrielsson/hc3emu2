@@ -1,0 +1,19 @@
+### Devices
+GET http://{{host}}/api/devices?interface=quickApp
+Authorization: Basic {{token}}
+
+### Global variables
+GET http://{{host}}/api/globalVariables
+Authorization: Basic {{token}}
+
+### Settings/Location
+GET http://{{host}}/api/settings/location
+Authorization: Basic {{token}}
+
+### Settings/Info
+GET http://{{host}}/api/settings/info
+Authorization: Basic {{token}}
+
+### Settings/Home
+GET http://{{host}}/api/settings/home
+Authorization: Basic {{token}}

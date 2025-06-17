@@ -19,8 +19,8 @@ local function renderPage(io, code, title, content)
 end
 
 local function jsonData(io, code, data)
-  io.write(fmt("HTTP/1.1 %d OK\r\nContent-Type: application/json\r\n\r\n", code))
-  io.write(json.encode(data))
+  io.write(fmt("HTTP/1.1 %d OK\r\nServer: HC3Emu\r\nContent-Type: application/json;charset=UTF-8\r\nDate: %s\r\nConnection: close\r\nCache-Control: no-cache\r\n\r\n", code, os.date("!%a, %d %b %Y %H:%M:%S GMT")))
+  io.write(data)
 end
 
 local embed = require("hc3emu2.embedui")
@@ -77,6 +77,12 @@ function WEBAPI:__init(emu)
 end
 
 function WEBAPI:call(io, headers, method, path, data) 
+  if path:match("^/api/") then
+    local path = path:sub(5)
+    local res,code = Emu.api[method:lower()](path,data)
+    jsonData(io,code,json.encode(res))
+    return res,code,headers
+  end
   local handler, vars, query = self:getRoute(method, path)
   local res,code,headers = nil,self.HTTP.NOT_IMPLEMENTED,nil
   if handler then
@@ -178,6 +184,7 @@ local function startServer()
   local ip = Emu.config.pip
   local port = Emu.config.wport
   local server = WebServer2(ip,port)
+  print("STARTED SERVER")
   server:start()
 end
 

@@ -323,7 +323,7 @@ function fibaro.alarm(arg1, action)
   __assert_type(arg1, "number")
   __assert_type(action, "string")
   local url = "/alarms/v1/partitions/" .. arg1 .. "/actions/arm"
-  if action == "arm" then api.post(url)
+  if action == "arm" then api.post(url,nil)
   elseif action == "disarm" then api.delete(url)
   else error(fmt("Wrong parameter: %s. Available parameters: arm, disarm",action),2) end
 end
@@ -333,7 +333,7 @@ end
 function fibaro.__houseAlarm(action)
   __assert_type(action, "string")
   local url = "/alarms/v1/partitions/actions/arm"
-  if action == "arm" then api.post(url)
+  if action == "arm" then api.post(url,nil)
   elseif action == "disarm" then api.delete(url)
   else error("Wrong parameter: '" .. action .. "'. Available parameters: arm, disarm", 3) end
 end
@@ -376,7 +376,7 @@ end
 -- @param name - The name of the custom event.
 function fibaro.emitCustomEvent(name)
   __assert_type(name, "string")
-  api.post("/customEvents/"..name)
+  api.post("/customEvents/"..name,nil)
 end
 
 -- Calls an action on a device or a table of devices.
@@ -485,7 +485,7 @@ function fibaro.getSectionID(deviceId)
   __assert_type(deviceId, 'number')
   local dev = __fibaro_get_device(deviceId)
   if dev == nil then return end
-  return __fibaro_get_room(dev.roomID).sectionID
+  return nil --__fibaro_get_room(dev.roomID).sectionID
 end
 
 -- Gets the name of a room by its ID.
@@ -582,7 +582,7 @@ function fibaro.scene(action, ids)
   __assert_type(ids, "table")
   assert(action=='execute' or action =='kill',"Wrong parameter: "..action..". Available actions: execute, kill")
   for _, id in ipairs(ids) do __assert_type(id, "number") end
-  for _, id in ipairs(ids) do api.post("/scenes/"..id.."/"..action) end
+  for _, id in ipairs(ids) do api.post("/scenes/"..id.."/"..action,nil) end
 end
 
 -- Activates a user profile.
@@ -595,7 +595,7 @@ function fibaro.profile(action, id)
   if action ~= "activeProfile" then
     error("Wrong parameter: " .. action .. ". Available actions: activateProfile", 2)
   end
-  return api.post("/profiles/activeProfile/"..id)
+  return api.post("/profiles/activeProfile/"..id,nil)
 end
 
 local FUNCTION = "func".."tion" -- Obfuscation for "function" string

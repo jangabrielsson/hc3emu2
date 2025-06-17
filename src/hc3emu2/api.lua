@@ -173,7 +173,7 @@ function EMUAPI:setupRoutes()
     visible=function(d,v) return tostring(d.visible) == tostring(v) end,
     roomID=function(d,v) return tonumber(d.roomID) == tonumber(v) end,
     interface=function(d,v)
-      local ifs = d.interfaces
+      local ifs = d.interfaces or d.interface or {}
       for _,i in ipairs(ifs) do if i == v then return true end end
     end,
     property=function(d,v)

@@ -1,6 +1,6 @@
 --%%name=LibTest
 --%%type=com.fibaro.binarySwitch
---%%debug=system:true
+--%% debug=system:true
 --%%save=encrypt.fqa
 --%%interfaces={"battery"}
 --%% file=$hc3emu2.lib.aeslua53:aes

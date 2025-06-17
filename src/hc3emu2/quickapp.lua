@@ -250,7 +250,7 @@ end
 function QuickAppBase:internalStorageSet(key, val, hidden)
   __assert_type(key, 'string')
   local data = { name = key, value = val, isHidden = hidden }
-  local _, stat = api.put("/plugins/" .. self.id .. "/variables/" .. key, data, false)
+  local _, stat = api.put("/plugins/" .. self.id .. "/variables/" .. key, data)
   --print(key,stat)
   if stat > 206 then
     local _, stat = api.post("/plugins/" .. self.id .. "/variables", data)
@@ -459,7 +459,9 @@ function RefreshStateSubscriber:unsubscribe(subscription)
 end
 
 -- Starts the refresh state subscriber
+---@diagnostic disable-next-line: undefined-field
 function RefreshStateSubscriber:run() fibaro.hc3emu.refreshState:addListener(self.handle) end
 
 -- Stops the refresh state subscriber
+---@diagnostic disable-next-line: undefined-field
 function RefreshStateSubscriber:stop() fibaro.hc3emu.refreshState:removeListener(self.handle) end
