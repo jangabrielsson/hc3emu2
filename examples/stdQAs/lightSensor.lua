@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=LightSensor
 --%%type=com.fibaro.lightSensor
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 function QuickApp:onInit()

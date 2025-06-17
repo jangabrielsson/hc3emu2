@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=WaterLeakSensor
 --%%type=com.fibaro.waterLeakSensor
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 function QuickApp:onInit()

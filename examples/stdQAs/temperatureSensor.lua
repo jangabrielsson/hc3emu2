@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=TemperatureSensor
 --%%type=com.fibaro.temperatureSensor
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 function QuickApp:onInit()

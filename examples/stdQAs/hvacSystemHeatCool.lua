@@ -26,7 +26,7 @@ function QuickApp:setCoolingThermostatSetpoint(value)
 end
 
 function QuickApp:onInit()
-    self:debug("onInit")
+    self:debug(self.name,self.id)
 
     -- set supported modes for thermostat
     self:updateProperty("supportedThermostatModes", {"Off", "Heat", "Cool", "Auto"})

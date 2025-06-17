@@ -1,6 +1,6 @@
 --%%name=ThermostatSetpoint
 --%%type=com.fibaro.thermostatSetpoint
---%%description=Thermostat setpoint template
+--%%description="Thermostat setpoint template"
 --%%webui=true
 
 -- Thermostat setpoint should handle actions: setHeatingThermostatSetpoint, setCoolingThermostatSetpoint
@@ -25,7 +25,7 @@ function QuickApp:updateTemperature(value)
 end
 
 function QuickApp:onInit()
-    self:debug("onInit")
+    self:debug(self.name,self.id)
 
     -- setup default values
     self:setHeatingThermostatSetpoint(21)

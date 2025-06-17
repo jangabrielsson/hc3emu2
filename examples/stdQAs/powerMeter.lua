@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=PowerMeter
 --%%type=com.fibaro.powerMeter
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 function QuickApp:onInit()
@@ -18,3 +18,13 @@ end
 -- Eg.
 -- self:updateProperty("rateType", "production")
 -- self:updateProperty("rateType", "consumption") 
+
+function QuickApp:updateValue(value)
+    self:debug("power meter update value: " .. tostring(value))
+    self:updateProperty("value", value)
+end
+
+function QuickApp:updateRateType(rateType)
+    self:debug("power meter update rate type: " .. tostring(rateType))
+    self:updateProperty("rateType", rateType)
+end

@@ -1,6 +1,6 @@
 --%%name=MultilevelSwitch
 --%%type=com.fibaro.multilevelSwitch
---%%description=Multilevel switch template
+--%%description="Multilevel switch template"
 --%%webui=true
 
 -- Multilevel switch type should handle actions: turnOn, turnOff, setValue
@@ -23,5 +23,5 @@ function QuickApp:setValue(value)
 end
 
 function QuickApp:onInit()
-    self:debug("onInit")
+    self:debug(self.name,self.id)
 end 

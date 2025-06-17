@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=BinarySwitch
 --%%type=com.fibaro.binarySwitch
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 -- Binary switch type should handle actions turnOn, turnOff

@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=MotionSensor
 --%%type=com.fibaro.motionSensor
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 function QuickApp:onInit()

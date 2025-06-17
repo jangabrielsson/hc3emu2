@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=EnergyMeter
 --%%type=com.fibaro.energyMeter
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 function QuickApp:onInit()
@@ -12,3 +12,8 @@ end
 -- Reported value must be in kWh
 -- Eg. 
 -- self:updateProperty("value", 226.137) 
+
+function QuickApp:updateEnergy(value)
+    self:debug("energy meter update: " .. tostring(value))
+    self:updateProperty("value", value)
+end

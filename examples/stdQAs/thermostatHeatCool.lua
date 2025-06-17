@@ -1,6 +1,6 @@
 --%%name=ThermostatHeatCool
 --%%type=com.fibaro.thermostatHeatCool
---%%description=Thermostat heat/cool template
+--%%description="Thermostat heat/cool template"
 --%%webui=true
 
 -- Thermostat heat/cool should handle actions: setThermostatMode, setHeatingThermostatSetpoint, setCoolingThermostatSetpoint
@@ -32,7 +32,7 @@ function QuickApp:updateTemperature(value)
 end
 
 function QuickApp:onInit()
-    self:debug("onInit")
+    self:debug(self.name,self.id)
 
     -- set supported modes for thermostat
     self:updateProperty("supportedThermostatModes", {"Off", "Heat", "Cool", "Auto"})

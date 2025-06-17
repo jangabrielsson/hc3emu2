@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=Weather
 --%%type=com.fibaro.weather
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 -- Weather type have no actions to handle

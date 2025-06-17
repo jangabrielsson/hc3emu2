@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=HVACSystemAuto
 --%%type=com.fibaro.hvacSystemAuto
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 -- Thermostat auto should handle actions: setThermostatMode, setCoolingThermostatSetpoint, setHeatingThermostatSetpoint
@@ -37,7 +37,7 @@ end
 --    * https://manuals.fibaro.com/home-center-3-quick-apps/
 
 function QuickApp:onInit()
-    self:debug("onInit")
+    self:debug(self.name,self.id)
 
     -- set supported modes for thermostat
     self:updateProperty("supportedThermostatModes", {"Auto", "Off", "Heat", "Cool"})
@@ -46,4 +46,6 @@ function QuickApp:onInit()
     self:updateProperty("thermostatMode", "Auto")
     self:setCoolingThermostatSetpoint(23)
     self:setHeatingThermostatSetpoint(20)
-end 
+end
+
+-- HVAC system auto type have no actions to handle 

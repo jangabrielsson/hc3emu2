@@ -1,11 +1,36 @@
 --%%name=DeviceController
 --%%type=com.fibaro.deviceController
---%%description=Device controller template
+--%%description="Device controller template"
 --%%webui=true
 
 -- Device Controller is a little more advanced than other types. 
 -- It can create child devices, so it can be used for handling multiple physical devices.
 -- E.g. when connecting to a hub, some cloud service or just when you want to represent a single physical device as multiple endpoints.
+
+-- Sample class for handling your binary switch logic. You can create as many classes as you need.
+-- Each device type you create should have its class which inherits from the QuickAppChild type.
+
+---@class MyBinarySwitch : QuickAppChild
+MyBinarySwitch = {}
+class 'MyBinarySwitch'(QuickAppChild)
+
+-- __init is a constructor for this class. All new classes must have it.
+function MyBinarySwitch:__init(device)
+    -- You should not insert code before QuickAppChild.__init. 
+    QuickAppChild.__init(self, device) 
+
+    self:debug("MyBinarySwitch init")   
+end
+
+function MyBinarySwitch:turnOn()
+    self:debug("child", self.id, "turned on")
+    self:updateProperty("value", true)
+end
+
+function MyBinarySwitch:turnOff()
+    self:debug("child", self.id, "turned off")
+    self:updateProperty("value", false)
+end 
 
 function QuickApp:onInit()
     self:debug("QuickApp:onInit")
@@ -34,24 +59,4 @@ function QuickApp:createChild()
     self:trace("Child device created: ", child.id)
 end
 
--- Sample class for handling your binary switch logic. You can create as many classes as you need.
--- Each device type you create should have its class which inherits from the QuickAppChild type.
-class 'MyBinarySwitch'(QuickAppChild)
-
--- __init is a constructor for this class. All new classes must have it.
-function MyBinarySwitch:__init(device)
-    -- You should not insert code before QuickAppChild.__init. 
-    QuickAppChild.__init(self, device) 
-
-    self:debug("MyBinarySwitch init")   
-end
-
-function MyBinarySwitch:turnOn()
-    self:debug("child", self.id, "turned on")
-    self:updateProperty("value", true)
-end
-
-function MyBinarySwitch:turnOff()
-    self:debug("child", self.id, "turned off")
-    self:updateProperty("value", false)
-end 
+-- Device controller type have no actions to handle

@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=MultilevelSensor
 --%%type=com.fibaro.multilevelSensor
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 -- Multilevel sensor type have no actions to handle

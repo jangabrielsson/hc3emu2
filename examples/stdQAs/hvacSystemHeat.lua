@@ -1,6 +1,6 @@
 --%%name=HVACSystemHeat
 --%%type=com.fibaro.hvacSystemHeat
---%%description=HVAC system heat template
+--%%description="HVAC system heat template"
 --%%webui=true
 
 -- Thermostat heat should handle actions: setThermostatMode, setHeatingThermostatSetpoint
@@ -20,7 +20,7 @@ function QuickApp:setHeatingThermostatSetpoint(value)
 end
 
 function QuickApp:onInit()
-    self:debug("onInit")
+    self:debug(self.name,self.id)
 
     -- set supported modes for thermostat
     self:updateProperty("supportedThermostatModes", {"Off", "Heat"})

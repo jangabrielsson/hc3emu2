@@ -1,4 +1,4 @@
---%%name=MyQA
+--%%name=RainDetector
 --%%type=com.fibaro.rainDetector
 --%%description=My description
 --%%webui=true
@@ -6,3 +6,12 @@
 -- Rain detector type has no actions to handle
 -- To update rain detector state, update property "value" with boolean
 -- Eg. self:updateProperty("value", true) will indicate that rain was detected 
+
+function QuickApp:onInit()
+    self:debug(self.name,self.id)
+end
+
+function QuickApp:breached(state)
+    self:debug("rain detector breached: " .. tostring(state))
+    self:updateProperty("value", state)
+end

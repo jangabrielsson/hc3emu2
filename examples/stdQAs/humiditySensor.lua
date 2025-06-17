@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=HumiditySensor
 --%%type=com.fibaro.humiditySensor
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 function QuickApp:onInit()

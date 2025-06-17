@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=RemoteController
 --%%type=com.fibaro.remoteController
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 -- Remote controller type have no actions to handle

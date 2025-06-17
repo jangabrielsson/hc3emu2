@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=WindowCovering
 --%%type=com.fibaro.windowCovering
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 function QuickApp:onInit()

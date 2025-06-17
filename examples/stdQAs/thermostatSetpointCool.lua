@@ -1,6 +1,6 @@
 --%%name=ThermostatSetpointCool
 --%%type=com.fibaro.thermostatSetpointCool
---%%description=Thermostat setpoint cool template
+--%%description="Thermostat setpoint cool template"
 --%%webui=true
 
 -- Thermostat setpoint cool should handle actions: setCoolingThermostatSetpoint
@@ -19,7 +19,7 @@ function QuickApp:updateTemperature(value)
 end
 
 function QuickApp:onInit()
-    self:debug("onInit")
+    self:debug(self.name,self.id)
 
     -- setup default values
     self:setCoolingThermostatSetpoint(23)

@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=Player
 --%%type=com.fibaro.player
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 -- Player type should handle actions: play, pause, stop, next, prev, setVolume, setMute
@@ -43,3 +43,9 @@ function QuickApp:setMute(mute)
         self:updateProperty("mute", true)
     end
 end 
+
+function QuickApp:onInit()
+    self:debug(self.name,self.id)
+end
+
+-- Player type have no actions to handle

@@ -1,6 +1,6 @@
 --%%name=HVACSystemCool
 --%%type=com.fibaro.hvacSystemCool
---%%description=HVAC system cool template
+--%%description="HVAC system cool template"
 --%%webui=true
 
 -- Thermostat cool should handle actions: setThermostatMode, setCoolingThermostatSetpoint

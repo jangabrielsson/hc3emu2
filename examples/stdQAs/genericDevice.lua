@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=GenericDevice
 --%%type=com.fibaro.genericDevice
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 -- Generic device type have no default actions to handle 

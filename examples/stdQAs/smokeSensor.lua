@@ -1,6 +1,6 @@
---%%name=MyQA
+--%%name=SmokeSensor
 --%%type=com.fibaro.smokeSensor
---%%description=My description
+--%%description="My description"
 --%%webui=true
 
 function QuickApp:onInit()
