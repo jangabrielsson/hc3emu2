@@ -135,7 +135,7 @@ local function startUp()
     local res,err = Emu.api.hc3.get("/settings/info")
     Emu.TIMEOUT = nil-- default
     if res==nil or err == "Host is down" or err == "Host not found" then
-      print("-HC3 is not reachable, please check your HC3 URL and network connection")
+      print("-HC3 is not reachable, please check your HC3 URL and network connection"..fmt(" (%s)",tostring(err)))
       print("-HC3 URL: "..tostring(Emu.config.hc3.url))
       print("-HC3 user: "..tostring(Emu.config.hc3.user))
       print("-HC3 password: "..tostring(Emu.config.hc3.pwd))
