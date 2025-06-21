@@ -2,6 +2,8 @@
 --%%nodebug=true
 --%%plugin=$hc3emu2.plugin.terminal
 
+assert(type(fibaro['hc3emu']) == 'table')
+
 local emu = fibaro.hc3emu
 local lfs = emu.lua.require("lfs")
 local io = emu.lua.io
@@ -244,6 +246,15 @@ end
 
 function task.terminal(path) -- file to run in terminal, if any
   fibaro.hc3emu.plugin.terminal()
+  if path and lfs.attributes(path) then
+    local flags = args.flags
+    local extra = {}
+    emu.loadQA(path,extra)
+  end
+  return "run"
+end
+
+function task.server(path) -- file to run in server, if any
   if path and lfs.attributes(path) then
     local flags = args.flags
     local extra = {}

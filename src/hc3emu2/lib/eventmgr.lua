@@ -224,4 +224,7 @@ function EventMgr:setupSourceTriggers() -- Setup some transformation to sourceTr
   
 end
 
-if fibaro then fibaro.EventMgr = EventMgr end
+if fibaro then 
+  fibaro.EventMgr = EventMgr
+  fibaro.midnight = midnight
+end

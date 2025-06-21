@@ -191,7 +191,6 @@ local function startServer()
   local ip = Emu.config.pip
   local port = Emu.config.wport
   local server = WebServer2(ip,port)
-  print("STARTED SERVER")
   server:start()
 end
 

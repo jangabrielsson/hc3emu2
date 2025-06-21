@@ -136,6 +136,9 @@ local function startUp()
     Emu.TIMEOUT = nil-- default
     if res==nil or err == "Host is down" or err == "Host not found" then
       print("-HC3 is not reachable, please check your HC3 URL and network connection")
+      print("-HC3 URL: "..tostring(Emu.config.hc3.url))
+      print("-HC3 user: "..tostring(Emu.config.hc3.user))
+      print("-HC3 password: "..tostring(Emu.config.hc3.pwd))
       print("-Switching to offline mode")
       Emu.offline = true
     end

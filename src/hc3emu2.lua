@@ -1,6 +1,6 @@
 local cmdLine, mode, mainFile, args
 local startupMode = { 
-  run=true, test=true, terminal=true,
+  run=true, test=true, terminal=true, server=true,
   uploadQA=true, downloadUnpack=true, updateFile=true, updateQA=true,
 }
 for i=-1,5 do
@@ -23,7 +23,7 @@ table.remove(args,1) -- remove mode from args
 mainFile = args[1]
 
 assert(mode,"Missing mode command line argument")
-assert(not flags.terminal or mainFile,"Missing file command line argument")
+assert(not (flags.terminal or flags.server) or mainFile,"Missing file command line argument")
 
 do
   local f = io.open(".env")
