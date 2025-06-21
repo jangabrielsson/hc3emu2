@@ -135,7 +135,7 @@ local function myTraceback()
 end
 
 local function gate(fun,...)
-  lock:get()
+  lock:get() --_emu:DEBUGF(true,"Get lock")
   local function ef(err)
     if type(err) == "table" then return err end
     err = err:gsub("%[string \"","[file \"")
@@ -146,6 +146,7 @@ local function gate(fun,...)
   end
   local res ={xpcall(fun,ef,...)}
   lock:release()
+   --_emu:DEBUGF(true,"Release lock")
   if res[1] then return table.unpack(res,2) else error(res[2],2) end
 end
 _PI.gate = gate

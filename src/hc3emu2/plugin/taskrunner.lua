@@ -255,7 +255,7 @@ function task.terminal(path) -- file to run in terminal, if any
 end
 
 function task.server(path) -- file to run in server, if any
-  if path and lfs.attributes(path) thenq
+  if path and lfs.attributes(path) then
     local flags = args.flags
     local extra = {}
     emu.loadQA(path,extra)
