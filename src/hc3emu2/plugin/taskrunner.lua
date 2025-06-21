@@ -228,7 +228,7 @@ function task.updateFile(fname)
   os.exit(0)
 end
 
-function task.downloadUnpack(id,path)
+function task.downloadQA(id,path)
   local stat,res = pcall(function()
     if path=="." or path=="" then path="./" end
     if not path:match("/$") then path = path.."/" end
@@ -255,7 +255,7 @@ function task.terminal(path) -- file to run in terminal, if any
 end
 
 function task.server(path) -- file to run in server, if any
-  if path and lfs.attributes(path) then
+  if path and lfs.attributes(path) thenq
     local flags = args.flags
     local extra = {}
     emu.loadQA(path,extra)
