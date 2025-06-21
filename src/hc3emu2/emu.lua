@@ -39,7 +39,7 @@
 ---@see hc3emu2.api - API handling
 ---@see hc3emu2.config - Configuration management
 
-local VERSION = "2.0.26"
+local VERSION = "2.0.27"
 local mode, mainFile, runflags, taskArgs = ...
 
 local fmt = string.format
