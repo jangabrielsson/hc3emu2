@@ -2,6 +2,7 @@ local fmt = string.format
 local copas = require("copas")
 local socket = require("socket")
 local mobdebug = require("mobdebug")
+Emu = Emu
 
 ---------- Time functions --------------------------
 --- User has own time that can be an offset to real time
@@ -108,6 +109,7 @@ class 'Master'
 function Master:__init()
   self.queue = createQueue()
   self.gate = copas.semaphore.new(1,0,math.huge)
+  self.speedGate = {false} --Emu:createLock(math.huge,true)
 end
 function Master:add(t,fun,id) 
   local ref = self.queue:add(t,fun) 
@@ -130,7 +132,7 @@ function Master:speed(flag)
   copas.wakeup(self.co)
 end
 function Master:speedFor(hours,cb)
-  print("speedFor",hours)
+  --print("speedFor",hours)
   self._speed = true
   self:setTimeout(function() 
     if cb then pcall(cb) end self:speed(false)
@@ -150,6 +152,7 @@ function Master:normalTick()
   end
 end
 function Master:speedTick()
+  if self.speedGate[1] then return copas.pause(0.001) end
   local v = self:pop()
   if not v then copas.pauseforever(self.co) -- Wait for someone from outside to wake us up
   else
@@ -243,6 +246,7 @@ function Emu:clearInterval(ref) scheduler:clearInterval(ref) end
 
 return {
   masterGate = scheduler.gate,
+  speedGate = scheduler.speedGate,
   setTime = setTime,
   userTime = userTime,
   userMilli = userMilli,

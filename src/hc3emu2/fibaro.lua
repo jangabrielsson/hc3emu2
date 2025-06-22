@@ -145,8 +145,8 @@ local function gate(fun,...)
     return _emu:createErrorMsg{msg=err,trace=trace}
   end
   local res ={xpcall(fun,ef,...)}
+  --_emu:DEBUGF(true,"Release lock")
   lock:release()
-   --_emu:DEBUGF(true,"Release lock")
   if res[1] then return table.unpack(res,2) else error(res[2],2) end
 end
 _PI.gate = gate
@@ -186,6 +186,20 @@ function clearTimeout(ref) _emu:clearTimeout(_PI.cancelTimer(ref,"cancelled")) e
 -- @param ref - The timer reference returned by setInterval.
 function clearInterval(ref) _emu:clearInterval(_PI.cancelTimer(ref,"cancelled")) end
 
+local function lockSpeedScheduler(fun)
+  return function(...)
+    local f = _emu.lib.speedGate
+    _emu.lib.speedGate[1] = true
+    local res = {fun(...)}
+    _emu.lib.speedGate[1] = false
+    return table.unpack(res)
+  end
+end
+
+api.get = lockSpeedScheduler(api.get)
+api.post = lockSpeedScheduler(api.post)
+api.put = lockSpeedScheduler(api.put)
+api.delete = lockSpeedScheduler(api.delete)
 -----------------------------------------------------------------
 ---
 
