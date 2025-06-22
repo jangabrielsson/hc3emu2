@@ -98,7 +98,7 @@ local function findRsrscsDir()
   -- C:\Users\jgab\scoop\apps\luarocks\3.11.1\rocks\lib\luarocks\rocks-5.4\hc3emu\1.0.70-1\rsrcs
   local dir = p:match(".:\\Users\\%w+\\scoop\\apps\\luarocks\\")
   if dir then
-    dir = dir.."3.11.1\\rocks\\lib\\luarocks\\rocks-5.4\\hc3emu\\"
+    dir = dir.."3.11.1\\rocks\\lib\\luarocks\\rocks-5.4\\hc3emu2\\"
     local p = findFile(dir,file)
     if p then return p:sub(1,len) end
   end

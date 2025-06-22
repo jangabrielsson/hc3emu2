@@ -377,7 +377,10 @@ do
   --@D role=<string> - Device role of the QA, ex. --%%role=Light
   function headerKeys.role(v,h,k) h.role = validate(v,k,"string") end
   --@D description=<string> - Description property of the QA, ex. --%%description=My QuickApp
-  function headerKeys.description(v,h,k) h.description = validate(v,k,"string") end
+  function headerKeys.description(v,h,k) 
+    local stat,res = pcall(validate,v,k,"string")
+    if stat then h.description = res else h.description=v end
+    end
   --@D latitude=<number> - Latitude of the system, ex. --%%latitude=59.3293
   function headerKeys.latitude(v,h,k) h.latitude = validate(v,k,"number") end
   --@D longitude=<number> - Longitude of the system, ex. --%%longitude=18.0686
