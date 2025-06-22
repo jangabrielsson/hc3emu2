@@ -145,7 +145,7 @@ local function hc3emuExports(emu)
   speedFor = emu.lib.speedFor, offline = emu.offline, refreshState = emu.refreshState,
   hasState = emu.stateTag ~= nil, taskargs = emu.taskArgs, runTest = emu.lib.runTest,
   createSimDevice = emu.lib.createSimDevice, readFile = emu.lib.readFile, writeFile = emu.lib.writeFile,
-  SocketServer = SocketServer, config = emu.config,
+  SocketServer = SocketServer, config = emu.config, colors = emu.lib.colors,
   plugin = emu.plugin
 }
 end

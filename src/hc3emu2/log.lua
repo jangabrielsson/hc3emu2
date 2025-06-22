@@ -154,6 +154,7 @@ local function init(colors)
     return table.concat(buff,"\n")
   end
   
+
   log = {
     colors = { COLORMAP = COLORMAP },
     setDark = setDark,
@@ -393,4 +394,5 @@ extraColors.salmon = extraColors.lightpink1
 extraColors.buttermilk = extraColors.yellow
 
 init(extraColors)
+log.colors.EXTRA = extraColors -- Expose extra colors for use in other modules
 return log
