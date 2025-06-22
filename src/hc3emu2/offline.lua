@@ -84,6 +84,9 @@ local store = {
   ['settings/location'] = Store{
     name="settings/location",idx=nil,
   },
+  ['panels/location'] = Store{
+    name="panels/location",idx='id',
+  },
   ['settings/info'] = Store{
     name="settings/info",idx=nil,
   },
@@ -94,6 +97,9 @@ local store = {
     name="weather",idx=nil,
   }
 }
+
+function Emu.EVENT._sunset_updated()
+end
 
 local function setup(Emu)
   local api = Emu.api
@@ -242,7 +248,9 @@ local function setup(Emu)
     end
     return {ctx.data,HTTP.OK}
   end)
-
+  add("GET/panels/location", function(ctx)
+    return {strip(store['panels/location']),HTTP.OK}
+  end)
     
   add("GET/home", function(ctx)
     return {strip(store['home'],true),HTTP.OK}

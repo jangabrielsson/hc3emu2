@@ -107,6 +107,18 @@ local function inittialOfflineResources(store,emu)
     }
   }
   
+  store['panels/location'][219] = {
+    "POST", {
+      id = 219,
+      name = "HC3-00000000",
+      latitude = Emu.config.latitude or 59.3169518987572,
+      longitude = Emu.config.longitude or 18.06379775049387,
+      radius = 150,
+      address = "xyz",
+      home = true
+    }
+  }
+
   store['rooms'][219] = {
     "POST", {
       id = 219,

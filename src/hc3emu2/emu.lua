@@ -187,6 +187,7 @@ local function startUp()
       if Emu.config.startTime then Emu.lib.setTime(Emu.config.startTime) end
       if Emu.config.speedTime then Emu.lib.speedFor(Emu.config.speedTime) end
       Emu.sunriseHour,Emu.sunsetHour = Emu.lib.sunCalc()
+      Emu:post({type='sunset_updated'})
       Emu.lib.midnightLoop()
       Emu.lib.startScheduler()
       require("hc3emu2.webserver").startServer() -- Test
@@ -198,7 +199,8 @@ local function startUp()
   function Emu.EVENT.midnight()
     local count = Emu.lib.masterGate:get_count()
     if count > 0 then Emu.lib.masterGate:take() end
-    Emu.sunriseHour,Emu.sunsetHour = Emu.lib.sunCalc() 
+    Emu.sunriseHour,Emu.sunsetHour = Emu.lib.sunCalc()
+    Emu:post({type='sunset_updated'})
     if count > 0 then Emu.lib.masterGate:give() end
   end
   

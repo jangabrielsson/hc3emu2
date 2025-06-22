@@ -6,6 +6,7 @@
 --%%conceal=token:"<put you HASS api token here>"
 
 function QuickApp:onInit()
+
   self:debug("QuickApp Initialized", self.name, self.id)
   self:debug("Sunset", fibaro.getValue(1, "sunsetHour"))
 
